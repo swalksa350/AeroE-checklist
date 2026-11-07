@@ -141,3 +141,30 @@ start there. Tick them off here as they are verified.
 - [ ] Vs/Vso 76/68, Vsse ~85, best glide 110–120 KIAS (not a POH figure)
 - [ ] Climb 2,400 RPM / 38–40 in Hg, cruise 32–36 in Hg; usable fuel ~182 gal; CHT limit 475 vs 500°F for the J2BD
 - [ ] Same gear-extension, go-around and generic-limit items as the Navajo; flaps-up approach 110–115
+
+## Cessna 210M / 210R Centurion
+- [ ] Vfe for 20°–30° (120 vs 140 KIAS); 210M Vle 140 vs 165 extended; Va ~130 (M) / ~133 (R); Vs/Vso ~64/57 (M) / ~66/59 (R)
+- [ ] Hand pump 40–60 strokes; gear horn ~12 in Hg and flap clause; cycle ~10 s
+- [ ] Climb 25 in / 2,550; 2,850 RPM 5-min takeoff limit; prime 6–8 GPH; hot-start purge 20–30 s
+- [ ] Aux pump HI/LO and throttle interlock behaviour by year (written as ON/OFF)
+- [ ] 210R usable fuel 87 vs 90 gal; 210M electrical system voltage not stated
+
+## Piper PA-46-310P Malibu
+- [ ] Max manifold pressure 36–38 in Hg; TIT 1,750°F red line / 1,650°F cruise
+- [ ] Emergency gear extension speed ~100 KIAS and lever wording; standby alternator ~20 A if fitted
+- [ ] Cabin altitude warning 10,000 vs 12,500 ft; min MP to hold cabin 18–20 in Hg
+- [ ] Vr 70–74, glide 90, Vs/Vso 69/58, Vref 80; takeoff flap 0° / 10° short field
+
+## Piper PA-46R-350T Matrix
+- [ ] TIT placard limit for the TIO-540-AE2A (1,650 vs 1,750°F); oil pressure 55–95 psi; mag check 2,000 RPM 175/50
+- [ ] MP available after turbo failure ~28 in Hg; oxygen bottle ~1,850 psi and mask altitude
+- [ ] Glide ~95, Vr 70–75, Vs/Vso 69/59, Vref 80–85; emergency gear extension speed
+- [ ] Autopilot model by panel (S-TEC 55X / GFC 700); alternate air door automatic
+
+## Pilatus PC-12/45
+- [ ] Torque: 44.3 psi takeoff (5 min) and 36.9 psi max continuous at 1,700 RPM (brief vs author differ – check AFM)
+- [ ] ITT 800°C takeoff / 760°C continuous; Ng 104%; Np transient 1,870 RPM 20 s; overspeed governor test RPM
+- [ ] Vs/Vso (author used ~85–90 / 64–68 at 9,920 lb; brief suggested 70/57); Vlo/Vle 180; Vfe 165/130/120
+- [ ] Min icing speed ~130; air start envelope; hand pump 25–40 strokes; fuel imbalance 26 gal; FUEL LOW ~20 gal/side
+- [ ] Ground idle Ng 60–66%; oil 90–135 psi / 60 min; battery start 24 V; battery endurance ~30 min
+- [ ] CAWS label wording by serial (ESNTL BUS, NON ESNTL BUS, PROP OVSP TEST, INERT SEP, boots 1 CYCLE / 3 MIN)

@@ -267,6 +267,7 @@ main.picker section.view{display:block}
 <script src="aircraft/pa31-350.js"></script>
 <script src="aircraft/pa44-180.js"></script>
 <script src="aircraft/pa46-310p.js"></script>
+<script src="aircraft/pa46r-350t.js"></script>
 <script src="aircraft/pc12-45.js"></script>
 <script src="aircraft/sr20.js"></script>
 <script src="aircraft/sr22.js"></script>
@@ -292,7 +293,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "da5c4747";
+const BUILD = "fb63116a";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
 const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["status","Status"]];
 const AC = () => byId(state.ac);
