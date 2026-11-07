@@ -61,8 +61,10 @@ nav.modes button.on.norm{color:var(--green);border-bottom-color:var(--green)}
 nav.modes button.on.abn{color:var(--amber);border-bottom-color:var(--amber)}
 nav.modes button.on.emerg{color:var(--red);border-bottom-color:var(--red)}
 nav.modes button .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--amber);color:var(--on-amber);font-size:11px;line-height:18px;font-variant-numeric:tabular-nums}
-html.mac-standalone header{padding-left:calc(env(safe-area-inset-left,0px) + 78px)}
-html.mac-standalone header .brand{min-width:0}
+/* Mac and iPad (iPadOS 26+) installs draw the window's close / minimise / zoom controls over the top-left corner */
+html.win-controls header{padding-left:calc(env(safe-area-inset-left,0px) + 96px)}
+html.win-controls header .brand{min-width:0}
+html.win-controls header.picker-head .brand{padding-left:0}
 header .theme{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--ink-dim);border-left:1px solid var(--line);font-size:11px;line-height:1}
 header .theme .g{font-size:17px;line-height:1}
 header .theme:active{background:var(--tap)}
@@ -249,10 +251,10 @@ header .brand{cursor:default}
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 1.7 (build 849ad9ab)</footer>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 1.7 (build 0d080c7b)</footer>
 </div>
 <script>
-window.AEROE_BUILD = "849ad9ab";
+window.AEROE_BUILD = "0d080c7b";
 window.AEROE_VERSION = "1.7";
 /* Beechcraft King Air B200 – checklist data.
    Prototype content. Verify against the operator's approved checklist and the POH/AFM. */
