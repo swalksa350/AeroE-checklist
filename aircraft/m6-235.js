@@ -47,10 +47,39 @@ window.AIRCRAFT.push({
       {c:"Mixture", r:"IDLE CUTOFF (IO-540) / RICH (O-540)"},
       {c:"Beacon", r:"ON"},
       {c:"Propeller area", r:"CLEAR (tail-low – check nose-high blind area)"},
-      {c:"Fuel boost pump", r:"ON"},
-      {c:"Prime", r:"IO-540: mixture RICH until fuel flow indicates (3–5 s) then IDLE CUTOFF; O-540: primer 2–3 strokes (cold), locked"},
-      {c:"Ignition switch", r:"START (release when engine fires; max 10 s cranking)"},
-      {c:"Mixture", r:"ADVANCE smoothly to RICH when engine fires (IO-540)"},
+      {branch:"Engine condition?", opts:{
+        "Cold / normal":[
+          {c:"Fuel boost pump", r:"ON"},
+          {c:"Prime", r:"IO-540: mixture RICH until fuel flow indicates (3–5 s) then IDLE CUTOFF; O-540: primer 2–3 strokes (cold), locked"},
+          {c:"Ignition switch", r:"START (release when engine fires; max 10 s cranking)"},
+          {c:"Mixture", r:"ADVANCE smoothly to RICH when engine fires (IO-540)"},
+        ],
+        "Hot (IO-540)":[
+          {note:"Hot start: fuel in the injector lines has vaporised. Do not prime. If the engine has been shut down less than about 20 min it may start with no prime at all.", kind:"caution"},
+          {c:"Throttle", r:"OPEN approx 1/2 inch"},
+          {c:"Mixture", r:"IDLE CUTOFF"},
+          {c:"Fuel boost pump", r:"OFF (ON briefly only if fuel flow shows zero, then OFF)"},
+          {c:"Ignition switch", r:"START (max 10 s cranking)"},
+          {c:"Mixture", r:"ADVANCE smoothly to RICH as engine fires, throttle back to 1,000 RPM"},
+          {branch:"Engine started?", opts:{
+            "Yes":[],
+            "No – use flooded procedure":[
+              {c:"Mixture", r:"IDLE CUTOFF"},
+              {c:"Throttle", r:"FULL OPEN"},
+              {c:"Fuel boost pump", r:"OFF"},
+              {c:"Ignition switch", r:"START – as engine fires: throttle RETARD smoothly, mixture RICH"},
+              {note:"Allow the starter to cool (approx 2 min between 10 s attempts). After repeated failures treat the engine as flooded or seek a cold-soak and try the cold procedure.", kind:"caution"},
+            ]
+          }},
+        ],
+        "Flooded":[
+          {c:"Mixture", r:"IDLE CUTOFF"},
+          {c:"Throttle", r:"FULL OPEN"},
+          {c:"Fuel boost pump", r:"OFF"},
+          {c:"Ignition switch", r:"START – as engine fires: throttle RETARD smoothly, mixture RICH"},
+          {note:"Keep a hand on the throttle: the engine will surge to high RPM as it catches with the throttle open.", kind:"warn"},
+        ]
+      }},
       {c:"Throttle", r:"ADJUST 1,000 RPM"},
       {c:"Oil pressure", r:"CHECK rising within 30 s (60 s cold) – if not, SHUT DOWN"},
       {c:"Fuel boost pump", r:"OFF (fuel pressure steady)"},

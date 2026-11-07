@@ -174,3 +174,7 @@ start there. Tick them off here as they are verified.
 - [ ] STOL Vr 40–50, Vx 55–60, Vs/Vso ~43/35, Vfe 90/85/80 (24°/40°/48°), 48° approach 50–55 KIAS (MPH POH conversions)
 - [ ] 40° flap approved for takeoff; 48° landing-only; oil 12 qt max / 8 min (copied from M-7)
 - [ ] Mag check 175/50, oil pressure 55–95 psi, suction 4.5–5.5, cruise 12–14 GPH at 22–24 in Hg (typical, not POH)
+
+## Maule M-6 / M-7 hot and flooded start (added later)
+- [ ] IO-540 hot start technique (throttle ~1/2 in, mixture cutoff, no prime, boost pump off) and the ~20 min "no prime" window – confirm against the Maule POH / Lycoming SI 1234
+- [ ] Flooded start (mixture cutoff, throttle full, crank, retard as it fires) and starter cooling interval
