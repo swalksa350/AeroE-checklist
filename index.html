@@ -60,9 +60,14 @@ header .brand{padding:12px 16px;font-weight:700;letter-spacing:.02em;display:fle
 header .brand small{font-weight:400;color:var(--ink-dim);font-size:12px}
 nav.modes{display:flex;flex:1;min-width:0}
 nav.modes button{flex:1;padding:14px 4px;font-size:14px;font-weight:600;color:var(--ink-dim);border-bottom:3px solid transparent;min-width:0;white-space:nowrap}
+nav.modes button.norm{color:var(--green)}
+nav.modes button.abn{color:var(--amber)}
+nav.modes button.emerg{color:var(--red)}
+nav.modes button:not(.on){opacity:.72}
 nav.modes button.on{color:var(--ink);border-bottom-color:var(--cyan)}
-nav.modes button.on.emerg{border-bottom-color:var(--red)}
-nav.modes button.on.abn{border-bottom-color:var(--amber)}
+nav.modes button.on.norm{color:var(--green);border-bottom-color:var(--green)}
+nav.modes button.on.abn{color:var(--amber);border-bottom-color:var(--amber)}
+nav.modes button.on.emerg{color:var(--red);border-bottom-color:var(--red)}
 nav.modes button .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--amber);color:var(--on-amber);font-size:11px;line-height:18px;font-variant-numeric:tabular-nums}
 @media (max-width:480px){
   header .brand{min-width:0;padding:10px 12px}
@@ -97,6 +102,7 @@ section.view{flex:1;min-width:0;overflow:auto;padding:0 env(safe-area-inset-righ
 .proc-head h1{margin:0;font-size:20px;flex:1;min-width:0;font-weight:700;text-wrap:balance}
 .proc-head h1.emerg{color:var(--red)}
 .proc-head h1.abn{color:var(--amber)}
+.proc-head h1.norm{color:var(--green)}
 .proc-head .cond{display:block;font-size:13px;font-weight:400;color:var(--ink-dim);margin-top:2px}
 .proc-head .tools{display:flex;gap:6px}
 .tools button{padding:7px 12px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;color:var(--ink-dim)}
@@ -381,7 +387,7 @@ function render(){
   if(a){
     const act=activeNonNormal().length;
     MODES.forEach(([m,label])=>{
-      const b=h("button",{class:(state.mode===m?"on ":"")+(m==="emergency"?"emerg":m==="abnormal"?"abn":""),"aria-pressed":state.mode===m?"true":"false",onclick:()=>go(()=>{state.mode=m;state.sel=null;state.showing=false;state.confirmReset=false})},label);
+      const b=h("button",{class:(state.mode===m?"on ":"")+(m==="emergency"?"emerg":m==="abnormal"?"abn":m==="normal"?"norm":""),"aria-pressed":state.mode===m?"true":"false",onclick:()=>go(()=>{state.mode=m;state.sel=null;state.showing=false;state.confirmReset=false})},label);
       if(m==="status"&&act)b.append(h("span",{class:"badge"},act));
       nav.append(b);
     });
@@ -455,7 +461,7 @@ function renderView(){
   if(state.mode==="normal"&&state.sel==="__vs"){renderVspeeds(v);return}
   const p=proc(state.mode,state.sel);
   if(!p){v.append(h("div",{class:"status"},h("div",{class:"empty"},"Select a checklist."))); return}
-  const cls=state.mode==="emergency"?"emerg":state.mode==="abnormal"?"abn":"";
+  const cls=state.mode==="emergency"?"emerg":state.mode==="abnormal"?"abn":"norm";
   const head=h("div",{class:"proc-head"},
     h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),
     h("h1",{class:cls},p.name,p.cond?h("span",{class:"cond"},p.cond):""),
