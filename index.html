@@ -333,7 +333,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "eeff205e";
+const BUILD = "48e99bd6";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -704,7 +704,7 @@ function renderStatus(v){
     w.append(tog("Read aloud",()=>voice.read,v=>{voice.read=v; if(!v) voiceStop(true);},"Speaks each line of an open checklist and waits for ✓ Checked before the next."));
     w.append(tog("Short responses in normal checklists",()=>voice.brief,v=>{voice.brief=v;},"Reads only the capitalised action, e.g. “Fuel shutoff, ON”, and leaves the bracketed detail for the screen. Abnormal and emergency procedures are always read in full."));
     w.append(tog("Cue tones",()=>voice.tones,v=>{voice.tones=v;},"One short tone when the app starts listening, two when it accepts your word."));
-    w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked”, “set”, “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
+    w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked” or the written response (for example “both on”), plus “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
     const seg=h("div",{class:"seg"});RATES.forEach(([rt,label])=>seg.append(h("button",{class:voice.rate===rt?"on":"",onclick:()=>{voice.rate=rt;saveVoice();render();speak("Fuel selectors. Both on.")}},label)));
     w.append(h("div",{class:"row"},h("span",{},"Speaking rate"),seg));
     if(!voicesCache.length) loadVoices();
@@ -929,7 +929,18 @@ function listenOnce(onAlts, onFail, onInterim){
   r.onend=()=>{ vs.listening=false; vs.rec=null; onFail&&onFail(got?"ended":"no-speech"); renderVoiceBar(); };
   try{ r.start(); vs.rec=r; vs.listening=true; }catch(e){ onFail&&onFail("error"); }
 }
-const CMDS=[[/\b(che[ck]+(ed|t|d)?|cheque[ds]?|czech|chucked|checkered|tick(ed)?|set|complete|completed|done|roger|affirm|affirmative|confirm|confirmed|next|yes|yep|yeah|copy|good)\b/,"confirm"],[/\b(repeat|again|say again)\b/,"repeat"],[/\bskip\b/,"skip"],[/\b(stop|pause|cancel)\b/,"stop"]];
+const CMDS=[[/\b(che[ck]+(ed|t|d)?|cheque[ds]?|czech|chucked|checkered)\b/,"confirm"],[/\b(repeat|again|say again)\b/,"repeat"],[/\bskip\b/,"skip"],[/\b(stop|pause|cancel)\b/,"stop"]];
+/* Does the transcript contain the written response (its capitalised action, brackets dropped)?
+   "BOTH ON" matches "both on"; "IDLE CUTOFF" matches "idle cut off"; "1,600–1,900 RPM" matches on "rpm". */
+function saidResponse(transcript, response){
+  const brief=briefResponse(response);
+  const words=brief.toLowerCase().replace(/[^a-z\s]/g," ").split(/\s+/).filter(w=>w.length>=2 && !["and","or","then","to","as"].includes(w));
+  if(!words.length) return false;
+  const t=String(transcript).toLowerCase();
+  const joined=words.join("");
+  if(joined.length<=3) return words.every(w=>new RegExp("\\b"+w+"\\b").test(t));
+  return t.replace(/[^a-z]/g,"").includes(joined) || words.every(w=>new RegExp("\\b"+w+"\\b").test(t));
+}
 function listenFor(r){
   if(!vs.active||!voice.reply||!SR||vs.pending!==r) return;
   let acted=false;
@@ -939,7 +950,11 @@ function listenFor(r){
       const opts=Object.keys(r.it.opts);
       for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ acted=true; vs.heard=a; beep(1320,55,2); voiceChoose(r,hit); return true; } }
     }else{
-      for(const a of alts){ const c=CMDS.find(([re])=>re.test(a)); if(c){ acted=true; vs.heard=a; const cmd=c[1]; beep(cmd==="confirm"?1320:660,55,cmd==="confirm"?2:1); if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; } }
+      for(const a of alts){
+        const c=CMDS.find(([re])=>re.test(a));
+        const cmd=c?c[1]:(r.type==="item"&&saidResponse(a,r.it.r)?"confirm":(r.type==="defer"&&/\bnoted\b/.test(a)?"confirm":null));
+        if(cmd){ acted=true; vs.heard=a; beep(cmd==="confirm"?1320:660,55,cmd==="confirm"?2:1); if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; }
+      }
     }
     return false;
   };
@@ -951,7 +966,7 @@ function listenFor(r){
     listenOnce(alts=>{
       vs.heard=alts[0]||""; renderVoiceBar();
       if(act(alts)) return;
-      vs.status="Heard “"+vs.heard+"” – say checked, repeat, skip or stop"; renderVoiceBar();
+      vs.status="Heard “"+vs.heard+"” – say checked or the response, or repeat, skip, stop"; renderVoiceBar();
     }, err=>{
       if(!vs.active||vs.pending!==r||acted) return;
       if(err==="not-allowed"||err==="service-not-allowed"||err==="unsupported"||err==="audio-capture"||err==="language-not-supported"){ vs.status=srErrorText(err)+" – tap Checked"; renderVoiceBar(); return; }
