@@ -1,4 +1,4 @@
-const VERSION = "ga-ecl-7efa2c8d";
+const VERSION = "ga-ecl-071becc8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,6 +11,8 @@ const ASSETS = [
   "./aircraft/c182t.js",
   "./aircraft/c206h.js",
   "./aircraft/c208b.js",
+  "./aircraft/c310r.js",
+  "./aircraft/c402c.js",
   "./aircraft/c441.js",
   "./aircraft/da40.js",
   "./aircraft/da42.js",
@@ -21,6 +23,7 @@ const ASSETS = [
   "./aircraft/pa28-181.js",
   "./aircraft/pa28r-201.js",
   "./aircraft/pa31-310.js",
+  "./aircraft/pa31-350.js",
   "./aircraft/pa44-180.js",
   "./aircraft/sr20.js",
   "./aircraft/sr22.js",
