@@ -278,25 +278,18 @@ window.AIRCRAFT.push({
     ]},
   ],
   abnormal: [
-    {id:"alt1-fail", name:"ALT 1 Failure", cond:"ALT 1 caution, Main Bus volts low / amps zero", items:[
-      {c:"ALT 1 circuit breaker", r:"CHECK IN"},
-      {c:"Alt 1", r:"OFF, then ON (reset once)"},
-      {branch:"ALT 1 restored?", opts:{
+    {id:"alt-fail", name:"ALT 1 or ALT 2 Failure", cond:"ALT 1 / ALT 2 caution, Main or Ess Bus amps zero", items:[
+      {c:"ALT 1 / ALT 2 circuit breaker (affected)", r:"CHECK IN"},
+      {c:"Alt 1 / Alt 2 (affected)", r:"OFF, then ON (reset once)"},
+      {branch:"Alternator restored?", opts:{
         "Yes":[{c:"Electrical load", r:"MONITOR"}],
-        "No":[
+        "No – ALT 1 failed":[
           {c:"Alt 1", r:"OFF"},
           {c:"Non-essential loads", r:"OFF (Alt 2 supplies approx 20 A to the essential bus only)"},
           {c:"Bat 1", r:"MONITOR – powers main bus until depleted (approx 30 min)"},
           {defer:"ALT 1 failed – main bus on battery, limited endurance; flaps once on final, land as soon as practical."},
-        ]
-      }},
-    ]},
-    {id:"alt2-fail", name:"ALT 2 Failure", cond:"ALT 2 caution, Ess Bus amps zero", items:[
-      {c:"ALT 2 circuit breaker", r:"CHECK IN"},
-      {c:"Alt 2", r:"OFF, then ON (reset once)"},
-      {branch:"ALT 2 restored?", opts:{
-        "Yes":[{c:"Electrical load", r:"MONITOR"}],
-        "No":[{c:"Alt 2", r:"OFF"},{c:"Flight", r:"CONTINUE – Alt 1 supplies both buses"},{defer:"ALT 2 failed – no electrical redundancy, avoid IMC / night if practical, land as soon as practical."}]
+        ],
+        "No – ALT 2 failed":[{c:"Alt 2", r:"OFF"},{c:"Flight", r:"CONTINUE – Alt 1 supplies both buses"},{defer:"ALT 2 failed – no electrical redundancy, avoid IMC / night if practical, land as soon as practical."}]
       }},
     ]},
     {id:"low-volts", name:"Low Volts / Both Alternators Failed", cond:"LOW VOLTS warning on Main and Ess bus", items:[
@@ -312,25 +305,28 @@ window.AIRCRAFT.push({
         ]
       }},
     ]},
-    {id:"oil-press", name:"Low Oil Pressure", cond:"OIL PRESS warning or indication below 30 psi (10 psi idle)", items:[
-      {c:"Oil pressure / temperature", r:"CHECK both"},
-      {branch:"Oil temperature rising or pressure below 10 psi?", opts:{
-        "Yes":[
-          {c:"Power", r:"REDUCE to minimum required"},
-          {c:"Landing site", r:"SELECT, expect engine failure; CAPS if no safe site"},
-          {defer:"Low oil pressure – land as soon as possible, engine failure possible."},
+    {id:"oil-press", name:"Low Oil Pressure / High Oil Temperature", cond:"OIL PRESS warning (below 30 psi, 10 psi idle), oil temperature above 240°F or CHT above 460°F", items:[
+      {c:"Oil pressure / temperature / CHT", r:"CHECK all, cross-check"},
+      {branch:"Which indication?", opts:{
+        "Low pressure":[
+          {branch:"Oil temperature rising or pressure below 10 psi?", opts:{
+            "Yes":[
+              {c:"Power", r:"REDUCE to minimum required"},
+              {c:"Landing site", r:"SELECT, expect engine failure; CAPS if no safe site"},
+              {defer:"Low oil pressure – land as soon as possible, engine failure possible."},
+            ],
+            "No – temperature normal":[{c:"Flight", r:"CONTINUE, monitor closely"},{defer:"Suspect oil pressure indication – land as soon as practical."}]
+          }},
         ],
-        "No – temperature normal":[{c:"Flight", r:"CONTINUE, monitor closely"},{defer:"Suspect oil pressure indication – land as soon as practical."}]
-      }},
-    ]},
-    {id:"oil-temp", name:"High Oil Temperature / CHT", cond:"Oil temperature above 240°F or CHT above 460°F", items:[
-      {c:"Mixture", r:"ENRICH"},
-      {c:"Airspeed", r:"INCREASE (lower nose)"},
-      {c:"Power", r:"REDUCE"},
-      {c:"Oil pressure", r:"CHECK"},
-      {branch:"Temperature returning to green?", opts:{
-        "Yes":[{c:"Flight", r:"CONTINUE, monitor"}],
-        "No":[{c:"Power", r:"MINIMUM practical"},{defer:"Engine overheating – land as soon as practical, expect possible power loss."}]
+        "High temperature":[
+          {c:"Mixture", r:"ENRICH"},
+          {c:"Airspeed", r:"INCREASE (lower nose)"},
+          {c:"Power", r:"REDUCE"},
+          {branch:"Temperature returning to green?", opts:{
+            "Yes":[{c:"Flight", r:"CONTINUE, monitor"}],
+            "No":[{c:"Power", r:"MINIMUM practical"},{defer:"Engine overheating – land as soon as practical, expect possible power loss."}]
+          }},
+        ]
       }},
     ]},
     {id:"rough", name:"Rough Running / Loss of Power", items:[

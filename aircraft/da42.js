@@ -257,7 +257,7 @@ window.AIRCRAFT.push({
       {c:"Landing gear", r:"DOWN (below 194 KIAS) to steepen descent", mem:true},
       {c:"Airspeed", r:"194 KIAS smooth air / 155 KIAS turbulence", mem:true},
     ]},
-    {id:"gear-emer", name:"Emergency Gear Extension (free-fall)", cond:"Gear does not extend normally or hydraulic / electrical failure", items:[
+    {id:"gear-emer", name:"Emergency Gear Extension (free-fall) / Gear-Up Landing", cond:"Gear does not extend normally or hydraulic / electrical failure", items:[
       {c:"Airspeed", r:"REDUCE below 156 KIAS"},
       {c:"GEAR (hydraulic pump) circuit breaker", r:"PULL"},
       {c:"Gear selector", r:"DOWN"},
@@ -265,20 +265,19 @@ window.AIRCRAFT.push({
       {c:"Landing gear", r:"CHECK three green (test light bulbs if not)"},
       {branch:"Three green?", opts:{
         "Yes":[{c:"Yaw / sideslip", r:"ASSIST lock if needed"},{defer:"Gear extended by emergency system – do not retract, hydraulic pump CB left out, normal landing, maintenance inspection."}],
-        "No":[{note:"Proceed with GEAR-UP / UNSAFE LANDING procedure.", kind:"warn"}]
+        "No – gear-up / unsafe landing":[
+          {c:"Airport", r:"SELECT longest paved runway, emergency services alerted"},
+          {c:"Fuel", r:"BURN DOWN to minimum practical, fuel transfer pumps OFF"},
+          {c:"Seats / belts / loose objects", r:"SECURE"},
+          {c:"Flaps", r:"LDG"},
+          {c:"Approach", r:"NORMAL 86 KIAS, minimum rate of descent at touchdown"},
+          {c:"Front canopy", r:"UNLOCK to cooling gap position before touchdown"},
+          {c:"ENGINE MASTERS", r:"OFF just before touchdown (propellers feather)"},
+          {c:"Fuel selectors", r:"OFF"},
+          {c:"Electric master", r:"OFF after touchdown"},
+          {c:"Aircraft", r:"EVACUATE when stopped"},
+        ]
       }},
-    ]},
-    {id:"gear-up-land", name:"Gear-Up / Gear-Unsafe Landing", items:[
-      {c:"Airport", r:"SELECT longest paved runway, emergency services alerted"},
-      {c:"Fuel", r:"BURN DOWN to minimum practical, fuel transfer pumps OFF"},
-      {c:"Seats / belts / loose objects", r:"SECURE"},
-      {c:"Flaps", r:"LDG"},
-      {c:"Approach", r:"NORMAL 86 KIAS, minimum rate of descent at touchdown"},
-      {c:"Front canopy", r:"UNLOCK to cooling gap position before touchdown"},
-      {c:"ENGINE MASTERS", r:"OFF just before touchdown (propellers feather)"},
-      {c:"Fuel selectors", r:"OFF"},
-      {c:"Electric master", r:"OFF after touchdown"},
-      {c:"Aircraft", r:"EVACUATE when stopped"},
     ]},
   ],
   abnormal: [
@@ -291,22 +290,17 @@ window.AIRCRAFT.push({
         "No – single ECU":[{defer:"One ECU failed – no redundancy on that engine, land as soon as practical."}]
       }},
     ]},
-    {id:"alt-fail", name:"Alternator Failure", cond:"L/R ALTN FAIL caution or low voltage on one side", items:[
+    {id:"alt-fail", name:"Alternator Failure / Low Voltage", cond:"L/R ALTN FAIL caution or LOW VOLTS warning", items:[
       {c:"ALTERNATOR (affected side)", r:"OFF, then ON (reset once)"},
       {branch:"Alternator restored?", opts:{
         "Yes":[{c:"Electrical load", r:"MONITOR"}],
-        "No":[
+        "No – one alternator":[
           {c:"ALTERNATOR (affected side)", r:"OFF"},
           {c:"Electrical load", r:"REDUCE to within single alternator capacity"},
           {defer:"One alternator failed – single-source electrics, reduced load, land as soon as practical."},
-        ]
-      }},
-    ]},
-    {id:"low-volts", name:"Low Voltage / Both Alternators Failed", cond:"LOW VOLTS warning, both L/R ALTN FAIL", items:[
-      {c:"Both ALTERNATOR switches", r:"OFF then ON (reset once)"},
-      {branch:"Voltage recovered?", opts:{
-        "Yes":[{c:"Electrical load", r:"MONITOR"}],
-        "No":[
+        ],
+        "No – both failed / LOW VOLTS":[
+          {c:"Both ALTERNATOR switches", r:"OFF"},
           {c:"Non-essential loads", r:"OFF (lights, pitot heat if not required, air conditioning)"},
           {c:"Battery", r:"MONITOR (approx 30 min endurance at reduced load – verify per AFM)"},
           {note:"Engines keep running on ECU backup batteries. Extend gear early while battery power remains, or use emergency extension.", kind:"caution"},

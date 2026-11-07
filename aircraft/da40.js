@@ -272,25 +272,28 @@ window.AIRCRAFT.push({
         ]
       }},
     ]},
-    {id:"oil-press", name:"Low Oil Pressure", cond:"Oil pressure below 55 psi (green) or OIL PRESS caution", items:[
-      {c:"Oil pressure / temperature", r:"CHECK both"},
-      {branch:"Oil temperature rising or pressure below 25 psi?", opts:{
-        "Yes":[
-          {c:"Power", r:"REDUCE to minimum required"},
-          {c:"Landing site", r:"SELECT, expect engine failure"},
-          {defer:"Low oil pressure – land as soon as possible, engine failure possible."},
+    {id:"oil-press", name:"Low Oil Pressure / High Oil Temperature", cond:"Oil pressure below 55 psi, oil temperature above 245°F or CHT above 500°F", items:[
+      {c:"Oil pressure / temperature / CHT", r:"CHECK all, cross-check"},
+      {branch:"Which indication?", opts:{
+        "Low pressure":[
+          {branch:"Oil temperature rising or pressure below 25 psi?", opts:{
+            "Yes":[
+              {c:"Power", r:"REDUCE to minimum required"},
+              {c:"Landing site", r:"SELECT, expect engine failure"},
+              {defer:"Low oil pressure – land as soon as possible, engine failure possible."},
+            ],
+            "No – temperature normal":[{c:"Flight", r:"CONTINUE, monitor closely"},{defer:"Suspect oil pressure indication – land as soon as practical."}]
+          }},
         ],
-        "No – temperature normal":[{c:"Flight", r:"CONTINUE, monitor closely"},{defer:"Suspect oil pressure indication – land as soon as practical."}]
-      }},
-    ]},
-    {id:"oil-temp", name:"High Oil Temperature / CHT", cond:"Oil temperature above 245°F or CHT above 500°F", items:[
-      {c:"Mixture", r:"ENRICH"},
-      {c:"Airspeed", r:"INCREASE (lower nose)"},
-      {c:"Power", r:"REDUCE"},
-      {c:"Oil pressure", r:"CHECK"},
-      {branch:"Temperature returning to green?", opts:{
-        "Yes":[{c:"Flight", r:"CONTINUE, monitor"}],
-        "No":[{c:"Power", r:"MINIMUM practical"},{defer:"Engine overheating – land as soon as practical, expect possible power loss."}]
+        "High temperature":[
+          {c:"Mixture", r:"ENRICH"},
+          {c:"Airspeed", r:"INCREASE (lower nose)"},
+          {c:"Power", r:"REDUCE"},
+          {branch:"Temperature returning to green?", opts:{
+            "Yes":[{c:"Flight", r:"CONTINUE, monitor"}],
+            "No":[{c:"Power", r:"MINIMUM practical"},{defer:"Engine overheating – land as soon as practical, expect possible power loss."}]
+          }},
+        ]
       }},
     ]},
     {id:"rough", name:"Rough Running / Loss of Power", items:[
