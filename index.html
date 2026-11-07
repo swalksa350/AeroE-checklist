@@ -199,6 +199,16 @@ main.voice-on section.view{padding-bottom:150px}
 .status .tog{padding:6px 12px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-weight:600;color:var(--ink-dim)}
 .status .tog.on{background:var(--green);color:var(--on-green);border-color:var(--green)}
 .status .seg{display:flex;gap:4px} .status .seg button{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;color:var(--ink-dim)} .status .seg button.on{color:var(--ink);border-color:var(--cyan)}
+.wakedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-left:6px;vertical-align:middle}
+@media (prefers-reduced-motion:no-preference){.wakedot{animation:pulse 1.2s infinite alternate}}
+.item.custom-tag::after{content:"custom";position:absolute;right:16px;top:4px;font-size:10px;color:var(--ink-mute);letter-spacing:.06em;text-transform:uppercase}
+.editor .line{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.editor input{font:inherit;font-size:15px;padding:8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);min-width:0;width:100%}
+.editor .ops{display:flex;gap:4px} .editor .ops button{padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px}
+.editor .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px} .editor .actions button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
+.editor .actions button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
+.editor .hint{font-size:13px;color:var(--ink-dim);margin:6px 0 10px}
+@media (max-width:480px){.editor .line{grid-template-columns:1fr auto}.editor .line input:nth-child(2){grid-column:1}}
 .status select{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);max-width:55%}
 .sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
 .sheet .card2{width:100%;max-width:640px;max-height:85%;overflow:auto;background:var(--panel);color:var(--ink);border-radius:12px 12px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -333,14 +343,22 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "219cd2ff";
+const BUILD = "90680382";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
-const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
 const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
-const DATA = () => AC() || {normal:[],emergency:[],abnormal:[]};
+const CUSTOM_ID="approach-custom";
+const CUSTOM_TEMPLATE=[{c:"ATIS / AWIS",r:"OBTAINED"},{c:"Altimeter",r:"SET"},{c:"Approach",r:"BRIEFED (type, minima, missed approach)"},{c:"Navigation / avionics",r:"SET for approach"},{c:"Fuel",r:"CHECK quantity & selector"},{c:"Mixture",r:"SET / RICH"},{c:"Fuel pump",r:"ON (if applicable)"},{c:"Lights",r:"ON"},{c:"Seat belts / harnesses",r:"SECURE"},{c:"Passengers",r:"BRIEFED"},{c:"Speed",r:"SET for approach"}];
+function customApproach(aid){ const c=state.custom&&state.custom[aid]; return c&&Array.isArray(c.items)&&c.items.length ? c : null; }
+function withCustom(a){
+  const c=customApproach(a.id); if(!c) return a.normal;
+  const proc={id:CUSTOM_ID,name:c.name||"Approach (custom)",items:c.items.map(it=>({c:it.c,r:it.r})),custom:true};
+  const out=a.normal.slice(); let i=out.findIndex(p=>p.id==="land"); if(i<0) i=out.length; out.splice(i,0,proc); return out;
+}
+const DATA = () => { const a=AC(); return a ? {normal:withCustom(a), emergency:a.emergency, abnormal:a.abnormal} : {normal:[],emergency:[],abnormal:[]}; };
 
 function load(){
   try{
@@ -354,6 +372,7 @@ function load(){
         if(Array.isArray(s.fav)) state.fav = s.fav.filter(id=>byId(id));
         if(s.uses && typeof s.uses==="object") state.uses = s.uses;
         if(s.favAsked && typeof s.favAsked==="object") state.favAsked = s.favAsked;
+        if(s.custom && typeof s.custom==="object") state.custom = s.custom;
         if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
         if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
         state.showing = !!s.showing;
@@ -372,7 +391,7 @@ function load(){
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
@@ -458,9 +477,9 @@ function deferredItems(){
 function aircraftSummary(a){
   return withAircraft(a.id, ()=>{
     const act=activeNonNormal(a.id).length;
-    const norm=a.normal.map(progress);
+    const norm=withCustom(a).map(progress);
     const started=norm.filter(p=>p.done>0).length, complete=norm.filter(p=>p.complete).length;
-    return {act, started, complete, total:a.normal.length};
+    return {act, started, complete, total:withCustom(a).length};
   });
 }
 
@@ -514,7 +533,7 @@ function render(){
   $("#main").classList.toggle("picker",!a);
   const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
   if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); renderVoiceBar(); return; }
-  renderSide();renderView();renderVoiceBar();
+  renderSide();renderView();renderVoiceBar();renderWakeDot();
 }
 
 function renderPicker(v){
@@ -608,7 +627,7 @@ function renderView(){
   const head=h("div",{class:"proc-head"},
     h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),
     h("h1",{class:cls},p.name,p.cond?h("span",{class:"cond"},p.cond):""),
-    h("div",{class:"tools"},h("button",{onclick:()=>go(()=>resetProc(p))},"Reset"))
+    h("div",{class:"tools"},p.custom?h("button",{onclick:()=>openEditor()},"Edit"):"",h("button",{onclick:()=>go(()=>resetProc(p))},"Reset"))
   );
   v.append(head);
   if(p.land)v.append(h("div",{class:"land"+(p.land.includes("PRACTICAL")?" amber":"")},p.land));
@@ -697,12 +716,17 @@ function renderStatus(v){
     :"On this device the file opens in the browser; save it from there (File → Save, or Share) and put it in your EFB's Documents or Dropbox folder."));
   efb.append(h("div",{class:"saved"},"The file works offline inside the EFB and carries this version's content; send it again after an app update."));
   w.append(efb);
+  w.append(h("h2",{},"Custom approach checklist"));
+  const cust=customApproach(a.id);
+  w.append(h("div",{class:"row"},h("span",{},cust?cust.name+" · "+cust.items.length+" lines":"None for the "+a.short+" yet"),h("button",{class:"link",onclick:openEditor},cust?"Edit":"Create")));
+  w.append(h("div",{class:"saved"},"Your own approach checklist for this aircraft, kept on this device. It appears under Normal between Descent and Before Landing, is read aloud like any other, and “hey Aero, approach checklist” opens it."));
   w.append(h("h2",{},"Voice"));
   const tog=(label,get,set,hint)=>h("div",{class:"row"},h("span",{},label,h("div",{class:"saved",style:"margin-top:2px"},hint)),h("button",{class:"tog"+(get()?" on":""),onclick:()=>{set(!get());saveVoice();render()}},get()?"On":"Off"));
   if(!TTS) w.append(h("div",{class:"empty"},"This browser cannot read text aloud."));
   else{
     w.append(tog("Read aloud",()=>voice.read,v=>{voice.read=v; if(!v) voiceStop(true);},"Speaks each line of an open checklist and waits for ✓ Checked before the next."));
     w.append(tog("Short responses in normal checklists",()=>voice.brief,v=>{voice.brief=v;},"Reads only the capitalised action, e.g. “Fuel shutoff, ON”, and leaves the bracketed detail for the screen. Abnormal and emergency procedures are always read in full."));
+    w.append(tog("“Hey Aero” wake word",()=>voice.wake,v=>{voice.wake=v; if(!v&&wake.on){stopListening();wake.on=false;}},SR?"Keeps the microphone open while the app is on screen. Say “hey Aero, landing checklist” or “hey Aero, engine failure in flight”. Also “hey Aero, status” and “hey Aero, stop”. Uses battery and, on iPad and iPhone, signal. A red dot by the aircraft name shows it is listening.":"Not available in this browser."));
     w.append(tog("Open microphone early",()=>voice.early,v=>{voice.early=v;},"Starts listening while the line is still being read so your reply is caught the instant the voice stops. Anything heard before then is ignored. Best with a headset; turn off if the voice cuts out or lines tick themselves when using the device speaker."));
     w.append(tog("Cue tones",()=>voice.tones,v=>{voice.tones=v;},"One short tone when the app starts listening, two when it accepts your word."));
     w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked” or the written response (for example “both on”), plus “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
@@ -807,14 +831,56 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   });
 }
 
+/* ---------------- CUSTOM APPROACH CHECKLIST EDITOR ---------------- */
+function openEditor(){
+  const a=AC(); if(!a) return;
+  const existing=customApproach(a.id);
+  let draft={name:(existing&&existing.name)||"Approach (custom)", items:(existing?existing.items:CUSTOM_TEMPLATE).map(it=>({c:it.c,r:it.r}))};
+  const old=document.getElementById("sheet"); if(old) old.remove();
+  const card=h("div",{class:"card2 editor"});
+  const sheet=h("div",{class:"sheet",id:"sheet"},card);
+  const draw=()=>{
+    card.innerHTML="";
+    card.append(h("h2",{},(existing?"Edit":"Create")+" approach checklist – "+a.short));
+    card.append(h("div",{class:"hint"},"Kept on this device for the "+a.short+" only and shown under Normal between Descent and Before Landing. Write the action in CAPITALS so the voice reads it in short form."));
+    const nameIn=h("input",{id:"cust-name",value:draft.name,placeholder:"Checklist name"}); nameIn.oninput=ev=>{draft.name=ev.target.value};
+    card.append(h("div",{class:"line",style:"grid-template-columns:1fr"},nameIn));
+    draft.items.forEach((it,i)=>{
+      const c=h("input",{id:"cust-c"+i,value:it.c,placeholder:"Challenge"}); c.oninput=ev=>{it.c=ev.target.value};
+      const r=h("input",{id:"cust-r"+i,value:it.r,placeholder:"RESPONSE"}); r.oninput=ev=>{it.r=ev.target.value};
+      const ops=h("div",{class:"ops"},
+        h("button",{title:"Move up",onclick:()=>{if(i>0){[draft.items[i-1],draft.items[i]]=[draft.items[i],draft.items[i-1]];draw()}}},"▲"),
+        h("button",{title:"Move down",onclick:()=>{if(i<draft.items.length-1){[draft.items[i+1],draft.items[i]]=[draft.items[i],draft.items[i+1]];draw()}}},"▼"),
+        h("button",{title:"Delete line",onclick:()=>{draft.items.splice(i,1);draw()}},"✕"));
+      card.append(h("div",{class:"line"},c,r,ops));
+    });
+    const actions=h("div",{class:"actions"});
+    actions.append(h("button",{onclick:()=>{draft.items.push({c:"",r:""});draw();setTimeout(()=>{const el=document.getElementById("cust-c"+(draft.items.length-1));el&&el.focus()},0)}},"+ Add line"));
+    actions.append(h("button",{onclick:()=>{draft.items=CUSTOM_TEMPLATE.map(it=>({c:it.c,r:it.r}));draw()}},"Use template"));
+    actions.append(h("button",{class:"primary",onclick:()=>{
+      const items=draft.items.map(it=>({c:String(it.c||"").trim(),r:String(it.r||"").trim()})).filter(it=>it.c&&it.r);
+      if(!items.length){ alertRow("Add at least one line with a challenge and a response."); return; }
+      state.custom[a.id]={name:(draft.name||"Approach (custom)").trim()||"Approach (custom)",items};
+      Object.keys(PER().ticks).forEach(k=>{if(k.startsWith(CUSTOM_ID+"/"))delete PER().ticks[k]});
+      save(); sheet.remove(); state.mode="normal"; state.sel=CUSTOM_ID; state.showing=true; render();
+    }},"Save"));
+    if(existing) actions.append(h("button",{style:"color:var(--red);border-color:var(--red)",onclick:()=>{ if(card.dataset.confirm==="1"){ delete state.custom[a.id]; Object.keys(PER().ticks).forEach(k=>{if(k.startsWith(CUSTOM_ID+"/"))delete PER().ticks[k]}); save(); sheet.remove(); if(state.sel===CUSTOM_ID) state.sel=null; render(); } else { card.dataset.confirm="1"; alertRow("Tap Remove again to delete this checklist from this device."); } }},"Remove checklist"));
+    actions.append(h("button",{onclick:()=>sheet.remove()},"Cancel"));
+    card.append(actions);
+    card.append(h("div",{class:"hint",id:"cust-msg"}));
+  };
+  const alertRow=t=>{ const el=document.getElementById("cust-msg"); if(el) el.textContent=t; };
+  draw(); document.body.append(sheet);
+}
+
 /* ---------------- VOICE ----------------
    Opt-in. "Read aloud" speaks each line and waits for a tap (or a spoken reply) before the next.
    "Voice replies" listens for checked / set / repeat / skip / stop after each line, and powers the
    tap-then-speak procedure recall button. Everything here degrades to the normal tap behaviour. */
 const VOICE_KEY="ga-ecl-voice";
 const RATES=[[0.7,"Slow"],[0.8,"Slower"],[0.9,"Normal"],[1,"Brisk"],[1.15,"Fast"]];
-const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true, tones:true, early:true};
-try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; if(typeof v.tones==="boolean") voice.tones=v.tones; if(typeof v.early==="boolean") voice.early=v.early; } }catch(e){}
+const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true, tones:true, early:true, wake:false};
+try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; if(typeof v.tones==="boolean") voice.tones=v.tones; if(typeof v.early==="boolean") voice.early=v.early; if(typeof v.wake==="boolean") voice.wake=v.wake; } }catch(e){}
 function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)); }catch(e){} }
 const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -975,6 +1041,8 @@ function listenFor(r, early){
       for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ acted=true; vs.heard=a; beep(1320,55,2); voiceChoose(r,hit); return true; } }
     }else{
       for(const a of alts){
+        const wm=voice.wake?WAKE_RE.exec(a):null;
+        if(wm&&(wm[1]||"").trim()){ acted=true; stopListening(); beep(1320,55,2); vs.active=false; vs.pending=null; handleSpokenCommand(wm[1].trim()); return true; }
         const c=CMDS.find(([re])=>re.test(a));
         const cmd=c?c[1]:(r.type==="item"&&saidResponse(a,r.it.r)?"confirm":(r.type==="defer"&&/\bnoted\b/.test(a)?"confirm":null));
         if(cmd){ acted=true; vs.heard=a; beep(cmd==="confirm"?1320:660,55,cmd==="confirm"?2:1); if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; }
@@ -1016,6 +1084,59 @@ function runMicTest(){
   setTimeout(()=>finish("fail","No response from the recogniser after 12 s. Error code: timeout."),12000);
 }
 
+/* --- "hey Aero" wake word: a continuous listener while the app is on screen and idle --- */
+const WAKE_RE=/\b(?:hey|hi|ok|okay|a|hay|hate)?\s*(?:aero|arrow|aro|airo|air o|era|aerial|arrows|errol|arrow's)\b[,.!]?\s*(.*)$/i;
+const ALIASES=[[/\b(before )?landing\b/,"land"],[/\bapproach\b/,"approach"],[/\b(pre[- ]?)?take ?off\b|\brun ?up\b|\bbefore takeoff\b/,"runup"],[/\bengine start\b|\bstart(ing)? (the )?engine\b|\bstart\b/,"start"],[/\bbefore start\b|\bpre[- ]?start\b|\bpreflight\b/,"pre"],[/\bafter landing\b/,"after"],[/\bshut ?down\b|\bsecure\b/,"shut"],[/\bclimb\b|\bafter take ?off\b/,"climb"],[/\bcruise\b/,"cruise"],[/\bdescent\b|\bdescend\b/,"desc"],[/\btaxi\b/,"taxi"]];
+let wake={on:false, busy:false, last:0, timer:null};
+function wakeShouldRun(){ return voice.wake && voice.reply && SR && !!AC() && document.visibilityState==="visible" && !vs.active && !recallState.on && !vs.listening && !wake.busy; }
+function wakeLoop(){
+  if(!wakeShouldRun()){ wake.on=false; return; }
+  wake.on=true; renderWakeDot();
+  let handled=false;
+  const consider=alts=>{
+    for(const a of alts){
+      const m=WAKE_RE.exec(a); if(!m) continue;
+      const rest=(m[1]||"").trim();
+      if(!rest){ if(Date.now()-wake.last>2500){ wake.last=Date.now(); beep(880,60,1); } continue; }   // wake word heard, waiting for the rest
+      if(rest.split(/\s+/).length<1) continue;
+      handled=true; wake.busy=true; stopListening(); beep(1320,55,2);
+      handleSpokenCommand(rest); setTimeout(()=>{ wake.busy=false; wakeLoop(); }, 1500);
+      return true;
+    }
+    return false;
+  };
+  listenOnce(alts=>{ consider(alts); }, err=>{
+    wake.on=false; renderWakeDot();
+    if(handled) return;
+    if(err==="not-allowed"||err==="service-not-allowed"||err==="unsupported"||err==="audio-capture"){ voice.wake=false; saveVoice(); render(); return; }
+    clearTimeout(wake.timer); wake.timer=setTimeout(wakeLoop, err==="network"?2000:250);
+  }, alts=>consider(alts), ()=>0);
+}
+function renderWakeDot(){ const b=$("#brand small"); if(!b) return; const d=b.querySelector(".wakedot"); if(wake.on&&!d) b.append(h("span",{class:"wakedot",title:"Listening for “hey Aero”"})); else if(!wake.on&&d) d.remove(); }
+setInterval(()=>{ if(wakeShouldRun()&&!wake.on) wakeLoop(); }, 1000);
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState!=="visible"){ if(wake.on){ stopListening(); wake.on=false; } } });
+
+/* Spoken command after the wake word (or from the Say procedure button): a checklist/procedure name, "status" or "stop". */
+function handleSpokenCommand(text){
+  const t=text.toLowerCase().replace(/\b(the|a|an|please|checklist|check list|procedure|open|go to|show|read|me)\b/g," ").replace(/\s+/g," ").trim();
+  if(/\bstop\b|\bcancel\b|\bquiet\b/.test(t)){ voiceStop(); return true; }
+  if(/\bstatus\b/.test(t)){ state.mode="status"; state.sel=null; state.showing=true; save(); render(); speak("Status."); return true; }
+  const a=AC(); if(!a) return false;
+  let target=null;
+  for(const [re,id] of ALIASES){ if(re.test(t)){ if(id==="approach"){ target=customApproach(a.id)?{m:"normal",p:DATA().normal.find(p=>p.id===CUSTOM_ID)}:null; if(!target) continue; } else { const p=DATA().normal.find(p=>p.id===id); if(p) target={m:"normal",p}; } if(target) break; } }
+  if(!target){
+    const all=["emergency","abnormal","normal"].flatMap(m=>DATA()[m].map(p=>({m,p})));
+    const norm=x=>x.toLowerCase().replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(w=>w&&!["the","a","an","in","of","and","or","to"].includes(w));
+    const words=norm(t); let best=null,bestScore=0;
+    for(const x of all){ const nw=norm(x.p.name+" "+(x.p.cond||"")); let sc=0; for(const w of words){ if(nw.includes(w)) sc+=2; else if(nw.some(n=>n.startsWith(w)&&w.length>3)) sc+=1; } if(sc>bestScore){bestScore=sc;best=x;} }
+    if(best&&bestScore>=2) target=best;
+  }
+  if(!target){ recallState.msg="Heard “"+text+"” – no matching checklist."; render(); speak("No matching checklist."); return false; }
+  recallState.msg=""; state.mode=target.m; state.sel=target.p.id; state.showing=true; save(); render();
+  speak("Opening "+sayable(target.p.name)+".", ()=>{ if(voice.read) voiceStart(); });
+  return true;
+}
+
 /* --- tap-then-speak recall of a procedure --- */
 let recallState={on:false,msg:""};
 function voiceRecall(){
@@ -1024,12 +1145,8 @@ function voiceRecall(){
   let done=false;
   listenOnce(alts=>{
     if(done) return; done=true; recallState.on=false;
-    const all=["emergency","abnormal","normal"].flatMap(m=>DATA()[m].map(p=>({m,p})));
-    const norm=t=>t.toLowerCase().replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(w=>w&&!["the","a","an","in","of","and","or","procedure","checklist","open","go","to"].includes(w));
-    let best=null,bestScore=0;
-    for(const a of alts){ const words=norm(a); for(const x of all){ const nw=norm(x.p.name+" "+(x.p.cond||"")); let sc=0; for(const w of words){ if(nw.includes(w)) sc+=2; else if(nw.some(n=>n.startsWith(w)&&w.length>3)) sc+=1; } if(sc>bestScore){bestScore=sc;best=x;} } }
-    if(best&&bestScore>=2){ recallState.msg=""; state.mode=best.m; state.sel=best.p.id; state.showing=true; save(); render(); speak("Opening "+sayable(best.p.name)+".", ()=>{ if(voice.read) voiceStart(); }); }
-    else { recallState.msg="Heard \""+(alts[0]||"")+"\" – no matching procedure."; render(); }
+    const said=(alts[0]||"").replace(WAKE_RE,"$1");
+    handleSpokenCommand(said||alts[0]||"");
   }, err=>{ if(done) return; done=true; recallState.on=false; recallState.msg=err==="not-allowed"?"Microphone not allowed.":err==="network"?"No connection for voice recognition.":"Nothing heard – tap the microphone and try again."; render(); });
 }
 
