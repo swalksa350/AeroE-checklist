@@ -333,7 +333,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "602a21bb";
+const BUILD = "54f7c47f";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -703,7 +703,7 @@ function renderStatus(v){
   else{
     w.append(tog("Read aloud",()=>voice.read,v=>{voice.read=v; if(!v) voiceStop(true);},"Speaks each line of an open checklist and waits for ✓ Checked before the next."));
     w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked”, “set”, “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
-    const seg=h("div",{class:"seg"});[0.8,1,1.2].forEach(rt=>seg.append(h("button",{class:voice.rate===rt?"on":"",onclick:()=>{voice.rate=rt;saveVoice();render()}},rt===0.8?"Slower":rt===1?"Normal":"Faster")));
+    const seg=h("div",{class:"seg"});RATES.forEach(([rt,label])=>seg.append(h("button",{class:voice.rate===rt?"on":"",onclick:()=>{voice.rate=rt;saveVoice();render();speak("Fuel selectors. Both on.")}},label)));
     w.append(h("div",{class:"row"},h("span",{},"Speaking rate"),seg));
     if(!voicesCache.length) loadVoices();
     if(voicesCache.length){ const sel=h("select",{id:"voice-select",onchange:ev=>{voice.voiceURI=ev.target.value;saveVoice();}}); const cur=pickVoice(); voicesCache.forEach(v=>{const o=h("option",{value:v.voiceURI},v.name+" ("+v.lang+")"); if(cur&&v.voiceURI===cur.voiceURI) o.selected=true; sel.append(o)}); w.append(h("div",{class:"row"},h("span",{},"Voice"),sel)); }
@@ -809,8 +809,9 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
    "Voice replies" listens for checked / set / repeat / skip / stop after each line, and powers the
    tap-then-speak procedure recall button. Everything here degrades to the normal tap behaviour. */
 const VOICE_KEY="ga-ecl-voice";
-const voice={read:false, reply:false, rate:1, voiceURI:""};
-try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if([0.8,1,1.2].includes(v.rate)) voice.rate=v.rate; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; } }catch(e){}
+const RATES=[[0.7,"Slow"],[0.8,"Slower"],[0.9,"Normal"],[1,"Brisk"],[1.15,"Fast"]];
+const voice={read:false, reply:false, rate:0.9, voiceURI:""};
+try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; } }catch(e){}
 function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)); }catch(e){} }
 const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -855,7 +856,7 @@ function voiceNext(){
     if(r.type==="branch"){ if(r.chosen) continue; vs.pending=r; vs.retries=0; vs.status="Choose an option"; renderVoiceBar();
       speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r)); return; }
     if(actionable(r)){ if(isDone(p,r)||vs.skipped[k]) continue; vs.pending=r; vs.retries=0; vs.status="Reading"; renderVoiceBar();
-      const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+". "+sayable(r.it.r)+".");
+      const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+", . "+sayable(r.it.r)+".");
       speak(text, ()=>{ vs.status=voice.reply&&SR?"Listening":"Waiting for Checked"; renderVoiceBar(); listenFor(r); }); return; }
   }
   const pr=progress(p);
@@ -867,7 +868,7 @@ function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; c
 function voiceSkip(){ const r=vs.pending; if(!r) return; const c=currentRows(); if(!c) return; stopListening(); vs.skipped[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); }
 function voiceRepeat(){ const r=vs.pending; if(!r){ voiceNext(); return; } stopListening(); const c=currentRows(); if(!c) return;
   if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r));
-  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+". "+sayable(r.it.r)+"."), ()=>listenFor(r)); }
+  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+", . "+sayable(r.it.r)+"."), ()=>listenFor(r)); }
 function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; vs.pending=null; voiceNext(); save(); render(); }
 
 /* --- speech recognition --- */
