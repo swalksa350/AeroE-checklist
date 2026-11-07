@@ -1,15 +1,31 @@
-# C208B Electronic Checklist (offline PWA)
+# GA Electronic Checklist (offline PWA)
 
-Tap-to-tick normal, abnormal and emergency checklists for the Cessna 208B Grand Caravan.
+Tap-to-tick normal, abnormal and emergency checklists for common general aviation aircraft.
+Pick an aircraft, work through the flight, and the app keeps progress per type on the device.
 Installable on a phone and works with no network once opened once.
 
-Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use.
+**Prototype content. Verify every item against the operator's approved checklist and the aircraft's POH/AFM before any use.**
+
+## Files
+
+- `index.html` – the app (one page, no build step, no dependencies)
+- `aircraft/<id>.js` – one checklist data file per aircraft type
+- `sw.js` – service worker that precaches everything for offline use
+- `manifest.webmanifest`, `icons/` – home-screen install
+- `tools/validate.js` – checks every data file against the schema
+- `tools/build.js` – regenerates the aircraft script tags and the service-worker precache list / version
+- `tools/AUTHORING.md` – how to write a data file
+
+## Adding or editing an aircraft
+
+1. Copy an existing file in `aircraft/` to `aircraft/<new-id>.js` and edit it (see `tools/AUTHORING.md`).
+2. `node tools/validate.js`
+3. `node tools/build.js`  (updates `index.html` and bumps the service-worker version so installed phones update)
+4. Commit and push to `main`. GitHub Actions deploys to Pages.
+
+Deep links: `https://<site>/#<id>` opens that aircraft directly, e.g. `#c172s`.
 
 ## Hosting
 
-Static files only. Serve this folder over HTTPS (GitHub Pages, Netlify, Cloudflare Pages, any web host).
-Then open the site on the phone and use "Add to Home Screen".
-
-## Updating
-
-After changing `index.html`, bump `VERSION` in `sw.js` so installed phones pick up the new build.
+Static files only. Serve the folder over HTTPS (GitHub Pages, Netlify, Cloudflare Pages, any web host),
+open the site on the phone and use "Add to Home Screen".

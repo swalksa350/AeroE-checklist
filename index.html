@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>C208B Checklist</title>
-<meta name="description" content="Tap-to-tick normal, abnormal and emergency checklists for the Cessna 208B Grand Caravan. Works offline.">
+<title>GA Checklist</title>
+<meta name="description" content="Tap-to-tick normal, abnormal and emergency checklists for common general aviation aircraft. Works offline.">
 <meta name="theme-color" content="#1b2329" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="C208B Checklist">
+<meta name="apple-mobile-web-app-title" content="GA Checklist">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <style>
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:#12181d}
+
 html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:#12181d}
 /* Layout: full-height two-pane app (list | procedure) that collapses to one pane on a phone.
    Dark-first: cockpit-style charcoal panels, cyan responses, amber/red for abnormal/emergency. */
@@ -157,24 +159,64 @@ section.view{flex:1;min-width:0;overflow:auto;padding:0 env(safe-area-inset-righ
 
 footer{font-size:11px;color:var(--ink-mute);text-align:center;padding:8px 16px;border-top:1px solid var(--line);background:var(--panel)}
 @media (prefers-reduced-motion:no-preference){.item{transition:background .12s}}
+
+/* ---- aircraft picker and header additions ---- */
+header .brand{cursor:pointer;gap:2px}
+header .brand .ac{display:flex;align-items:center;gap:6px}
+header .brand .ac .chev{font-size:11px;color:var(--ink-dim)}
+header .brand:active{background:var(--tap)}
+header.picker-head nav.modes{display:none}
+header.picker-head .brand{flex:1;cursor:default}
+header .brand .title{font-weight:700}
+.picker{padding:0 16px 40px}
+.picker .intro{color:var(--ink-dim);font-size:14px;padding:14px 0 4px;max-width:60ch}
+.picker .continue{margin:12px 0 4px;padding:12px 14px;border-radius:var(--radius);background:var(--panel-2);border:1px solid var(--line);display:flex;align-items:center;gap:12px;width:100%;text-align:left}
+.picker .continue .lbl{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em}
+.picker .continue .nm{font-weight:700}
+.picker .continue .go{margin-left:auto;color:var(--cyan);font-weight:600;white-space:nowrap}
+.picker h2{font-size:13px;color:var(--ink-dim);margin:22px 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.card{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);text-align:left;min-width:0;position:relative}
+.card:active{background:var(--tap)}
+.card .mk{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em}
+.card .md{font-weight:700;font-size:17px}
+.card .en{font-size:13px;color:var(--ink-dim)}
+.card .pr{font-size:12px;color:var(--ink-mute);margin-top:4px;font-variant-numeric:tabular-nums}
+.card .pr.go{color:var(--green)}
+.card .pr.em{color:var(--red);font-weight:600}
+.card .short{position:absolute;right:12px;top:10px;font-size:11px;color:var(--ink-mute);border:1px solid var(--line);border-radius:4px;padding:1px 6px;letter-spacing:.04em}
+.vs{padding:4px 16px 16px}
+.vs .meta{color:var(--ink-dim);font-size:14px;padding:10px 0 4px}
+.vs table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.vs td{padding:9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.vs td:first-child{color:var(--ink-dim);width:38%;padding-right:12px}
+.vs td:last-child{font-weight:600;color:var(--cyan)}
+.list button.ref .dot{background:transparent;border:1px solid var(--ink-mute)}
+.status .acline{color:var(--ink-dim);font-size:14px;margin-top:-2px}
 </style>
 </head>
 <body>
-
 <div id="app">
-  <header>
-    <div class="brand">C208B<small>Grand Caravan</small></div>
+  <header id="hdr">
+    <button class="brand" id="brand" aria-label="Choose aircraft"></button>
     <nav class="modes" id="modes" aria-label="Checklist sections"></nav>
   </header>
   <main id="main">
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use.</footer>
+  <footer id="foot">Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use.</footer>
 </div>
+
+<!-- aircraft:start (generated by tools/build.js – do not edit by hand) -->
+<script src="aircraft/c208b.js"></script>
+<!-- aircraft:end -->
 
 <script>
 /* ---------------- DATA ----------------
+   Aircraft are loaded from aircraft/<id>.js, each pushing one object onto window.AIRCRAFT:
+   {id, maker, model, short, category, engine, seats, basis, vspeeds:[{k,v}], normal:[], emergency:[], abnormal:[]}
+   Procedure: {id, name, cond?, land?, items}
    Item types:
    {c:"Challenge", r:"RESPONSE"}            normal line
    {c:..., r:..., mem:true}                  memory item
@@ -183,294 +225,51 @@ footer{font-size:11px;color:var(--ink-mute);text-align:center;padding:8px 16px;b
    {branch:"question", opts:{"A":[items], "B":[items]}}   conditional
    {defer:"text"}                            item that rolls to the Status page
 ----------------------------------------*/
-const DATA = {
-  normal: [
-    {id:"pre", name:"Before Start", items:[
-      {c:"Preflight inspection", r:"COMPLETE"},
-      {c:"Seats, belts, harnesses", r:"ADJUST & LOCK"},
-      {c:"Brakes", r:"TEST & SET"},
-      {c:"Fuel selectors", r:"BOTH ON"},
-      {c:"Fuel shutoff", r:"ON (push in)"},
-      {c:"Emergency power lever", r:"NORMAL"},
-      {c:"Power lever", r:"IDLE"},
-      {c:"Propeller control", r:"MAX"},
-      {c:"Fuel condition lever", r:"CUTOFF"},
-      {c:"Avionics switches", r:"OFF"},
-      {c:"Bleed air heat", r:"OFF"},
-      {c:"Battery switch", r:"ON"},
-      {c:"Annunciators", r:"CHECK (no abnormal lights)"},
-      {c:"Fuel quantity", r:"CHECK"},
-      {c:"Beacon", r:"ON"},
-    ]},
-    {id:"start", name:"Engine Start", items:[
-      {c:"Propeller area", r:"CLEAR"},
-      {c:"Fuel boost", r:"ON"},
-      {c:"Starter switch", r:"START"},
-      {c:"Oil pressure", r:"CHECK rising"},
-      {c:"Ng", r:"12% minimum (stable)"},
-      {c:"Fuel condition lever", r:"LOW IDLE"},
-      {c:"ITT", r:"MONITOR (1090°C max)"},
-      {c:"Ng", r:"52% minimum"},
-      {c:"Starter switch", r:"OFF"},
-      {c:"Oil pressure", r:"CHECK in limits"},
-      {c:"Starter annunciator", r:"OFF"},
-      {c:"Generator", r:"CHECK charging"},
-      {c:"Fuel boost", r:"NORM"},
-      {c:"Avionics switches", r:"ON"},
-      {c:"Engine instruments", r:"CHECK"},
-    ]},
-    {id:"taxi", name:"Before Taxi", items:[
-      {c:"Inertial separator", r:"BYPASS (as required)"},
-      {c:"Flight instruments / avionics", r:"CHECK & SET"},
-      {c:"Altimeters", r:"SET"},
-      {c:"Trims", r:"SET for takeoff"},
-      {c:"Autopilot", r:"CHECK"},
-      {c:"Brakes", r:"CHECK during taxi"},
-    ]},
-    {id:"runup", name:"Before Takeoff", items:[
-      {c:"Flight controls", r:"FREE & CORRECT"},
-      {c:"Overspeed governor", r:"CHECK"},
-      {c:"Propeller", r:"EXERCISE"},
-      {c:"Standby power", r:"CHECK"},
-      {c:"Engine instruments", r:"CHECK"},
-      {c:"Fuel selectors", r:"BOTH ON"},
-      {c:"Fuel condition lever", r:"HIGH IDLE"},
-      {c:"Wing flaps", r:"SET (10°–20°)"},
-      {c:"Trims", r:"SET"},
-      {c:"Inertial separator", r:"NORMAL (unless contaminated)"},
-      {c:"Pitot heat", r:"AS REQUIRED"},
-      {c:"Lights", r:"AS REQUIRED"},
-      {c:"Transponder", r:"ALT"},
-      {c:"Doors", r:"LOCKED"},
-      {c:"Takeoff briefing", r:"COMPLETE"},
-    ]},
-    {id:"climb", name:"After Takeoff / Climb", items:[
-      {c:"Wing flaps", r:"UP (above 85 KIAS)"},
-      {c:"Climb power", r:"SET (torque / ITT / Ng in limits)"},
-      {c:"Propeller", r:"1600–1900 RPM"},
-      {c:"Fuel boost", r:"NORM"},
-      {c:"Engine instruments", r:"CHECK"},
-    ]},
-    {id:"cruise", name:"Cruise", items:[
-      {c:"Cruise power", r:"SET"},
-      {c:"Fuel quantity / balance", r:"CHECK"},
-      {c:"Engine instruments", r:"CHECK"},
-      {c:"Pressure altitude / temperature", r:"NOTED"},
-    ]},
-    {id:"desc", name:"Descent", items:[
-      {c:"Altimeters", r:"SET"},
-      {c:"Fuel selectors", r:"BOTH ON"},
-      {c:"Inertial separator", r:"AS REQUIRED"},
-      {c:"Approach briefing", r:"COMPLETE"},
-    ]},
-    {id:"land", name:"Before Landing", items:[
-      {c:"Fuel selectors", r:"BOTH ON"},
-      {c:"Fuel boost", r:"NORM"},
-      {c:"Propeller", r:"MAX"},
-      {c:"Wing flaps", r:"AS REQUIRED (full for landing)"},
-      {c:"Airspeed", r:"SET (ref 75–85 KIAS)"},
-      {c:"Landing lights", r:"ON"},
-    ]},
-    {id:"after", name:"After Landing", items:[
-      {c:"Wing flaps", r:"UP"},
-      {c:"Trims", r:"SET"},
-      {c:"Transponder", r:"STBY / as required"},
-      {c:"Lights", r:"AS REQUIRED"},
-      {c:"Inertial separator", r:"BYPASS"},
-    ]},
-    {id:"shut", name:"Shutdown", items:[
-      {c:"Parking brake", r:"SET"},
-      {c:"Avionics switches", r:"OFF"},
-      {c:"Fuel boost", r:"OFF"},
-      {c:"Propeller", r:"MAX"},
-      {c:"Fuel condition lever", r:"CUTOFF"},
-      {c:"ITT", r:"MONITOR during coast-down"},
-      {c:"Propeller", r:"FEATHER (after Ng stops)"},
-      {c:"Fuel shutoff", r:"OFF (pull out)"},
-      {c:"Lights / battery", r:"OFF"},
-      {c:"Control lock", r:"INSTALL"},
-    ]},
-  ],
-  emergency: [
-    {id:"eng-fail-to", name:"Engine Failure after Takeoff", cond:"Airborne, insufficient runway remaining", land:"LAND IMMEDIATELY", items:[
-      {c:"Airspeed", r:"85 KIAS (flaps up) / 75 KIAS (flaps down)", mem:true},
-      {c:"Power lever", r:"IDLE", mem:true},
-      {c:"Propeller", r:"FEATHER", mem:true},
-      {c:"Fuel condition lever", r:"CUTOFF", mem:true},
-      {c:"Wing flaps", r:"AS REQUIRED", mem:true},
-      {c:"Fuel shutoff", r:"OFF", mem:true},
-      {c:"Battery switch", r:"OFF", mem:true},
-      {note:"Land straight ahead with only small changes of direction. Do not attempt a turn back.", kind:"warn"},
-    ]},
-    {id:"eng-fail-flt", name:"Engine Failure in Flight", cond:"Loss of power with altitude available", land:"LAND AS SOON AS POSSIBLE", items:[
-      {c:"Airspeed", r:"95 KIAS (best glide)", mem:true},
-      {c:"Propeller", r:"FEATHER", mem:true},
-      {c:"Emergency power lever", r:"NORMAL", mem:true},
-      {branch:"Restart attempt practicable?", opts:{
-        "Yes – restart":[
-          {c:"Fuel condition lever", r:"CUTOFF"},
-          {c:"Ignition", r:"ON"},
-          {c:"Fuel boost", r:"ON"},
-          {c:"Starter", r:"START (Ng 12% min)"},
-          {c:"Fuel condition lever", r:"LOW IDLE"},
-          {c:"ITT", r:"MONITOR"},
-          {c:"Propeller", r:"MAX (once running)"},
-          {branch:"Engine restarted?", opts:{
-            "Yes":[{c:"Power", r:"AS REQUIRED"},{c:"Engine instruments", r:"MONITOR"},{defer:"Engine restarted after in-flight failure – land as soon as possible and report."}],
-            "No":[{note:"Continue with forced landing.", kind:"warn"}]
-          }},
-        ],
-        "No – forced landing":[]
-      }},
-      {note:"Forced landing without power:", kind:"warn"},
-      {c:"Seats / belts / harnesses", r:"SECURE"},
-      {c:"Wing flaps", r:"AS REQUIRED (full on final)"},
-      {c:"Airspeed", r:"75–80 KIAS"},
-      {c:"Fuel shutoff", r:"OFF"},
-      {c:"Fuel condition lever", r:"CUTOFF"},
-      {c:"Battery switch", r:"OFF (when no longer required)"},
-      {c:"Doors", r:"UNLATCH before touchdown"},
-    ]},
-    {id:"eng-fire-flt", name:"Engine Fire in Flight", land:"LAND IMMEDIATELY", items:[
-      {c:"Fuel condition lever", r:"CUTOFF", mem:true},
-      {c:"Fuel shutoff", r:"OFF", mem:true},
-      {c:"Propeller", r:"FEATHER", mem:true},
-      {c:"Cabin heat", r:"OFF", mem:true},
-      {c:"Bleed air heat", r:"OFF", mem:true},
-      {c:"Airspeed", r:"95 KIAS (or higher if fire persists)"},
-      {c:"Forced landing", r:"EXECUTE (do not attempt restart)"},
-    ]},
-    {id:"eng-fire-start", name:"Engine Fire During Start", items:[
-      {c:"Starter", r:"CONTINUE cranking (purge)", mem:true},
-      {c:"Fuel condition lever", r:"CUTOFF", mem:true},
-      {c:"Fuel shutoff", r:"OFF", mem:true},
-      {c:"Fuel boost", r:"OFF"},
-      {c:"Starter", r:"OFF (after ITT decreases)"},
-      {c:"Battery switch", r:"OFF"},
-      {c:"Fire extinguisher", r:"OBTAIN"},
-      {c:"Aircraft", r:"EVACUATE"},
-    ]},
-    {id:"cabin-fire", name:"Cabin / Electrical Fire", land:"LAND AS SOON AS POSSIBLE", items:[
-      {c:"Battery switch", r:"OFF", mem:true},
-      {c:"Avionics switches", r:"OFF", mem:true},
-      {c:"Cabin heat / vents", r:"CLOSE"},
-      {c:"Fire extinguisher", r:"ACTIVATE"},
-      {note:"After discharge, ventilate the cabin.", kind:"warn"},
-      {branch:"Fire out and electrical power required?", opts:{
-        "Yes":[
-          {c:"Circuit breakers", r:"CHECK – do not reset faulted"},
-          {c:"Battery switch", r:"ON"},
-          {c:"Avionics / electrical", r:"ON one at a time, check for smoke"},
-          {defer:"Electrical fire – suspect circuits isolated, affected systems unavailable."},
-        ],
-        "No":[{note:"Continue with battery off. Standby instruments only.", kind:"caution"}]
-      }},
-    ]},
-    {id:"emer-desc", name:"Emergency Descent", items:[
-      {c:"Power lever", r:"IDLE", mem:true},
-      {c:"Propeller", r:"MAX", mem:true},
-      {c:"Wing flaps", r:"UP", mem:true},
-      {c:"Airspeed", r:"175 KIAS (smooth air) / 148 KIAS (turbulence)", mem:true},
-    ]},
-  ],
-  abnormal: [
-    {id:"gen-off", name:"GENERATOR OFF annunciator", land:"", items:[
-      {c:"Generator switch", r:"RESET then ON"},
-      {branch:"Generator restored?", opts:{
-        "Yes":[{c:"Generator load", r:"MONITOR"}],
-        "No":[
-          {c:"Generator switch", r:"TRIP"},
-          {c:"Non-essential electrical load", r:"REDUCE"},
-          {c:"Battery", r:"MONITOR (approx 30 min endurance)"},
-          {defer:"Generator failed – on battery power, limited electrical endurance. Land as soon as practical."},
-        ]
-      }},
-    ]},
-    {id:"oil-press", name:"Low Oil Pressure", cond:"OIL PRESS LOW annunciator or indication below limits", items:[
-      {c:"Oil pressure / temperature", r:"CHECK"},
-      {branch:"Oil pressure confirmed low (below 85 psi)?", opts:{
-        "Yes":[
-          {c:"Power", r:"REDUCE to minimum required"},
-          {c:"Engine", r:"MONITOR for seizure indications"},
-          {defer:"Low oil pressure – land as soon as possible, expect possible engine failure."},
-        ],
-        "No – gauge fault":[{c:"Flight", r:"CONTINUE, monitor oil temperature"}]
-      }},
-    ]},
-    {id:"fuel-press", name:"FUEL PRESS LOW annunciator", items:[
-      {c:"Fuel boost", r:"ON"},
-      {c:"Fuel selectors", r:"BOTH ON"},
-      {c:"Fuel quantity", r:"CHECK"},
-      {branch:"Annunciator extinguished?", opts:{
-        "Yes":[{c:"Fuel boost", r:"LEAVE ON"},{defer:"Fuel boost pump on continuously – engine-driven pump suspect."}],
-        "No":[{c:"Fuel contamination / exhaustion", r:"CONSIDER"},{c:"Land", r:"AS SOON AS POSSIBLE"}]
-      }},
-    ]},
-    {id:"fuel-sel", name:"FUEL SELECT OFF annunciator", items:[
-      {c:"Fuel selectors", r:"CHECK BOTH ON"},
-      {c:"Fuel selector warning", r:"CHECK"},
-    ]},
-    {id:"ice", name:"Inadvertent Icing", items:[
-      {c:"Pitot / static heat", r:"ON"},
-      {c:"Inertial separator", r:"BYPASS"},
-      {c:"Windshield / propeller anti-ice", r:"ON (if fitted)"},
-      {c:"Exit icing conditions", r:"TURN / CLIMB / DESCEND"},
-      {c:"Airspeed", r:"INCREASE (flaps-up landing)"},
-      {c:"Wing flaps", r:"LIMIT to 10° for landing with residual ice"},
-      {defer:"Residual airframe ice – flaps-up / 10° landing, increased approach speed."},
-    ]},
-    {id:"chip", name:"CHIP DETECTOR annunciator", items:[
-      {c:"Engine instruments", r:"MONITOR closely"},
-      {c:"Power", r:"REDUCE to minimum practical"},
-      {defer:"Chip detector – land as soon as practical, maintenance inspection required."},
-    ]},
-    {id:"volt", name:"VOLTAGE LOW annunciator", items:[
-      {c:"Generator", r:"CHECK ON / charging"},
-      {c:"Electrical load", r:"REDUCE"},
-      {branch:"Voltage recovered?", opts:{
-        "Yes":[{c:"Flight", r:"CONTINUE, monitor"}],
-        "No":[{note:"Refer to GENERATOR OFF procedure.", kind:"warn"}]
-      }},
-    ]},
-    {id:"flap-fail", name:"Flap Failure", items:[
-      {c:"Flap circuit breaker", r:"CHECK / RESET once"},
-      {c:"Standby flap motor", r:"ON (if fitted)"},
-      {branch:"Flaps operable?", opts:{
-        "Yes":[{c:"Flap setting", r:"AS REQUIRED"}],
-        "No":[{c:"Landing", r:"FLAPS UP – 95 KIAS approach, longer runway"},{defer:"Flaps inoperative – flaps-up landing, increased landing distance."}]
-      }},
-    ]},
-  ],
-};
+const CATEGORIES = ["Single-engine piston","High-performance single","Multi-engine piston","Turboprop"];
+const AIRCRAFT = (window.AIRCRAFT || []).slice().sort((a,b)=>CATEGORIES.indexOf(a.category)-CATEGORIES.indexOf(b.category) || (a.maker+a.model).localeCompare(b.maker+b.model));
+const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 
 /* ---------------- STATE + PERSISTENCE ---------------- */
-const STORE_KEY = "c208b-ecl-v1";
-const state = {mode:"normal", sel:null, showing:false, ticks:{}, branches:{}, confirmReset:false, savedAt:null};
+const STORE_KEY = "ga-ecl-v2";
+const LEGACY_KEY = "c208b-ecl-v1";
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, confirmReset:false, savedAt:null};
 const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["status","Status"]];
+const AC = () => byId(state.ac);
+const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
+const DATA = () => AC() || {normal:[],emergency:[],abnormal:[]};
 
 function load(){
   try{
     const raw = localStorage.getItem(STORE_KEY);
-    if(!raw) return;
-    const s = JSON.parse(raw);
-    if(s && typeof s==="object"){
-      if(s.ticks && typeof s.ticks==="object") state.ticks = s.ticks;
-      if(s.branches && typeof s.branches==="object") state.branches = s.branches;
-      if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
-      if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
-      state.showing = !!s.showing;
-      state.savedAt = s.savedAt||null;
+    if(raw){
+      const s = JSON.parse(raw);
+      if(s && typeof s==="object"){
+        if(s.per && typeof s.per==="object") state.per = s.per;
+        if(typeof s.ac==="string" && byId(s.ac)) state.ac = s.ac;
+        if(typeof s.lastAc==="string" && byId(s.lastAc)) state.lastAc = s.lastAc;
+        if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
+        if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
+        state.showing = !!s.showing;
+        state.savedAt = s.savedAt||null;
+      }
+    }else{
+      // carry over progress from the single-aircraft C208B version
+      const old = localStorage.getItem(LEGACY_KEY);
+      if(old){
+        const s = JSON.parse(old);
+        if(s && s.ticks) state.per.c208b = {ticks:s.ticks||{}, branches:s.branches||{}};
+      }
     }
   }catch(e){ /* storage unavailable: run without it */ }
 }
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({ticks:state.ticks, branches:state.branches, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
-/* Keep the screen awake while the checklist is open (silently skipped where not allowed). */
+/* Keep the screen awake while a checklist is open (silently skipped where not allowed). */
 let wakeLock = null;
 async function keepAwake(){
   try{
@@ -481,16 +280,16 @@ async function keepAwake(){
 }
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") keepAwake(); });
 
-function proc(mode,id){return (DATA[mode]||[]).find(p=>p.id===id)}
+function proc(mode,id){return (DATA()[mode]||[]).find(p=>p.id===id)}
 function key(pid,path){return pid+"/"+path}
 
 /* Flatten a procedure into visible rows given current branch selections */
 function rows(p){
-  const out=[];
+  const out=[]; const per=PER();
   const walk=(items,prefix)=>items.forEach((it,i)=>{
     const path=prefix+i;
     if(it.branch){
-      const chosen=state.branches[key(p.id,path)];
+      const chosen=per.branches[key(p.id,path)];
       out.push({type:"branch",it,path,chosen});
       if(chosen && it.opts[chosen]) walk(it.opts[chosen],path+"."+chosen+".");
     }else if(it.note){out.push({type:"note",it,path})}
@@ -501,7 +300,7 @@ function rows(p){
   return out;
 }
 function actionable(r){return r.type==="item"||r.type==="defer"}
-function isDone(p,r){return !!state.ticks[key(p.id,r.path)]}
+function isDone(p,r){return !!PER().ticks[key(p.id,r.path)]}
 function progress(p){
   const all=rows(p);
   const rs=all.filter(actionable);
@@ -510,16 +309,26 @@ function progress(p){
   return {done:d,total:rs.length,complete:rs.length>0&&d===rs.length&&!open};
 }
 function resetProc(p){
-  Object.keys(state.ticks).forEach(k=>{if(k.startsWith(p.id+"/"))delete state.ticks[k]});
-  Object.keys(state.branches).forEach(k=>{if(k.startsWith(p.id+"/"))delete state.branches[k]});
+  const per=PER();
+  Object.keys(per.ticks).forEach(k=>{if(k.startsWith(p.id+"/"))delete per.ticks[k]});
+  Object.keys(per.branches).forEach(k=>{if(k.startsWith(p.id+"/"))delete per.branches[k]});
 }
-function activeNonNormal(){
-  return ["emergency","abnormal"].flatMap(m=>DATA[m].map(p=>({m,p}))).filter(x=>{const pr=progress(x.p);return pr.done>0&&!pr.complete});
+function withAircraft(aid, fn){ const prev=state.ac; state.ac=aid; try{ return fn(); } finally { state.ac=prev; } }
+function activeNonNormal(aid){
+  return withAircraft(aid||state.ac, ()=>["emergency","abnormal"].flatMap(m=>DATA()[m].map(p=>({m,p}))).filter(x=>{const pr=progress(x.p);return pr.done>0&&!pr.complete}));
 }
 function deferredItems(){
   const out=[];
-  ["emergency","abnormal"].forEach(m=>DATA[m].forEach(p=>rows(p).forEach(r=>{if(r.type==="defer"&&isDone(p,r))out.push({p,text:r.it.defer})})));
+  ["emergency","abnormal"].forEach(m=>DATA()[m].forEach(p=>rows(p).forEach(r=>{if(r.type==="defer"&&isDone(p,r))out.push({p,text:r.it.defer})})));
   return out;
+}
+function aircraftSummary(a){
+  return withAircraft(a.id, ()=>{
+    const act=activeNonNormal(a.id).length;
+    const norm=a.normal.map(progress);
+    const started=norm.filter(p=>p.done>0).length, complete=norm.filter(p=>p.complete).length;
+    return {act, started, complete, total:a.normal.length};
+  });
 }
 
 /* ---------------- RENDER ---------------- */
@@ -527,17 +336,67 @@ const $=s=>document.querySelector(s);
 function h(tag,attrs,...kids){const e=document.createElement(tag);for(const k in attrs||{}){if(k==="class")e.className=attrs[k];else if(k.startsWith("on"))e.addEventListener(k.slice(2),attrs[k]);else e.setAttribute(k,attrs[k])}kids.flat().forEach(c=>e.append(c instanceof Node?c:document.createTextNode(c)));return e}
 
 function go(fn){ fn(); save(); render(); }
+function selectAircraft(id){
+  state.ac=id; state.lastAc=id; state.mode="normal"; state.sel=null; state.showing=false; state.confirmReset=false;
+  if(location.hash!=="#"+id){ try{ history.replaceState(null,"","#"+id); }catch(e){} }
+}
+function showPicker(){
+  state.ac=null; state.showing=false; state.confirmReset=false;
+  if(location.hash){ try{ history.replaceState(null,"",location.pathname+location.search); }catch(e){} }
+}
 
 function render(){
+  const a=AC();
+  const hdr=$("#hdr"); hdr.classList.toggle("picker-head",!a);
+  const brand=$("#brand"); brand.innerHTML="";
+  if(a){
+    brand.append(h("span",{class:"ac"},h("span",{},a.short),h("span",{class:"chev"},"▼")),h("small",{},a.maker+" "+a.model));
+    brand.onclick=()=>go(showPicker);
+  }else{
+    brand.append(h("span",{class:"title"},"GA Checklist"),h("small",{},AIRCRAFT.length+" aircraft · tap one to begin"));
+    brand.onclick=null;
+  }
   const nav=$("#modes");nav.innerHTML="";
-  const act=activeNonNormal().length;
-  MODES.forEach(([m,label])=>{
-    const b=h("button",{class:(state.mode===m?"on ":"")+(m==="emergency"?"emerg":m==="abnormal"?"abn":""),"aria-pressed":state.mode===m?"true":"false",onclick:()=>go(()=>{state.mode=m;state.sel=null;state.showing=false;state.confirmReset=false})},label);
-    if(m==="status"&&act)b.append(h("span",{class:"badge"},act));
-    nav.append(b);
-  });
-  $("#main").classList.toggle("showing-proc",state.showing);
+  if(a){
+    const act=activeNonNormal().length;
+    MODES.forEach(([m,label])=>{
+      const b=h("button",{class:(state.mode===m?"on ":"")+(m==="emergency"?"emerg":m==="abnormal"?"abn":""),"aria-pressed":state.mode===m?"true":"false",onclick:()=>go(()=>{state.mode=m;state.sel=null;state.showing=false;state.confirmReset=false})},label);
+      if(m==="status"&&act)b.append(h("span",{class:"badge"},act));
+      nav.append(b);
+    });
+  }
+  $("#main").classList.toggle("showing-proc",!!a&&state.showing);
+  if(!a){ $("#side").innerHTML=""; $("#side").style.display="none"; renderPicker($("#view")); $("#view").style.display=""; return; }
+  $("#side").style.display="";
   renderSide();renderView();
+}
+
+function renderPicker(v){
+  v.innerHTML="";
+  const w=h("div",{class:"picker"});
+  w.append(h("div",{class:"intro"},"Choose the aircraft you are flying. Each type has its own normal, abnormal and emergency checklists, and progress is kept separately per type on this device."));
+  // last used
+  let last=byId(state.lastAc);
+  if(!last){ const l=Object.keys(state.per).filter(id=>byId(id)); if(l.length===1) last=byId(l[0]); }
+  if(last) w.append(h("button",{class:"continue",onclick:()=>go(()=>selectAircraft(last.id))},h("span",{},h("div",{class:"lbl"},"Continue"),h("div",{class:"nm"},last.maker+" "+last.model)),h("span",{class:"go"},"Open ›")));
+  CATEGORIES.forEach(cat=>{
+    const list=AIRCRAFT.filter(a=>a.category===cat);
+    if(!list.length) return;
+    w.append(h("h2",{},cat));
+    const grid=h("div",{class:"cards"});
+    list.forEach(a=>{
+      const s=aircraftSummary(a);
+      let pr="", cls="pr";
+      if(s.act){pr=s.act+" procedure"+(s.act>1?"s":"")+" in progress";cls+=" em"}
+      else if(s.complete===s.total){pr="All normal checklists complete";cls+=" go"}
+      else if(s.started){pr=s.complete+"/"+s.total+" normal checklists complete"}
+      else pr="Not started";
+      grid.append(h("button",{class:"card",onclick:()=>go(()=>selectAircraft(a.id))},
+        h("span",{class:"short"},a.short),h("span",{class:"mk"},a.maker),h("span",{class:"md"},a.model),h("span",{class:"en"},a.engine),h("span",{class:cls},pr)));
+    });
+    w.append(grid);
+  });
+  v.append(w);
 }
 
 function renderSide(){
@@ -545,7 +404,10 @@ function renderSide(){
   if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"))));return}
   const list=h("div",{class:"list"});
   s.append(h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures"));
-  DATA[state.mode].forEach(p=>{
+  if(state.mode==="normal"){
+    list.append(h("button",{class:"ref "+(state.sel==="__vs"?"sel":""),onclick:()=>go(()=>{state.sel="__vs";state.showing=true})},h("span",{class:"dot"}),h("span",{class:"name"},"V-speeds & limits"),h("span",{class:"n"},"ref")));
+  }
+  DATA()[state.mode].forEach(p=>{
     const pr=progress(p);
     const dot=pr.complete?"done":pr.done>0?(state.mode==="normal"?"partial":"active"):"";
     list.append(h("button",{class:state.sel===p.id?"sel":"",onclick:()=>go(()=>{state.sel=p.id;state.showing=true})},
@@ -554,9 +416,22 @@ function renderSide(){
   s.append(list);
 }
 
+function renderVspeeds(v){
+  const a=AC();
+  v.append(h("div",{class:"proc-head"},h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),h("h1",{},"V-speeds & limits",h("span",{class:"cond"},a.maker+" "+a.model))));
+  const w=h("div",{class:"vs"});
+  w.append(h("div",{class:"meta"},a.engine+(a.seats?" · "+a.seats+" seats":"")));
+  const t=h("table",{});
+  (a.vspeeds||[]).forEach(s=>t.append(h("tr",{},h("td",{},s.k),h("td",{},s.v))));
+  w.append(t);
+  if(a.basis) w.append(h("div",{class:"meta"},"Basis: "+a.basis));
+  v.append(w);
+}
+
 function renderView(){
   const v=$("#view");v.innerHTML="";
   if(state.mode==="status"){renderStatus(v);return}
+  if(state.mode==="normal"&&state.sel==="__vs"){renderVspeeds(v);return}
   const p=proc(state.mode,state.sel);
   if(!p){v.append(h("div",{class:"status"},h("div",{class:"empty"},"Select a checklist."))); return}
   const cls=state.mode==="emergency"?"emerg":state.mode==="abnormal"?"abn":"";
@@ -575,9 +450,10 @@ function renderView(){
     if(r.type==="branch"){
       const opts=h("div",{class:"opts"});
       Object.keys(r.it.opts).forEach(o=>opts.append(h("button",{class:r.chosen===o?"sel":r.chosen?"off":"",onclick:()=>go(()=>{
-        Object.keys(state.ticks).forEach(k=>{if(k.startsWith(key(p.id,r.path+".")))delete state.ticks[k]});
-        Object.keys(state.branches).forEach(k=>{if(k!==key(p.id,r.path)&&k.startsWith(key(p.id,r.path+".")))delete state.branches[k]});
-        state.branches[key(p.id,r.path)]=o;})},o)));
+        const per=PER();
+        Object.keys(per.ticks).forEach(k=>{if(k.startsWith(key(p.id,r.path+".")))delete per.ticks[k]});
+        Object.keys(per.branches).forEach(k=>{if(k!==key(p.id,r.path)&&k.startsWith(key(p.id,r.path+".")))delete per.branches[k]});
+        per.branches[key(p.id,r.path)]=o;})},o)));
       items.append(h("div",{class:"branch"},h("div",{class:"q"},r.it.branch),opts));return;
     }
     const done=isDone(p,r);
@@ -585,13 +461,13 @@ function renderView(){
     const cl=["item",done?"done":"",r===next?"next":"",it.mem?"mem":"",it.sub?"sub":"",r.type==="defer"?"defer":""].join(" ");
     const chal=r.type==="defer"?"Deferred: "+it.defer:it.c;
     const resp=r.type==="defer"?"NOTED":it.r;
-    items.append(h("button",{class:cl,"aria-pressed":done?"true":"false",onclick:()=>go(()=>{const k=key(p.id,r.path);if(state.ticks[k])delete state.ticks[k];else state.ticks[k]=1})},
+    items.append(h("button",{class:cl,"aria-pressed":done?"true":"false",onclick:()=>go(()=>{const per=PER();const k=key(p.id,r.path);if(per.ticks[k])delete per.ticks[k];else per.ticks[k]=1})},
       h("span",{class:"chal"},chal),h("span",{class:"lead"}),h("span",{class:"resp"},resp)));
   });
   v.append(items);
   const pr=progress(p);
   if(pr.complete){
-    const nextProc=DATA[state.mode][DATA[state.mode].indexOf(p)+1];
+    const nextProc=DATA()[state.mode][DATA()[state.mode].indexOf(p)+1];
     const bar=h("div",{class:"complete"},p.name.toUpperCase()+" COMPLETE");
     if(state.mode==="normal"&&nextProc)bar.append(h("button",{onclick:()=>go(()=>{state.sel=nextProc.id})},"Next: "+nextProc.name));
     else if(state.mode!=="normal")bar.append(h("button",{onclick:()=>go(()=>{state.mode="status";state.sel=null;state.showing=true})},"View status"));
@@ -600,8 +476,9 @@ function renderView(){
 }
 
 function renderStatus(v){
+  const a=AC();
   const w=h("div",{class:"status"});
-  w.append(h("div",{class:"proc-head"},h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),h("h1",{},"Flight status")));
+  w.append(h("div",{class:"proc-head"},h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),h("h1",{},"Flight status",h("span",{class:"cond"},a.maker+" "+a.model))));
   const act=activeNonNormal();
   w.append(h("h2",{},"Active procedures"));
   if(!act.length)w.append(h("div",{class:"empty"},"None."));
@@ -611,28 +488,36 @@ function renderStatus(v){
   if(!defs.length)w.append(h("div",{class:"empty"},"None."));
   else{const ul=h("ul",{});defs.forEach(d=>ul.append(h("li",{},d.text)));w.append(h("div",{class:"deferred"},ul))}
   w.append(h("h2",{},"Normal checklists"));
-  DATA.normal.forEach(p=>{const pr=progress(p);w.append(h("div",{class:"row"},h("span",{},p.name),h("span",{class:"num "+(pr.complete?"ok":pr.done?"pend":"")},pr.complete?"Complete":pr.done?pr.done+"/"+pr.total:"—")))});
+  DATA().normal.forEach(p=>{const pr=progress(p);w.append(h("div",{class:"row"},h("span",{},p.name),h("span",{class:"num "+(pr.complete?"ok":pr.done?"pend":"")},pr.complete?"Complete":pr.done?pr.done+"/"+pr.total:"—")))});
   w.append(h("h2",{},"Flight"));
   if(!state.confirmReset){
-    w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>{state.confirmReset=true;render()}},"Reset all for new flight")));
+    w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>{state.confirmReset=true;render()}},"Reset all "+a.short+" checklists for a new flight")));
   }else{
     w.append(h("div",{class:"confirm"},
-      h("span",{},"Clear every checklist and procedure for a new flight?"),
+      h("span",{},"Clear every "+a.short+" checklist and procedure for a new flight? Other aircraft are not affected."),
       h("button",{onclick:()=>{state.confirmReset=false;render()}},"Keep"),
-      h("button",{class:"danger",onclick:()=>go(()=>{state.ticks={};state.branches={};state.confirmReset=false})},"Reset all")));
+      h("button",{class:"danger",onclick:()=>go(()=>{state.per[state.ac]={ticks:{},branches:{}};state.confirmReset=false})},"Reset all")));
   }
+  w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(showPicker)},"Change aircraft")));
   w.append(h("div",{class:"saved"},state.savedAt?"Progress is saved on this device. Last change "+new Date(state.savedAt).toLocaleString()+".":"Progress is saved on this device as you tick items."));
   v.append(w);
 }
 
 /* ---------------- BOOT ---------------- */
-function start(hot){
-  if(hot && hot.ticks){ Object.assign(state, hot); }
-  else load();
+function applyHash(){
+  const id=(location.hash||"").replace(/^#/,"");
+  if(id && byId(id) && id!==state.ac){ selectAircraft(id); return true; }
+  return false;
+}
+function start(){
+  load();
+  if(!applyHash() && state.ac && !byId(state.ac)) state.ac=null;
+  if(AIRCRAFT.length===1 && !state.ac) selectAircraft(AIRCRAFT[0].id);
   render();
+  window.addEventListener("hashchange", ()=>{ if(applyHash()){ save(); render(); } });
   document.addEventListener("pointerdown", keepAwake, {once:true});
 }
-start({});
+start();
 </script>
 <script>
 if ("serviceWorker" in navigator && location.protocol !== "file:") {

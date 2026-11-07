@@ -1,12 +1,13 @@
-const VERSION = "c208b-ecl-v1";
+const VERSION = "ga-ecl-10577b0312";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./aircraft/c208b.js",
+  "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
-  "./icons/icon-maskable-512.png",
-  "./icons/apple-touch-icon.png"
+  "./icons/icon-maskable-512.png"
 ];
 
 self.addEventListener("install", e => {
