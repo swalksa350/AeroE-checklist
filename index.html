@@ -333,7 +333,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "0794be49";
+const BUILD = "602a21bb";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -863,22 +863,27 @@ function voiceNext(){
   renderVoiceBar();
   speak(pr.complete?(sayable(p.name)+" checklist complete."):("End of "+sayable(p.name)+". Some items were skipped."));
 }
-function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; const c=currentRows(); if(!c) return; stopListening(); PER().ticks[key(c.p.id,r.path)]=1; save(); vs.pending=null; render(); voiceNext(); }
+function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; const c=currentRows(); if(!c) return; stopListening(); PER().ticks[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); save(); render(); }
 function voiceSkip(){ const r=vs.pending; if(!r) return; const c=currentRows(); if(!c) return; stopListening(); vs.skipped[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); }
 function voiceRepeat(){ const r=vs.pending; if(!r){ voiceNext(); return; } stopListening(); const c=currentRows(); if(!c) return;
   if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r));
   else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+". "+sayable(r.it.r)+"."), ()=>listenFor(r)); }
-function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; save(); vs.pending=null; render(); voiceNext(); }
+function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; vs.pending=null; voiceNext(); save(); render(); }
 
 /* --- speech recognition --- */
 function stopListening(){ if(vs.rec){ try{ vs.rec.onend=null; vs.rec.abort(); }catch(e){} vs.rec=null; } vs.listening=false; }
-function listenOnce(onAlts, onFail){
+function listenOnce(onAlts, onFail, onInterim){
   if(!SR) { onFail&&onFail("unsupported"); return; }
   stopListening();
   let r; try{ r=new SR(); }catch(e){ onFail&&onFail("unsupported"); return; }
-  r.lang=navigator.language||"en-AU"; r.interimResults=false; r.maxAlternatives=4; r.continuous=false;
+  r.lang=navigator.language||"en-AU"; r.interimResults=!!onInterim; r.maxAlternatives=4; r.continuous=false;
   let got=false;
-  r.onresult=e=>{ got=true; const alts=[]; for(let i=0;i<e.results.length;i++){ for(let j=0;j<e.results[i].length;j++) alts.push(String(e.results[i][j].transcript||"").toLowerCase().trim()); } onAlts(alts); };
+  r.onresult=e=>{
+    const alts=[]; let anyFinal=false;
+    for(let i=0;i<e.results.length;i++){ if(e.results[i].isFinal!==false) anyFinal=anyFinal||e.results[i].isFinal===true; for(let j=0;j<e.results[i].length;j++) alts.push(String(e.results[i][j].transcript||"").toLowerCase().trim()); }
+    if(onInterim && !anyFinal){ if(onInterim(alts)===true){ got=true; } return; }   // acted on an interim word: treat as handled
+    got=true; onAlts(alts);
+  };
   r.onerror=e=>{ const err=(e&&e.error)||"error"; if(err==="not-allowed"||err==="service-not-allowed"){ voice.reply=false; saveVoice(); vs.status="Microphone not allowed – voice replies turned off"; } onFail&&onFail(err); };
   r.onend=()=>{ vs.listening=false; vs.rec=null; if(!got) onFail&&onFail("no-speech"); renderVoiceBar(); };
   try{ r.start(); vs.rec=r; vs.listening=true; }catch(e){ onFail&&onFail("error"); }
@@ -887,22 +892,27 @@ const CMDS=[[/\b(checked?|set|complete|completed|done|roger|affirm|confirmed?|ne
 function listenFor(r){
   if(!vs.active||!voice.reply||!SR||vs.pending!==r) return;
   vs.status="Listening"; vs.heard=""; renderVoiceBar();
-  let failed=false;
-  listenOnce(alts=>{
-    vs.heard=alts[0]||""; renderVoiceBar();
+  let failed=false, acted=false;
+  const act=(alts)=>{                     // returns true when a command or option was recognised and applied
+    if(acted) return true;
     if(r.type==="branch"){
       const opts=Object.keys(r.it.opts);
-      for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ voiceChoose(r,hit); return; } }
+      for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ acted=true; vs.heard=a; voiceChoose(r,hit); return true; } }
     }else{
-      for(const a of alts){ const c=CMDS.find(([re])=>re.test(a)); if(c){ const cmd=c[1]; if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return; } }
+      for(const a of alts){ const c=CMDS.find(([re])=>re.test(a)); if(c){ acted=true; vs.heard=a; const cmd=c[1]; if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; } }
     }
+    return false;
+  };
+  listenOnce(alts=>{
+    vs.heard=alts[0]||""; renderVoiceBar();
+    if(act(alts)) return;
     vs.status="Not understood – say checked, repeat, skip or stop"; renderVoiceBar(); if(vs.retries++<3) setTimeout(()=>listenFor(r),400);
   }, err=>{
     if(failed) return; failed=true;
     if(!vs.active||vs.pending!==r) return;
     if(err==="no-speech"||err==="aborted"||err==="network"){ if(vs.retries++<4){ setTimeout(()=>listenFor(r),300); } else { vs.status=err==="network"?"No connection for voice – tap Checked":"Nothing heard – tap Checked"; renderVoiceBar(); } }
     else { vs.status=srErrorText(err)+" – tap Checked"; renderVoiceBar(); }
-  });
+  }, alts=>act(alts));
 }
 
 function srErrorText(err){

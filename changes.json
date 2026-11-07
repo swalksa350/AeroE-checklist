@@ -8,7 +8,8 @@
       "Voice replies (experimental): after each line the app listens for “checked”, “set”, “repeat”, “skip” or “stop”. What it heard is shown before anything is applied. Needs microphone permission and, on Apple devices, signal.",
       "Say procedure: with voice replies on, a microphone button above each checklist list lets you say a procedure name, for example “engine failure in flight”, and the app opens it.",
       "All of this is off by default; nothing changes unless you turn it on.",
-      "Status → Voice has a Test the microphone button that reports exactly what the device says, and the voice bar names the reason when listening fails."
+      "Status → Voice has a Test the microphone button that reports exactly what the device says, and the voice bar names the reason when listening fails.",
+      "Spoken replies are acted on as soon as the word is heard, without waiting for the end-of-speech pause."
     ]
   },
   {
