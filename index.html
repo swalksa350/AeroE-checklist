@@ -333,7 +333,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "42d94e30";
+const BUILD = "eeff205e";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -703,6 +703,7 @@ function renderStatus(v){
   else{
     w.append(tog("Read aloud",()=>voice.read,v=>{voice.read=v; if(!v) voiceStop(true);},"Speaks each line of an open checklist and waits for ✓ Checked before the next."));
     w.append(tog("Short responses in normal checklists",()=>voice.brief,v=>{voice.brief=v;},"Reads only the capitalised action, e.g. “Fuel shutoff, ON”, and leaves the bracketed detail for the screen. Abnormal and emergency procedures are always read in full."));
+    w.append(tog("Cue tones",()=>voice.tones,v=>{voice.tones=v;},"One short tone when the app starts listening, two when it accepts your word."));
     w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked”, “set”, “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
     const seg=h("div",{class:"seg"});RATES.forEach(([rt,label])=>seg.append(h("button",{class:voice.rate===rt?"on":"",onclick:()=>{voice.rate=rt;saveVoice();render();speak("Fuel selectors. Both on.")}},label)));
     w.append(h("div",{class:"row"},h("span",{},"Speaking rate"),seg));
@@ -811,8 +812,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
    tap-then-speak procedure recall button. Everything here degrades to the normal tap behaviour. */
 const VOICE_KEY="ga-ecl-voice";
 const RATES=[[0.7,"Slow"],[0.8,"Slower"],[0.9,"Normal"],[1,"Brisk"],[1.15,"Fast"]];
-const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true};
-try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; } }catch(e){}
+const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true, tones:true};
+try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; if(typeof v.tones==="boolean") voice.tones=v.tones; } }catch(e){}
 function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)); }catch(e){} }
 const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -863,10 +864,27 @@ function speak(text, onend){
 }
 function stopSpeaking(){ utterSeq++; try{ speechSynthesis.cancel(); }catch(e){} }
 
+/* --- cue tones (short beeps in the headset: one when listening starts, two when a word is accepted) --- */
+let actx=null;
+function unlockAudio(){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; actx=actx||new AC(); if(actx.state==="suspended") actx.resume(); }catch(e){} }
+function beep(freq,ms,times){
+  if(!voice.tones) return;
+  try{
+    unlockAudio(); if(!actx) return;
+    let t=actx.currentTime+0.01;
+    for(let i=0;i<(times||1);i++){
+      const o=actx.createOscillator(), g=actx.createGain();
+      o.type="sine"; o.frequency.value=freq;
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.2,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+ms/1000);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t+ms/1000+0.02); t+=ms/1000+0.07;
+    }
+  }catch(e){}
+}
+
 /* --- read-aloud session for the open procedure --- */
 const vs={active:false, pid:null, pending:null, readNotes:{}, skipped:{}, status:"", heard:"", listening:false, rec:null, retries:0};
 function currentRows(){ const p=proc(state.mode,state.sel); return p?{p,rs:rows(p)}:null; }
-function voiceStart(){ const c=currentRows(); if(!c||!voice.read) return; vs.active=true; vs.pid=c.p.id; vs.pending=null; vs.retries=0; vs.heard=""; vs.status="Reading"; renderVoiceBar(); voiceNext(); }
+function voiceStart(){ const c=currentRows(); if(!c||!voice.read) return; unlockAudio(); vs.active=true; vs.pid=c.p.id; vs.pending=null; vs.retries=0; vs.heard=""; vs.status="Reading"; renderVoiceBar(); voiceNext(); }
 function voiceStop(silent){ vs.active=false; vs.pending=null; vs.status="Paused"; stopListening(); stopSpeaking(); if(!silent) renderVoiceBar(); }
 function voiceNext(){
   if(!vs.active) return;
@@ -899,7 +917,7 @@ function listenOnce(onAlts, onFail, onInterim){
   if(!SR) { onFail&&onFail("unsupported"); return; }
   stopListening();
   let r; try{ r=new SR(); }catch(e){ onFail&&onFail("unsupported"); return; }
-  r.lang=navigator.language||"en-AU"; r.interimResults=!!onInterim; r.maxAlternatives=4; r.continuous=false;
+  r.lang=navigator.language||"en-AU"; r.interimResults=!!onInterim; r.maxAlternatives=4; r.continuous=!!onInterim;
   let got=false;
   r.onresult=e=>{
     const alts=[]; let anyFinal=false;
@@ -908,36 +926,42 @@ function listenOnce(onAlts, onFail, onInterim){
     got=true; onAlts(alts);
   };
   r.onerror=e=>{ const err=(e&&e.error)||"error"; if(err==="not-allowed"||err==="service-not-allowed"){ voice.reply=false; saveVoice(); vs.status="Microphone not allowed – voice replies turned off"; } onFail&&onFail(err); };
-  r.onend=()=>{ vs.listening=false; vs.rec=null; if(!got) onFail&&onFail("no-speech"); renderVoiceBar(); };
+  r.onend=()=>{ vs.listening=false; vs.rec=null; onFail&&onFail(got?"ended":"no-speech"); renderVoiceBar(); };
   try{ r.start(); vs.rec=r; vs.listening=true; }catch(e){ onFail&&onFail("error"); }
 }
-const CMDS=[[/\b(checked?|set|complete|completed|done|roger|affirm|confirmed?|next|yes)\b/,"confirm"],[/\b(repeat|again)\b/,"repeat"],[/\bskip\b/,"skip"],[/\b(stop|pause|cancel)\b/,"stop"]];
+const CMDS=[[/\b(che[ck]+(ed|t|d)?|cheque[ds]?|czech|chucked|checkered|tick(ed)?|set|complete|completed|done|roger|affirm|affirmative|confirm|confirmed|next|yes|yep|yeah|copy|good)\b/,"confirm"],[/\b(repeat|again|say again)\b/,"repeat"],[/\bskip\b/,"skip"],[/\b(stop|pause|cancel)\b/,"stop"]];
 function listenFor(r){
   if(!vs.active||!voice.reply||!SR||vs.pending!==r) return;
-  vs.status="Listening"; vs.heard=""; renderVoiceBar();
-  let failed=false, acted=false;
+  let acted=false;
   const act=(alts)=>{                     // returns true when a command or option was recognised and applied
     if(acted) return true;
     if(r.type==="branch"){
       const opts=Object.keys(r.it.opts);
-      for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ acted=true; vs.heard=a; voiceChoose(r,hit); return true; } }
+      for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ acted=true; vs.heard=a; beep(1320,55,2); voiceChoose(r,hit); return true; } }
     }else{
-      for(const a of alts){ const c=CMDS.find(([re])=>re.test(a)); if(c){ acted=true; vs.heard=a; const cmd=c[1]; if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; } }
+      for(const a of alts){ const c=CMDS.find(([re])=>re.test(a)); if(c){ acted=true; vs.heard=a; const cmd=c[1]; beep(cmd==="confirm"?1320:660,55,cmd==="confirm"?2:1); if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; } }
     }
     return false;
   };
-  listenOnce(alts=>{
-    vs.heard=alts[0]||""; renderVoiceBar();
-    if(act(alts)) return;
-    vs.status="Not understood – say checked, repeat, skip or stop"; renderVoiceBar(); if(vs.retries++<3) setTimeout(()=>listenFor(r),400);
-  }, err=>{
-    if(failed) return; failed=true;
-    if(!vs.active||vs.pending!==r) return;
-    if(err==="no-speech"||err==="aborted"||err==="network"){ if(vs.retries++<4){ setTimeout(()=>listenFor(r),300); } else { vs.status=err==="network"?"No connection for voice – tap Checked":"Nothing heard – tap Checked"; renderVoiceBar(); } }
-    else { vs.status=srErrorText(err)+" – tap Checked"; renderVoiceBar(); }
-  }, alts=>act(alts));
+  const open=()=>{
+    if(!vs.active||vs.pending!==r||acted) return;
+    vs.status="Listening"; renderVoiceBar();
+    const firstOpen=!vs.listenedOnce; vs.listenedOnce=true;
+    if(firstOpen) beep(880,70,1);
+    listenOnce(alts=>{
+      vs.heard=alts[0]||""; renderVoiceBar();
+      if(act(alts)) return;
+      vs.status="Heard “"+vs.heard+"” – say checked, repeat, skip or stop"; renderVoiceBar();
+    }, err=>{
+      if(!vs.active||vs.pending!==r||acted) return;
+      if(err==="not-allowed"||err==="service-not-allowed"||err==="unsupported"||err==="audio-capture"||err==="language-not-supported"){ vs.status=srErrorText(err)+" – tap Checked"; renderVoiceBar(); return; }
+      if(err==="network"){ vs.netFails=(vs.netFails||0)+1; if(vs.netFails>5){ vs.status="No connection for voice – tap Checked"; renderVoiceBar(); return; } setTimeout(open,1200); return; }
+      setTimeout(open, 150);               // session ended or nothing heard yet: keep the microphone open while the line is pending
+    }, alts=>act(alts));
+  };
+  vs.listenedOnce=false; vs.netFails=0;
+  setTimeout(open, 180);                   // let the speech engine release the audio channel before the microphone opens
 }
-
 function srErrorText(err){
   return ({"not-allowed":"Microphone not allowed for this app","service-not-allowed":"Speech recognition not allowed here","audio-capture":"No microphone found","network":"No connection for speech recognition","no-speech":"Nothing heard","aborted":"Listening stopped","unsupported":"Speech recognition not available in this app","language-not-supported":"Language not supported"})[err] || ("Speech recognition error: "+err);
 }
