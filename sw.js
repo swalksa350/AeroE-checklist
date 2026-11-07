@@ -1,4 +1,4 @@
-const VERSION = "ga-ecl-548fd509";
+const VERSION = "ga-ecl-cb0c6525";
 const ASSETS = [
   "./",
   "./index.html",
@@ -40,7 +40,7 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS.map(a => new Request(a, { cache: "no-cache" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", e => {
@@ -62,7 +62,8 @@ self.addEventListener("fetch", e => {
       try {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), 3000);
-        const res = await fetch(e.request, { signal: ctrl.signal });
+        // "no-cache" = always revalidate with the server (cheap: a 304 when unchanged), never trust the HTTP cache
+        const res = await fetch(new Request(e.request, { cache: "no-cache" }), { signal: ctrl.signal });
         clearTimeout(timer);
         if (res && res.ok) { cache.put(e.request, res.clone()); return res; }
         throw new Error("bad response");
@@ -74,7 +75,7 @@ self.addEventListener("fetch", e => {
   }
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(cached => {
-      const refresh = fetch(e.request).then(res => {
+      const refresh = fetch(new Request(e.request, { cache: "no-cache" })).then(res => {
         if (res && res.ok) caches.open(VERSION).then(c => c.put(e.request, res.clone()));
         return res;
       }).catch(() => cached);
