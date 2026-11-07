@@ -176,7 +176,9 @@ section.view.emerg .item .resp{color:var(--ink)}
 .saved{font-size:12px;color:var(--ink-mute);margin-top:8px}
 
 .upd{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;width:100%;padding:12px 16px;background:var(--cyan);color:#06202a;font-weight:700;font-size:15px;text-align:center;border-bottom:1px solid var(--line)}
-.upd.info{background:var(--panel-2);color:var(--ink);font-weight:500;border-top:3px solid var(--cyan)}
+.upd.ready{background:var(--amber);color:var(--on-amber)}
+.upd.info{background:var(--green);color:var(--on-green)}
+#updstate.ready{color:var(--amber);font-weight:700}
 .upd .x{padding:6px 12px;border:1px solid currentColor;border-radius:var(--radius);font-size:13px;font-weight:600}
 .favp{margin:12px 16px 0;padding:12px 14px;border:1px solid var(--amber);border-radius:var(--radius);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel)}
 .favp span{flex:1;min-width:180px}
@@ -286,7 +288,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "071becc8";
+const BUILD = "da2ae275";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
 const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["status","Status"]];
 const AC = () => byId(state.ac);
@@ -618,7 +620,7 @@ function renderStatus(v){
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(showPicker)},"Change aircraft")));
   w.append(h("h2",{},"App"));
   w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},BUILD)));
-  w.append(h("div",{class:"row"},h("span",{},"Updates"),h("span",{id:"updstate",class:"num"},updateState())));
+  w.append(h("div",{class:"row"},h("span",{},"Updates"),h("span",{id:"updstate",class:"num"+(updInfo.waiting?" ready":"")},updateState())));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>checkForUpdate(true)},"Check for updates now")));
   w.append(h("div",{class:"saved"},state.savedAt?"Progress is saved on this device. Last change "+new Date(state.savedAt).toLocaleString()+".":"Progress is saved on this device as you tick items."));
   v.append(w);
@@ -634,7 +636,7 @@ function updateState(){
   if(updInfo.waiting) return "New version ready – refresh";
   return updInfo.lastCheck ? "Up to date · checked "+new Date(updInfo.lastCheck).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "Not checked yet";
 }
-function refreshUpdState(){ const el=document.getElementById("updstate"); if(el) el.textContent=updateState(); }
+function refreshUpdState(){ const el=document.getElementById("updstate"); if(el){ el.textContent=updateState(); el.classList.toggle("ready",updInfo.waiting); } }
 function showBar(id, text, cls, action){
   if(document.getElementById(id)) return;
   const bar=document.createElement("div"); bar.id=id; bar.className="upd "+(cls||"");
@@ -646,7 +648,7 @@ function showBar(id, text, cls, action){
 }
 function showUpdateReady(){
   updInfo.waiting=true; refreshUpdState();
-  showBar("upd","A new version is ready.","",{label:"Refresh now",run:bar=>{bar.textContent="Refreshing…";location.reload();}});
+  showBar("upd","A new version is ready.","ready",{label:"Refresh now",run:bar=>{bar.textContent="Refreshing…";location.reload();}});
 }
 (function noticeAppliedUpdate(){
   try{
