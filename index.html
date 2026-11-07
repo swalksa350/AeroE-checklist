@@ -333,7 +333,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "54f7c47f";
+const BUILD = "42d94e30";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -702,6 +702,7 @@ function renderStatus(v){
   if(!TTS) w.append(h("div",{class:"empty"},"This browser cannot read text aloud."));
   else{
     w.append(tog("Read aloud",()=>voice.read,v=>{voice.read=v; if(!v) voiceStop(true);},"Speaks each line of an open checklist and waits for ✓ Checked before the next."));
+    w.append(tog("Short responses in normal checklists",()=>voice.brief,v=>{voice.brief=v;},"Reads only the capitalised action, e.g. “Fuel shutoff, ON”, and leaves the bracketed detail for the screen. Abnormal and emergency procedures are always read in full."));
     w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked”, “set”, “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
     const seg=h("div",{class:"seg"});RATES.forEach(([rt,label])=>seg.append(h("button",{class:voice.rate===rt?"on":"",onclick:()=>{voice.rate=rt;saveVoice();render();speak("Fuel selectors. Both on.")}},label)));
     w.append(h("div",{class:"row"},h("span",{},"Speaking rate"),seg));
@@ -810,8 +811,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
    tap-then-speak procedure recall button. Everything here degrades to the normal tap behaviour. */
 const VOICE_KEY="ga-ecl-voice";
 const RATES=[[0.7,"Slow"],[0.8,"Slower"],[0.9,"Normal"],[1,"Brisk"],[1.15,"Fast"]];
-const voice={read:false, reply:false, rate:0.9, voiceURI:""};
-try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; } }catch(e){}
+const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true};
+try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; } }catch(e){}
 function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)); }catch(e){} }
 const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -828,6 +829,27 @@ function sayable(t){
     .replace(/\bVmca?\b/g,"V M C").replace(/\bVyse\b/g,"V Y S E").replace(/\bVxse\b/g,"V X S E").replace(/\bVref\b/g,"V ref").replace(/\bVfe\b/g,"V F E").replace(/\bVle\b/g,"V L E").replace(/\bVlo\b/g,"V L O")
     .replace(/&/g," and ").replace(/[–—]/g,", ").replace(/\s*\/\s*/g,", ").replace(/\(([^)]*)\)/g,", $1,").replace(/\s+,/g,",").replace(/,\s*,/g,",");
 }
+/* Short form of a response for normal checklists: drop bracketed detail and read only the
+   capitalised action, e.g. "CHECK visually (53 gal usable)" -> "CHECK", "RESET then ON" -> "RESET then ON".
+   Falls back to the full response (minus brackets) when there is no capitalised action word. */
+const CONNECT=new Set(["&","/","and","or","then","to","-","–","—","+"]);
+function briefResponse(r){
+  let t=String(r).replace(/\([^)]*\)/g," ").replace(/\s+/g," ").trim();
+  const toks=t.split(" ").filter(Boolean);
+  const isCaps=w=>/^[A-Z][A-Z&'’\/\-]+[.,;:]?$/.test(w)&&/[A-Z]{2}/.test(w);
+  const isNum=w=>/^[\d.,%°]+[A-Za-z%°]*[.,;:]?$/.test(w);
+  if(!toks.some(isCaps)) return t;
+  const out=[];
+  for(const w of toks){
+    const bare=w.replace(/[.,;:]+$/,"");
+    if(isCaps(w)||isNum(w)||CONNECT.has(bare.toLowerCase())){ out.push(bare); if(/[;:]$/.test(w)) break; }
+    else break;
+  }
+  while(out.length&&CONNECT.has(out[out.length-1].toLowerCase())) out.pop();
+  if(!out.some(isCaps)) return t;
+  return out.join(" ");
+}
+function responseForSpeech(r){ return (voice.brief&&state.mode==="normal") ? briefResponse(r) : r; }
 let utterSeq=0;
 function speak(text, onend){
   if(!TTS){ onend&&onend(); return; }
@@ -856,7 +878,7 @@ function voiceNext(){
     if(r.type==="branch"){ if(r.chosen) continue; vs.pending=r; vs.retries=0; vs.status="Choose an option"; renderVoiceBar();
       speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r)); return; }
     if(actionable(r)){ if(isDone(p,r)||vs.skipped[k]) continue; vs.pending=r; vs.retries=0; vs.status="Reading"; renderVoiceBar();
-      const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+", . "+sayable(r.it.r)+".");
+      const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+".");
       speak(text, ()=>{ vs.status=voice.reply&&SR?"Listening":"Waiting for Checked"; renderVoiceBar(); listenFor(r); }); return; }
   }
   const pr=progress(p);
@@ -868,7 +890,7 @@ function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; c
 function voiceSkip(){ const r=vs.pending; if(!r) return; const c=currentRows(); if(!c) return; stopListening(); vs.skipped[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); }
 function voiceRepeat(){ const r=vs.pending; if(!r){ voiceNext(); return; } stopListening(); const c=currentRows(); if(!c) return;
   if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r));
-  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+", . "+sayable(r.it.r)+"."), ()=>listenFor(r)); }
+  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+"."), ()=>listenFor(r)); }
 function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; vs.pending=null; voiceNext(); save(); render(); }
 
 /* --- speech recognition --- */
