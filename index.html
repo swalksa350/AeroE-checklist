@@ -333,7 +333,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "c9e52546";
+const BUILD = "0794be49";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -708,6 +708,8 @@ function renderStatus(v){
     if(!voicesCache.length) loadVoices();
     if(voicesCache.length){ const sel=h("select",{id:"voice-select",onchange:ev=>{voice.voiceURI=ev.target.value;saveVoice();}}); const cur=pickVoice(); voicesCache.forEach(v=>{const o=h("option",{value:v.voiceURI},v.name+" ("+v.lang+")"); if(cur&&v.voiceURI===cur.voiceURI) o.selected=true; sel.append(o)}); w.append(h("div",{class:"row"},h("span",{},"Voice"),sel)); }
     w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>speak("Fuel selectors. Both on. Airspeed. "+sayable("85 KIAS")+".")},"Test the voice")));
+    w.append(h("div",{class:"row"},h("button",{class:"link",onclick:runMicTest},micTest.state==="listening"?"● Listening…":"Test the microphone"),h("span",{class:"num"},SR?"":"not available")));
+    if(micTest.text) w.append(h("div",{class:"saved",style:micTest.state==="fail"?"color:var(--red)":micTest.state==="ok"?"color:var(--green)":""},micTest.text));
     w.append(h("div",{class:"saved"},"With a Bluetooth headset paired to the device, speech plays in the headset and the headset microphone is used for replies, which keeps engine noise out. Every spoken reply is shown on screen before it is applied, and a tap always works."));
   }
   w.append(h("h2",{},"App"));
@@ -898,9 +900,25 @@ function listenFor(r){
   }, err=>{
     if(failed) return; failed=true;
     if(!vs.active||vs.pending!==r) return;
-    if(err==="no-speech"||err==="aborted"||err==="network"){ if(vs.retries++<4){ setTimeout(()=>listenFor(r),300); } else { vs.status=err==="network"?"No connection for voice – tap Checked":"Waiting for Checked"; renderVoiceBar(); } }
-    else { renderVoiceBar(); }
+    if(err==="no-speech"||err==="aborted"||err==="network"){ if(vs.retries++<4){ setTimeout(()=>listenFor(r),300); } else { vs.status=err==="network"?"No connection for voice – tap Checked":"Nothing heard – tap Checked"; renderVoiceBar(); } }
+    else { vs.status=srErrorText(err)+" – tap Checked"; renderVoiceBar(); }
   });
+}
+
+function srErrorText(err){
+  return ({"not-allowed":"Microphone not allowed for this app","service-not-allowed":"Speech recognition not allowed here","audio-capture":"No microphone found","network":"No connection for speech recognition","no-speech":"Nothing heard","aborted":"Listening stopped","unsupported":"Speech recognition not available in this app","language-not-supported":"Language not supported"})[err] || ("Speech recognition error: "+err);
+}
+/* Microphone test for the Status page: one listen, with the exact outcome shown. */
+let micTest={state:"idle", text:""};
+function runMicTest(){
+  const standalone=(window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;
+  const env=(standalone?"installed app":"browser tab")+", "+(navigator.onLine?"online":"offline");
+  if(!SR){ micTest={state:"fail",text:"Speech recognition is not available in this "+env+". On iPad and iPhone try the same page in Safari."}; render(); return; }
+  micTest={state:"listening",text:"Listening for 5 seconds – say anything ("+env+")"}; render();
+  const t0=Date.now(); let settled=false;
+  const finish=(st,tx)=>{ if(settled) return; settled=true; micTest={state:st,text:tx+" ("+Math.round((Date.now()-t0)/100)/10+" s, "+env+")"}; render(); };
+  listenOnce(alts=>finish("ok","Heard: “"+(alts[0]||"")+"”. Recognition works on this device."), err=>finish("fail",srErrorText(err)+". Error code: "+err+"."));
+  setTimeout(()=>finish("fail","No response from the recogniser after 12 s. Error code: timeout."),12000);
 }
 
 /* --- tap-then-speak recall of a procedure --- */
