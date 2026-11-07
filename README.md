@@ -30,9 +30,10 @@ The folder is not part of the app's offline cache and the app does not depend on
 
 1. Copy an existing file in `aircraft/` to `aircraft/<new-id>.js` and edit it (see `tools/AUTHORING.md`).
 2. `node tools/validate.js`
-3. `node tools/build.js`  (updates `index.html` and bumps the service-worker version so installed phones update)
+3. Add an entry at the top of `changes.json` (version, date, title, notes) – it feeds the What's new sheet and the update bars.
+4. `node tools/build.js`  (updates `index.html` and bumps the service-worker version so installed phones update)
    then `node tools/build-efb.js` to regenerate the EFB files
-4. Commit and push to `main`. GitHub Actions deploys to Pages.
+5. Commit and push to `main`. GitHub Actions deploys to Pages.
 
 Deep links: `https://<site>/#<id>` opens that aircraft directly, e.g. `#c172s`.
 

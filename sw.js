@@ -1,8 +1,9 @@
-const VERSION = "ga-ecl-cb0c6525";
+const VERSION = "ga-ecl-38b19394";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./changes.json",
   "./aircraft/a36.js",
   "./aircraft/b200.js",
   "./aircraft/be58.js",

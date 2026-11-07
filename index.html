@@ -173,6 +173,18 @@ section.view.emerg .item .resp{color:var(--ink)}
 .confirm button{padding:8px 14px;border-radius:var(--radius);border:1px solid var(--line);font-size:14px}
 .confirm button.danger{background:var(--red);color:var(--on-red);border-color:var(--red)}
 .link{color:var(--cyan)}
+.sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet .card2{width:100%;max-width:640px;max-height:85%;overflow:auto;background:var(--panel);color:var(--ink);border-radius:12px 12px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.sheet h2{font-size:18px;margin:0 0 4px}
+.sheet .ver{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.sheet .ver:first-of-type{border-top:0;margin-top:8px;padding-top:0}
+.sheet .ver b{font-size:16px} .sheet .ver small{color:var(--ink-dim);white-space:nowrap}
+.sheet ul{margin:6px 0 0;padding-left:20px} .sheet li{margin:4px 0;font-size:15px}
+.sheet .close{margin-top:16px;padding:10px 16px;border:1px solid var(--line);border-radius:var(--radius);width:100%;font-weight:600}
+.status .efb a{color:var(--cyan);text-decoration:none;font-weight:600}
+.status .efb .row{flex-wrap:wrap}
+.picker .efblink{display:block;margin-top:26px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--cyan);text-decoration:none;font-weight:600}
+.picker .efblink small{display:block;color:var(--ink-dim);font-weight:400;margin-top:2px}
 .saved{font-size:12px;color:var(--ink-mute);margin-top:8px}
 
 .upd{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;width:100%;padding:12px 16px;background:var(--cyan);color:#06202a;font-weight:700;font-size:15px;text-align:center;border-bottom:1px solid var(--line)}
@@ -294,7 +306,9 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "cb0c6525";
+const BUILD = "38b19394";
+let CHANGES = [];   // loaded from changes.json; newest first
+const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
 const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["status","Status"]];
 const AC = () => byId(state.ac);
@@ -512,6 +526,7 @@ function renderPicker(v){
     list.forEach(a=>grid.append(card(a)));
     w.append(grid);
   });
+  w.append(h("a",{class:"efblink",href:"efb/",target:"_blank",rel:"noopener"},"EFB files for OzRunways and AvPlan ›",h("small",{},"A single-file checklist and a printable PDF for every aircraft, with loading instructions. Also under each aircraft's Status page.")));
   v.append(w);
 }
 
@@ -624,13 +639,39 @@ function renderStatus(v){
   }
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(()=>toggleFav(a.id))},isFav(a.id)?"★ Remove "+a.short+" from favourites":"☆ Add "+a.short+" to favourites")));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(showPicker)},"Change aircraft")));
+  w.append(h("h2",{},"EFB files for this aircraft"));
+  const efb=h("div",{class:"efb"});
+  efb.append(h("div",{class:"row"},h("a",{href:"efb/"+a.id+".html",target:"_blank",rel:"noopener"},"Interactive checklist (HTML) ›"),h("span",{class:"num"},"for OzRunways / AvPlan Documents")));
+  efb.append(h("div",{class:"row"},h("a",{href:"efb/"+a.id+".pdf",target:"_blank",rel:"noopener"},"Printable checklist (PDF) ›"),h("span",{class:"num"},"A4, all procedures")));
+  efb.append(h("div",{class:"row"},h("a",{href:"efb/",target:"_blank",rel:"noopener"},"How to load into an EFB ›"),h("span",{class:"num"},"all aircraft")));
+  efb.append(h("div",{class:"saved"},"Open the HTML file, then use Share → Copy to OzRWY (or save it to your EFB's Dropbox folder). The file works offline inside the EFB and carries this version's content; replace it after an update."));
+  w.append(efb);
   w.append(h("h2",{},"App"));
-  w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},BUILD)));
+  w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},(APP_VERSION()?APP_VERSION()+" · ":"")+BUILD)));
+  w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>showWhatsNew(null,"What's new")},"What's new in this version")));
   w.append(h("div",{class:"row"},h("span",{},"Updates"),h("span",{id:"updstate",class:"num"+(updInfo.waiting?" ready":"")},updateState())));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>checkForUpdate(true)},"Check for updates now")));
   w.append(h("div",{class:"saved"},"If a newer version was published in the last few minutes it can take up to 10 minutes to reach every phone. Checking again after that will pick it up."));
   w.append(h("div",{class:"saved"},state.savedAt?"Progress is saved on this device. Last change "+new Date(state.savedAt).toLocaleString()+".":"Progress is saved on this device as you tick items."));
   v.append(w);
+}
+
+/* What's new sheet */
+function showWhatsNew(list, heading){
+  const old=document.getElementById("sheet"); if(old) old.remove();
+  const entries=(list&&list.length?list:CHANGES);
+  const card=h("div",{class:"card2"},h("h2",{},heading||"What's new"));
+  if(!entries.length) card.append(h("p",{},"Release notes are not available offline yet."));
+  entries.slice(0,8).forEach(e=>{card.append(h("div",{class:"ver"},h("b",{},"Version "+e.version+" – "+e.title),h("small",{},e.date)));const ul=h("ul",{});(e.notes||[]).forEach(n=>ul.append(h("li",{},n)));card.append(ul)});
+  const sheet=h("div",{class:"sheet",id:"sheet",onclick:ev=>{if(ev.target===sheet)sheet.remove()}},card);
+  card.append(h("button",{class:"close",onclick:()=>sheet.remove()},"Close"));
+  document.body.append(sheet);
+}
+function loadChanges(){
+  return fetch("changes.json").then(r=>r.json()).then(j=>{ if(Array.isArray(j)) CHANGES=j; }).catch(()=>{});
+}
+function fetchLatestChanges(){
+  return fetch("changes.json",{cache:"no-cache"}).then(r=>r.json()).catch(()=>null);
 }
 
 /* Update awareness.
@@ -644,28 +685,36 @@ function updateState(){
   return updInfo.lastCheck ? "Up to date · checked "+new Date(updInfo.lastCheck).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "Not checked yet";
 }
 function refreshUpdState(){ const el=document.getElementById("updstate"); if(el){ el.textContent=updateState(); el.classList.toggle("ready",updInfo.waiting); } }
-function showBar(id, text, cls, action){
-  if(document.getElementById(id)) return;
+function showBar(id, text, cls, actions){
+  if(document.getElementById(id)) return null;
   const bar=document.createElement("div"); bar.id=id; bar.className="upd "+(cls||"");
-  bar.append(document.createTextNode(text));
-  const b=document.createElement("button"); b.className="x"; b.textContent=action.label;
-  b.onclick=()=>{ action.run(bar); };
-  bar.append(b);
+  const txt=document.createElement("span"); txt.className="t"; txt.textContent=text; bar.append(txt);
+  actions.forEach(action=>{ const b=document.createElement("button"); b.className="x"; b.textContent=action.label; b.onclick=()=>{ action.run(bar); }; bar.append(b); });
   document.getElementById("app").insertBefore(bar, document.getElementById("main"));
+  return bar;
 }
+let latestChanges=null;
 function showUpdateReady(){
   updInfo.waiting=true; refreshUpdState();
-  showBar("upd","A new version is ready.","ready",{label:"Refresh now",run:bar=>{bar.textContent="Refreshing…";location.reload();}});
+  const bar=showBar("upd","A new version is ready.","ready",[
+    {label:"What's new",run:()=>showWhatsNew(latestChanges&&latestChanges.length?latestChanges.filter(e=>e.version!==APP_VERSION()):null,"In the new version")},
+    {label:"Refresh now",run:b=>{b.textContent="Refreshing…";location.reload();}}]);
+  fetchLatestChanges().then(j=>{ if(!j||!j.length) return; latestChanges=j; const top=j[0]; if(bar&&top&&top.version!==APP_VERSION()){ bar.querySelector(".t").textContent="Version "+top.version+" is ready: "+top.title+"."; } });
 }
+let appliedNotice=false;
 (function noticeAppliedUpdate(){
   try{
     const prev=localStorage.getItem(UPD_KEY);
-    if(prev && prev!==BUILD){
-      showBar("updok","AeroE Checklist was updated to version "+BUILD+".","info",{label:"OK",run:bar=>bar.remove()});
-    }
+    if(prev && prev!==BUILD) appliedNotice=true;
     localStorage.setItem(UPD_KEY, BUILD);
   }catch(e){}
 })();
+function showAppliedNotice(){
+  if(!appliedNotice) return;
+  const top=CHANGES[0];
+  const text= top ? "Updated to version "+top.version+": "+top.title+"." : "AeroE Checklist was updated to build "+BUILD+".";
+  showBar("updok",text,"info",[{label:"What's new",run:()=>showWhatsNew(null,"What's new")},{label:"OK",run:b=>b.remove()}]);
+}
 let swReg=null;
 function checkForUpdate(manual){
   if(!swReg){ if(manual){ updInfo.lastCheck=Date.now(); refreshUpdState(); } return; }
@@ -700,6 +749,7 @@ function start(){
   if(!applyHash() && state.ac && !byId(state.ac)) state.ac=null;
   if(AIRCRAFT.length===1 && !state.ac) selectAircraft(AIRCRAFT[0].id);
   render();
+  loadChanges().then(()=>{ showAppliedNotice(); render(); });
   window.addEventListener("hashchange", ()=>{ if(applyHash()){ save(); render(); } });
   document.addEventListener("pointerdown", keepAwake, {once:true});
 }

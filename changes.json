@@ -1,0 +1,54 @@
+[
+  {
+    "version": "1.5",
+    "date": "2026-11-07",
+    "title": "EFB files inside the app, and release notes",
+    "notes": [
+      "Each aircraft's Status page now has an EFB files section: an interactive single-file checklist and a printable PDF for loading into OzRunways or AvPlan, with instructions.",
+      "The update bars now say what changed, with a What's new button. The Status page has a What's new row.",
+      "Hot and flooded start branches added to the Maule M-6 and M-7 engine start."
+    ]
+  },
+  {
+    "version": "1.4",
+    "date": "2026-11-07",
+    "title": "30 aircraft and faster updates",
+    "notes": [
+      "Added GA8 Airvan, Maule M-6-235 and M-7-235, King Air B200, Conquest II, Cessna 310R, 402C, 210M and 210R, Navajo, Chieftain, Malibu, Matrix and PC-12/45.",
+      "Opening the app with signal now always fetches the newest build instead of a cached copy.",
+      "Update bars are coloured: amber when a new version is waiting, green once applied."
+    ]
+  },
+  {
+    "version": "1.3",
+    "date": "2026-11-07",
+    "title": "Favourites and update awareness",
+    "notes": [
+      "Star an aircraft to pin it under Favourites; the app offers this after three opens.",
+      "A bar announces a downloaded update while the app is open and an applied update on the next launch; the Status page shows the version and a manual check."
+    ]
+  },
+  {
+    "version": "1.2",
+    "date": "2026-11-07",
+    "title": "Day and night modes, cockpit colours",
+    "notes": [
+      "Header switch cycles Auto, Day and Night; remembered on the device.",
+      "Normal, Abnormal and Emergency tabs coloured green, amber and red; warnings red, cautions amber; next-item marker takes the tab colour."
+    ]
+  },
+  {
+    "version": "1.1",
+    "date": "2026-11-07",
+    "title": "Multi-aircraft app",
+    "notes": [
+      "Aircraft picker with 16 common GA types, progress kept per aircraft, V-speeds page and deep links by aircraft id."
+    ]
+  },
+  {
+    "version": "1.0",
+    "date": "2026-11-07",
+    "title": "C208B offline checklist",
+    "notes": ["First installable version with the Cessna 208B checklists, saved progress and offline use."]
+  }
+]
