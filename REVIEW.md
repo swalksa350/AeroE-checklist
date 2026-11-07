@@ -87,3 +87,33 @@ start there. Tick them off here as they are verified.
 - [ ] Vx 84 / Vy 90 / Vxse 82; Va 125; Vno 155; idle ~890 RPM
 - [ ] Min oil 50°C / coolant 60°C; fuel transfer trigger (~2/3 main); free-fall time ~30 s
 - [ ] ECU switch nomenclature (A / AUTO / B) and ECU TEST layout vary by serial; starter cooling 2 min
+
+## GippsAero GA8 Airvan
+- [ ] Vs/Vso ~57/50 KIAS; Vfe 100 (14°) / 86 (38°); Va 119 at 4,000 lb / 103 at 3,000 lb (lower weight assumed)
+- [ ] Usable fuel 322 L / 85 US gal
+- [ ] Run-up 2,000 RPM, mag drop 175/50 (generic IO-540 figures)
+- [ ] Sliding-door airspeed limit for parachuting (left as "per supplement"); door side stated as left rear
+
+## Maule M-7-235
+- [ ] All V-speeds (POH is in MPH and varies by sub-model): Vr 45–55, Vx ~60, Vy ~75, glide ~70, Va ~110, Vno ~135, Vne ~160, Vfe ~90/85, Vs/Vso ~45/38 KIAS
+- [ ] Fuel: 40 gal mains + ~30 gal aux; aux transfer by electric pumps
+- [ ] Max RPM 2,575; 48° flap position "on some aircraft"; soft-field 40° takeoff
+- [ ] Tailwheel lock items written "if installed"; model suffix "Super Rocket"
+
+## Beechcraft King Air B200
+- [ ] Low idle N1 ~52–58%; oil temp 10°C min for takeoff; battery start minimum 23 V
+- [ ] Overspeed governor test 1,830–1,910 RPM; primary governor exercise wording
+- [ ] Autofeather test thresholds (~500 / ~400 / ~200 ft-lb) and arming above ~90% N1
+- [ ] Rudder boost test method; crossfeed AUTO position (not all airframes); feathered cold start allowance
+- [ ] Yaw damp required above 17,000 ft; climb/cruise RPM 1,900–2,000 / 1,700–1,800; climb speeds 140/160, Vy 125, Vx 100, glide 135
+- [ ] Bleed valve positions after in-flight shutdown; manual gear extension details (handle location, CB, ~50 turns, ~130 KIAS)
+- [ ] Prop deice 14–18 A; brake deice limits; flaps-up Vref +10–15; windmilling air start envelope; boost-pump-inop 10 h limit; overspeed governor ~2,080 RPM
+- [ ] Condition levers LOW vs HIGH IDLE for takeoff/landing per operator SOP
+
+## Cessna 441 Conquest II
+- [ ] V2 ~110, Vy ~130, Va ~170, Vs/Vso ~85–90 / 75–80, Vref 95–105 KIAS
+- [ ] SRL OFF reduced EGT limit (altitude/OAT dependent; ~650°C placeholder)
+- [ ] Oil limits 70–120 psi / 40 min idle / 55–110°C; taxi RPM 65–75% (generic TPE331)
+- [ ] Air start envelope (below ~20,000 ft, 120–150 KIAS); single-engine go-around floor ~200 ft AGL
+- [ ] Autofeather fitted or NTS only; condition vs speed lever nomenclature; fire extinguisher fitted; emergency gear extension method
+- [ ] Battery endurance ~30 min; starter duty cycle
