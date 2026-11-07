@@ -168,3 +168,9 @@ start there. Tick them off here as they are verified.
 - [ ] Min icing speed ~130; air start envelope; hand pump 25–40 strokes; fuel imbalance 26 gal; FUEL LOW ~20 gal/side
 - [ ] Ground idle Ng 60–66%; oil 90–135 psi / 60 min; battery start 24 V; battery endurance ~30 min
 - [ ] CAWS label wording by serial (ESNTL BUS, NON ESNTL BUS, PROP OVSP TEST, INERT SEP, boots 1 CYCLE / 3 MIN)
+
+## Maule M-6-235
+- [ ] Rated RPM 2,400 (author) vs 2,575 used in the M-7 file – confirm the red line for the O-540-J1A5D / IO-540-W1A5D
+- [ ] STOL Vr 40–50, Vx 55–60, Vs/Vso ~43/35, Vfe 90/85/80 (24°/40°/48°), 48° approach 50–55 KIAS (MPH POH conversions)
+- [ ] 40° flap approved for takeoff; 48° landing-only; oil 12 qt max / 8 min (copied from M-7)
+- [ ] Mag check 175/50, oil pressure 55–95 psi, suction 4.5–5.5, cruise 12–14 GPH at 22–24 in Hg (typical, not POH)

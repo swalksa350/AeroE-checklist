@@ -1,4 +1,4 @@
-const VERSION = "ga-ecl-fb63116a";
+const VERSION = "ga-ecl-164e21b8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -20,6 +20,7 @@ const ASSETS = [
   "./aircraft/da42.js",
   "./aircraft/ga8.js",
   "./aircraft/m20j.js",
+  "./aircraft/m6-235.js",
   "./aircraft/m7-235.js",
   "./aircraft/pa28-161.js",
   "./aircraft/pa28-181.js",
