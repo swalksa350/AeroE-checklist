@@ -117,3 +117,27 @@ start there. Tick them off here as they are verified.
 - [ ] Air start envelope (below ~20,000 ft, 120–150 KIAS); single-engine go-around floor ~200 ft AGL
 - [ ] Autofeather fitted or NTS only; condition vs speed lever nomenclature; fire extinguisher fitted; emergency gear extension method
 - [ ] Battery endurance ~30 min; starter duty cycle
+
+## Cessna 310R
+- [ ] Vsse 83–88, Vr ~90, Vs/Vso ~79/72, Vref 90–95 KIAS
+- [ ] Aux pump LOW vs OFF for takeoff (varies by POH year); feather check drop 200–300 RPM at 1,500–1,700
+- [ ] Cruise lean ~13–15 GPH per engine; climb 25 in / 2,500, cruise 22–24 in / 2,300–2,450
+- [ ] Aux-tank timing (60 / 90 min on mains) and locker transfer logic; hand-crank ~50 turns
+
+## Cessna 402C
+- [ ] Vle/Vlo 180 ext / 148 ret; Vs/Vso ~85/76; Vr ~95; Vref ~95 KIAS
+- [ ] 39 in Hg / 2,700 RPM as takeoff setting and max-continuous status; climb 32.5 in / 2,450
+- [ ] TIT cruise target 1,550–1,600°F; hand pump 30–60 strokes; alternator rating not stated
+- [ ] Idle 600–650 RPM and oil pressure figures (generic Continental)
+
+## Piper PA-31-310 Navajo
+- [ ] Vs/Vso 72/62, Vsse ~85, best glide 105–115 KIAS (not a POH figure)
+- [ ] Climb 2,400 RPM / ~35 in Hg, cruise 30–34 in Hg; usable fuel ~187 gal; CHT 475°F
+- [ ] Oil, TIT 1,650°F, suction and voltage limits (generic Lycoming/Piper)
+- [ ] Emergency gear extension speed (≤100 KIAS), lever location, CO2 vs hand pump by serial
+- [ ] Single-engine go-around floor ~300 ft AGL (operational, not POH); flaps-up approach 105–110
+
+## Piper PA-31-350 Chieftain
+- [ ] Vs/Vso 76/68, Vsse ~85, best glide 110–120 KIAS (not a POH figure)
+- [ ] Climb 2,400 RPM / 38–40 in Hg, cruise 32–36 in Hg; usable fuel ~182 gal; CHT limit 475 vs 500°F for the J2BD
+- [ ] Same gear-extension, go-around and generic-limit items as the Navajo; flaps-up approach 110–115

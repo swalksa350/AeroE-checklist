@@ -126,7 +126,7 @@ window.AIRCRAFT.push({
       {c:"Airspeed", r:"107 KIAS (Vy) / 120–130 KIAS cruise climb"},
       {c:"Mixtures", r:"FULL RICH (fuel flow in green; lean only per POH climb schedule, TIT below 1650°F)"},
       {c:"Electric fuel pumps", r:"OFF above approx 1000 ft AGL (check fuel flow steady)"},
-      {c:"Cowl flaps", r:"OPEN (CHT below 475°F, oil temp below 245°F)"},
+      {c:"Cowl flaps", r:"OPEN (CHT in green (approx 475°F max), oil temp below 245°F)"},
       {c:"Engine instruments", r:"CHECK both (MP, RPM, fuel flow, TIT, CHT, oil)"},
       {c:"Landing / taxi lights", r:"OFF"},
     ]},
