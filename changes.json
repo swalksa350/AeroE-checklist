@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.7",
+    "date": "2026-11-07",
+    "title": "Send to EFB, and Mac window fix",
+    "notes": [
+      "The EFB rows on each Status page are now Send to EFB buttons: they open the share sheet with the file attached, so Copy to OzRWY or Save to Files is one tap. On a computer the file opens in the browser to save from there.",
+      "EFB files show a banner saying what they are, with a Share this file button and a link back to the app, so they are not mistaken for the app's own checklist.",
+      "On a Mac install the header now clears the window's close, minimise and zoom buttons.",
+      "If an EFB file is requested with no signal, a short message appears instead of the app page."
+    ]
+  },
+  {
     "version": "1.6",
     "date": "2026-11-07",
     "title": "User guide",

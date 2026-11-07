@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-title" content="AeroE">
 <link rel="manifest" href="manifest.webmanifest">
 <script>
-(function(){try{var t=localStorage.getItem("ga-ecl-theme");if(t==="night")document.documentElement.setAttribute("data-theme","dark");else if(t==="day")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();
+(function(){try{if(/Mac/.test(navigator.platform)&&!("ontouchend" in document)&&(matchMedia("(display-mode: standalone)").matches||navigator.standalone))document.documentElement.classList.add("mac-standalone");}catch(e){}try{var t=localStorage.getItem("ga-ecl-theme");if(t==="night")document.documentElement.setAttribute("data-theme","dark");else if(t==="day")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();
 </script>
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -72,6 +72,8 @@ nav.modes button.on.norm{color:var(--green);border-bottom-color:var(--green)}
 nav.modes button.on.abn{color:var(--amber);border-bottom-color:var(--amber)}
 nav.modes button.on.emerg{color:var(--red);border-bottom-color:var(--red)}
 nav.modes button .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--amber);color:var(--on-amber);font-size:11px;line-height:18px;font-variant-numeric:tabular-nums}
+html.mac-standalone header{padding-left:calc(env(safe-area-inset-left,0px) + 78px)}
+html.mac-standalone header .brand{min-width:0}
 header .theme{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--ink-dim);border-left:1px solid var(--line);font-size:11px;line-height:1}
 header .theme .g{font-size:17px;line-height:1}
 header .theme:active{background:var(--tap)}
@@ -306,7 +308,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "7f510494";
+const BUILD = "dce92715";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -642,10 +644,30 @@ function renderStatus(v){
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(showPicker)},"Change aircraft")));
   w.append(h("h2",{},"EFB files for this aircraft"));
   const efb=h("div",{class:"efb"});
-  efb.append(h("div",{class:"row"},h("a",{href:"efb/"+a.id+".html",target:"_blank",rel:"noopener"},"Interactive checklist (HTML) ›"),h("span",{class:"num"},"for OzRunways / AvPlan Documents")));
-  efb.append(h("div",{class:"row"},h("a",{href:"efb/"+a.id+".pdf",target:"_blank",rel:"noopener"},"Printable checklist (PDF) ›"),h("span",{class:"num"},"A4, all procedures")));
+  const canShareFiles = !!(navigator.share && navigator.canShare);
+  const shareRow=(label,file,mime,hint)=>{
+    const btn=h("button",{class:"link",onclick:async ev=>{
+      const b=ev.currentTarget; const was=b.textContent; b.textContent="Preparing…";
+      try{
+        const res=await fetch("efb/"+file,{cache:"no-cache"}); if(!res.ok) throw new Error("not available");
+        const blob=await res.blob(); const f=new File([blob],file,{type:mime});
+        if(canShareFiles && navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:a.short+" checklist"}); b.textContent=was; return; }
+        throw new Error("no file sharing");
+      }catch(e){
+        b.textContent=was;
+        if(e && e.name==="AbortError") return;           // pilot closed the share sheet
+        window.open("efb/"+file,"_blank","noopener");     // fall back to opening the file in the browser
+      }
+    }},label);
+    return h("div",{class:"row"},btn,h("span",{class:"num"},hint));
+  };
+  efb.append(shareRow("Send interactive checklist to EFB…",a.id+".html","text/html","HTML · Copy to OzRWY / Dropbox"));
+  efb.append(shareRow("Send printable checklist to EFB…",a.id+".pdf","application/pdf","PDF · A4, all procedures"));
   efb.append(h("div",{class:"row"},h("a",{href:"efb/",target:"_blank",rel:"noopener"},"How to load into an EFB ›"),h("span",{class:"num"},"all aircraft")));
-  efb.append(h("div",{class:"saved"},"Open the HTML file, then use Share → Copy to OzRWY (or save it to your EFB's Dropbox folder). The file works offline inside the EFB and carries this version's content; replace it after an update."));
+  efb.append(h("div",{class:"saved"},canShareFiles
+    ?"Tap a button to open the share sheet with the file attached, then choose Copy to OzRWY, Save to Files, or your EFB's Dropbox folder. On a computer the file opens in the browser instead; save it from there."
+    :"On this device the file opens in the browser; save it from there (File → Save, or Share) and put it in your EFB's Documents or Dropbox folder."));
+  efb.append(h("div",{class:"saved"},"The file works offline inside the EFB and carries this version's content; send it again after an app update."));
   w.append(efb);
   w.append(h("h2",{},"App"));
   w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},(APP_VERSION()?APP_VERSION()+" · ":"")+BUILD)));

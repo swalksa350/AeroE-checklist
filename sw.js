@@ -1,4 +1,4 @@
-const VERSION = "ga-ecl-7f510494";
+const VERSION = "ga-ecl-dce92715";
 const ASSETS = [
   "./",
   "./index.html",
@@ -73,6 +73,9 @@ self.addEventListener("fetch", e => {
       } catch (err) {
         const hit = await cache.match(e.request.url.split("#")[0], { ignoreSearch: true });
         if (hit) return hit;
+        if (url.pathname.includes("/efb/")) {
+          return new Response("<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'><title>Offline</title><body style='font-family:sans-serif;padding:24px;max-width:40em'><h1>No connection</h1><p>EFB files are downloaded from the server when you send them to your EFB, so they need signal the first time. Try again when online.</p><p><a href='../'>Back to the app</a></p>", { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
+        }
         return (await cache.match("./index.html")) || Response.error();
       }
     })());

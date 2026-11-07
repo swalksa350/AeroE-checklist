@@ -25,6 +25,10 @@ const page = (a, data) => `<!DOCTYPE html>
 ${style}
 /* EFB edition: single aircraft, header brand is not a button */
 header .brand{cursor:default}
+.efbbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--panel-2);border-bottom:2px solid var(--cyan);font-size:14px;color:var(--ink-dim)}
+.efbbar b{color:var(--ink)}
+.efbbar button,.efbbar a{padding:7px 12px;border:1px solid var(--cyan);border-radius:var(--radius);color:var(--cyan);font-weight:600;font-size:13px;text-decoration:none;background:none}
+.efbbar .hide{margin-left:auto;border-color:var(--line);color:var(--ink-dim)}
 </style>
 </head>
 <body>
@@ -34,6 +38,7 @@ header .brand{cursor:default}
     <nav class="modes" id="modes" aria-label="Checklist sections"></nav>
     <button class="theme" id="theme" aria-label="Day or night display"></button>
   </header>
+  <div class="efbbar" id="efbbar"><span><b>EFB file</b> – ${esc(a.maker)} ${esc(a.model)} checklist as one offline file.</span><button id="efbshare">Share this file…</button><a href="../">Open the app</a><button class="hide" id="efbhide">Hide</button></div>
   <main id="main">
     <aside id="side"></aside>
     <section class="view" id="view"></section>
@@ -46,6 +51,25 @@ ${data}
 </script>
 <script>
 ${engine}
+</script>
+<script>
+(function(){
+  var bar=document.getElementById("efbbar"), sh=document.getElementById("efbshare"), hd=document.getElementById("efbhide");
+  try{ if(sessionStorage.getItem("aeroe-efbbar")==="hide") bar.remove(); }catch(e){}
+  hd.onclick=function(){ bar.remove(); try{ sessionStorage.setItem("aeroe-efbbar","hide"); }catch(e){} };
+  sh.onclick=async function(){
+    try{
+      var res=await fetch(location.href.split("#")[0],{cache:"no-cache"}); var blob=await res.blob();
+      var f=new File([blob],"${a.id}.html",{type:"text/html"});
+      if(navigator.share && navigator.canShare && navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:"${esc(a.short)} checklist"}); return; }
+      throw new Error("no file share");
+    }catch(e){
+      if(e && e.name==="AbortError") return;
+      sh.textContent="Use your browser's Share or Save Page to keep this file";
+    }
+  };
+  if(location.protocol==="file:"){ sh.remove(); }
+})();
 </script>
 </body>
 </html>
