@@ -1,4 +1,4 @@
-const VERSION = "ga-ecl-b027fd9696";
+const VERSION = "ga-ecl-7fd81ddcdf";
 const ASSETS = [
   "./",
   "./index.html",
@@ -44,6 +44,24 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
+  const isPage = e.request.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html");
+  if (isPage) {
+    // Page: try the network briefly so a launch with signal shows the newest build; fall back to the cache offline.
+    e.respondWith((async () => {
+      const cache = await caches.open(VERSION);
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 3000);
+        const res = await fetch(e.request, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (res && res.ok) { cache.put(e.request, res.clone()); return res; }
+        throw new Error("bad response");
+      } catch (err) {
+        return (await cache.match(e.request, { ignoreSearch: true })) || (await cache.match("./index.html"));
+      }
+    })());
+    return;
+  }
   e.respondWith(
     caches.match(e.request, { ignoreSearch: true }).then(cached => {
       const refresh = fetch(e.request).then(res => {

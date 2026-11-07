@@ -175,6 +175,7 @@ section.view.emerg .item .resp{color:var(--ink)}
 .link{color:var(--cyan)}
 .saved{font-size:12px;color:var(--ink-mute);margin-top:8px}
 
+.upd{display:block;width:100%;padding:12px 16px;background:var(--cyan);color:#06202a;font-weight:700;font-size:15px;text-align:center;border-bottom:1px solid var(--line)}
 footer{font-size:11px;color:var(--ink-mute);text-align:center;padding:8px 16px;border-top:1px solid var(--line);background:var(--panel)}
 @media (prefers-reduced-motion:no-preference){.item{transition:background .12s}}
 
@@ -590,17 +591,26 @@ start();
 </script>
 <script>
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  const showUpdate = () => {
+    if (document.getElementById("upd")) return;
+    const bar = document.createElement("button");
+    bar.id = "upd"; bar.className = "upd";
+    bar.textContent = "A new version is ready. Tap to refresh.";
+    bar.onclick = () => { bar.textContent = "Refreshing…"; location.reload(); };
+    document.getElementById("app").insertBefore(bar, document.getElementById("main"));
+  };
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js").then(reg => {
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
+      if (reg.waiting && navigator.serviceWorker.controller) showUpdate();
       reg.addEventListener("updatefound", () => {
         const nw = reg.installing;
         nw && nw.addEventListener("statechange", () => {
-          if (nw.state === "installed" && navigator.serviceWorker.controller) {
-            const f = document.querySelector("footer");
-            if (f) f.textContent = "An update is ready. Close and reopen the app to use it.";
-          }
+          if (nw.state === "installed" && navigator.serviceWorker.controller) showUpdate();
         });
       });
+      // check for a newer build whenever the app comes back to the foreground
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
+      setInterval(() => reg.update().catch(() => {}), 6 * 60 * 60 * 1000);
     }).catch(() => {});
   });
 }
