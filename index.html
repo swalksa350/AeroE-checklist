@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>GA Checklist</title>
+<title>AeroE Checklist</title>
 <meta name="description" content="Tap-to-tick normal, abnormal and emergency checklists for common general aviation aircraft. Works offline.">
 <meta name="theme-color" content="#1b2329" media="(prefers-color-scheme: dark)">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="GA Checklist">
+<meta name="apple-mobile-web-app-title" content="AeroE">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -370,7 +370,7 @@ function render(){
     brand.append(h("span",{class:"ac"},h("span",{},a.short),h("span",{class:"chev"},"▼")),h("small",{},a.maker+" "+a.model));
     brand.onclick=()=>go(showPicker);
   }else{
-    brand.append(h("span",{class:"title"},"GA Checklist"),h("small",{},AIRCRAFT.length+" aircraft · tap one to begin"));
+    brand.append(h("span",{class:"title"},"AeroE Checklist"),h("small",{},AIRCRAFT.length+" aircraft · tap one to begin"));
     brand.onclick=null;
   }
   const nav=$("#modes");nav.innerHTML="";

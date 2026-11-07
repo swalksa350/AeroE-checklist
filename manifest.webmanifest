@@ -1,6 +1,6 @@
 {
-  "name": "GA Electronic Checklist",
-  "short_name": "GA Checklist",
+  "name": "AeroE Checklist",
+  "short_name": "AeroE",
   "description": "Normal, abnormal and emergency checklists for common general aviation aircraft. Works offline.",
   "start_url": "./index.html",
   "scope": "./",

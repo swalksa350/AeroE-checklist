@@ -1,4 +1,4 @@
-# GA Electronic Checklist (offline PWA)
+# AeroE Checklist (offline PWA)
 
 Tap-to-tick normal, abnormal and emergency checklists for common general aviation aircraft.
 Pick an aircraft, work through the flight, and the app keeps progress per type on the device.
