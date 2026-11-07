@@ -1,9 +1,10 @@
-const VERSION = "ga-ecl-38b19394";
+const VERSION = "ga-ecl-7f510494";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./changes.json",
+  "./guide.html",
   "./aircraft/a36.js",
   "./aircraft/b200.js",
   "./aircraft/be58.js",
@@ -64,12 +65,15 @@ self.addEventListener("fetch", e => {
         const ctrl = new AbortController();
         const timer = setTimeout(() => ctrl.abort(), 3000);
         // "no-cache" = always revalidate with the server (cheap: a 304 when unchanged), never trust the HTTP cache
-        const res = await fetch(new Request(e.request, { cache: "no-cache" }), { signal: ctrl.signal });
+        // A navigation Request cannot be cloned with new options, so fetch by URL instead
+        const res = await fetch(e.request.url, { cache: "no-cache", credentials: "same-origin", signal: ctrl.signal });
         clearTimeout(timer);
         if (res && res.ok) { cache.put(e.request, res.clone()); return res; }
         throw new Error("bad response");
       } catch (err) {
-        return (await cache.match(e.request, { ignoreSearch: true })) || (await cache.match("./index.html"));
+        const hit = await cache.match(e.request.url.split("#")[0], { ignoreSearch: true });
+        if (hit) return hit;
+        return (await cache.match("./index.html")) || Response.error();
       }
     })());
     return;

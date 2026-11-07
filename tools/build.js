@@ -10,7 +10,7 @@ const tags = files.map(f => `<script src="aircraft/${f}"></script>`).join("\n");
 html = html.replace(/(<!-- aircraft:start[^>]*-->)[\s\S]*?(<!-- aircraft:end -->)/, `$1\n${tags}\n$2`);
 fs.writeFileSync(path.join(root, "index.html"), html);
 
-const assets = ["./", "./index.html", "./manifest.webmanifest", "./changes.json", ...files.map(f => `./aircraft/${f}`),
+const assets = ["./", "./index.html", "./manifest.webmanifest", "./changes.json", "./guide.html", ...files.map(f => `./aircraft/${f}`),
   ...fs.readdirSync(path.join(root, "icons")).sort().map(f => `./icons/${f}`)];
 const hash = crypto.createHash("sha1");
 hash.update(html.replace(/const BUILD = "[^"]*";/, 'const BUILD = "";'));

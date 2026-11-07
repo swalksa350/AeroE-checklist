@@ -306,7 +306,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "38b19394";
+const BUILD = "7f510494";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -526,6 +526,7 @@ function renderPicker(v){
     list.forEach(a=>grid.append(card(a)));
     w.append(grid);
   });
+  w.append(h("a",{class:"efblink",href:"guide.html"},"User guide ›",h("small",{},"How installing, checklists, emergency procedures, the Status page, day and night display, updates and EFB files work.")));
   w.append(h("a",{class:"efblink",href:"efb/",target:"_blank",rel:"noopener"},"EFB files for OzRunways and AvPlan ›",h("small",{},"A single-file checklist and a printable PDF for every aircraft, with loading instructions. Also under each aircraft's Status page.")));
   v.append(w);
 }
@@ -649,6 +650,7 @@ function renderStatus(v){
   w.append(h("h2",{},"App"));
   w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},(APP_VERSION()?APP_VERSION()+" · ":"")+BUILD)));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>showWhatsNew(null,"What's new")},"What's new in this version")));
+  w.append(h("div",{class:"row efb"},h("a",{href:"guide.html"},"User guide ›"),h("span",{class:"num"},"how everything works")));
   w.append(h("div",{class:"row"},h("span",{},"Updates"),h("span",{id:"updstate",class:"num"+(updInfo.waiting?" ready":"")},updateState())));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>checkForUpdate(true)},"Check for updates now")));
   w.append(h("div",{class:"saved"},"If a newer version was published in the last few minutes it can take up to 10 minutes to reach every phone. Checking again after that will pick it up."));

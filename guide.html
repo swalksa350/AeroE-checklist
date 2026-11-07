@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AeroE Checklist – User guide</title>
+<meta name="description" content="How to install and use the AeroE Checklist app: aircraft picker, checklists, emergency procedures, status page, day and night modes, updates and EFB files.">
+<style>
+:root{color-scheme:dark;--bg:#12181d;--panel:#1b2329;--panel-2:#222d35;--line:#2f3c46;--ink:#dfe5e9;--ink-dim:#8b9aa6;--amber:#e6ad3c;--red:#e0524a;--green:#5cc48d;--cyan:#5bb7d2;--radius:6px}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){color-scheme:light;--bg:#eef1f3;--panel:#fff;--panel-2:#f3f6f8;--line:#d3dade;--ink:#131a1f;--ink-dim:#5a6873;--amber:#b7780a;--red:#c2322a;--green:#1f8f55;--cyan:#1a7f9c}}
+:root[data-theme="light"]{color-scheme:light;--bg:#eef1f3;--panel:#fff;--panel-2:#f3f6f8;--line:#d3dade;--ink:#131a1f;--ink-dim:#5a6873;--amber:#b7780a;--red:#c2322a;--green:#1f8f55;--cyan:#1a7f9c}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.45 "Helvetica Neue",Helvetica,Arial,sans-serif}
+header{position:sticky;top:0;z-index:2;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;padding:12px max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+header a{color:var(--cyan);text-decoration:none;white-space:nowrap}
+header h1{font-size:18px;margin:0;flex:1}
+main{max-width:720px;margin:0 auto;padding:8px max(16px,env(safe-area-inset-right,0px)) 60px max(16px,env(safe-area-inset-left,0px))}
+h2{font-size:14px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-dim);margin:30px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+h3{font-size:17px;margin:18px 0 6px}
+p,li{max-width:65ch}
+ol,ul{padding-left:22px} li{margin:5px 0}
+.toc{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;margin:14px 0}
+.toc a{color:var(--cyan);text-decoration:none} .toc li{margin:3px 0}
+.key{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin:10px 0}
+.key b{white-space:nowrap}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px}
+.g{color:var(--green)} .a{color:var(--amber)} .r{color:var(--red)} .c{color:var(--cyan)}
+.note{border-left:4px solid var(--amber);padding:8px 12px;background:var(--panel-2);margin:12px 0;border-radius:0 var(--radius) var(--radius) 0}
+.warn{border-left-color:var(--red)}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px;background:var(--panel-2);padding:1px 5px;border-radius:4px}
+footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;border-top:1px solid var(--line)}
+</style>
+<script>(function(){try{var t=localStorage.getItem("ga-ecl-theme");if(t==="night")document.documentElement.setAttribute("data-theme","dark");else if(t==="day")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();</script>
+</head>
+<body>
+<header><a href="./">‹ App</a><h1>AeroE Checklist – User guide</h1></header>
+<main>
+<p>AeroE Checklist is a tap-to-tick electronic checklist for common general aviation aircraft. It runs on a phone or tablet, works without a network once installed, and keeps your place in each checklist on the device.</p>
+
+<div class="note warn"><strong>Prototype content.</strong> Every checklist was drafted from typical manufacturer procedures, not from an approved document. Verify each type against the operator's approved checklist and the aircraft's POH/AFM before any use. The footer notice stays until that has been done.</div>
+
+<div class="toc"><strong>Contents</strong>
+<ol>
+<li><a href="#install">Installing on a phone or tablet</a></li>
+<li><a href="#picker">Choosing an aircraft and favourites</a></li>
+<li><a href="#layout">The screen and the four tabs</a></li>
+<li><a href="#checklist">Working through a checklist</a></li>
+<li><a href="#emerg">Abnormal and emergency procedures</a></li>
+<li><a href="#status">The Status page</a></li>
+<li><a href="#theme">Day and night display</a></li>
+<li><a href="#updates">Updates and what's new</a></li>
+<li><a href="#offline">Offline use and saved progress</a></li>
+<li><a href="#efb">EFB files for OzRunways and AvPlan</a></li>
+<li><a href="#links">Direct links to an aircraft</a></li>
+<li><a href="#trouble">If something looks wrong</a></li>
+</ol></div>
+
+<h2 id="install">1. Installing on a phone or tablet</h2>
+<p>The app is a web page that installs like an app. You need signal once, for the install.</p>
+<ol>
+<li>Open <strong>https://swalksa350.github.io/AeroE-checklist/</strong> in Safari (iPhone, iPad) or Chrome (Android).</li>
+<li>Tap <strong>Share</strong>, then <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</li>
+<li>Open it once from the new icon while still online. From then on it launches full-screen and works with no network.</li>
+</ol>
+<p>Anyone with the link can install it the same way. Each device keeps its own progress and favourites; nothing is shared between devices.</p>
+
+<h2 id="picker">2. Choosing an aircraft and favourites</h2>
+<p>The app opens on the aircraft picker, grouped into single-engine piston, high-performance single, multi-engine piston and turboprop. Each card shows the maker, model, engine and whether any checklist is under way on that type. Tap a card to open it.</p>
+<ul>
+<li><strong>Favourites.</strong> Tap the ☆ in the corner of a card to pin that aircraft under a Favourites heading at the top of the picker. Tap the ★ to remove it. The same choice is available on the aircraft's Status page.</li>
+<li><strong>Suggested favourites.</strong> After you have opened an aircraft three times the app offers to add it. "Not now" silences the offer for another ten opens. Once you have added or removed an aircraft yourself it never asks about that type again.</li>
+<li><strong>Continue.</strong> The picker offers the aircraft you used last at the top.</li>
+<li><strong>Changing aircraft.</strong> Tap the aircraft name at the top left of any screen, or use "Change aircraft" on the Status page.</li>
+</ul>
+
+<h2 id="layout">3. The screen and the four tabs</h2>
+<p>Once an aircraft is open, the header shows its short name on the left, four tabs, and the display switch on the right. On a phone you see a list of checklists first and tap one to open it; on a tablet the list stays on the left with the open checklist on the right.</p>
+<div class="key">
+<b class="g">Normal</b><span>The flight sequence: Before Start, Engine Start, Before Taxi, Before Takeoff, After Takeoff / Climb, Cruise, Descent, Before Landing, After Landing, Shutdown. The first entry, V-speeds &amp; limits, is a reference page, not a checklist.</span>
+<b class="a">Abnormal</b><span>Caution-level problems: alternator failure, low oil pressure, gear unsafe, icing and so on. Action is needed but not immediately.</span>
+<b class="r">Emergency</b><span>Warning-level procedures: engine failure, fire, emergency descent, decompression. Immediate action.</span>
+<b>Status</b><span>Where you are across the whole flight: procedures in progress, items deferred to landing, normal checklist completion, favourites, EFB files, version and updates. A number on the tab means an abnormal or emergency procedure is still open.</span>
+</div>
+<p>The colours follow cockpit convention: green for normal, amber for caution, red for warning. A dot beside each checklist in the list shows its state: grey not started, amber part done, green complete, red for an abnormal or emergency procedure still in progress.</p>
+
+<h2 id="checklist">4. Working through a checklist</h2>
+<p>Each line is a challenge on the left and a response on the right, the way a paper checklist reads. The line to action next has a coloured bar on its left edge and a lighter background.</p>
+<ul>
+<li><strong>Tick an item</strong> by tapping anywhere on the line. It greys out and gains a tick. Tap again to untick.</li>
+<li><strong>Branches.</strong> Some procedures ask a question in amber, for example "Engine condition?" with Cold, Hot and Flooded. Tap the answer and only the lines that apply appear. Changing the answer clears ticks under the old one.</li>
+<li><strong>Notes</strong> in red are warnings and in amber are cautions. They are read, not ticked.</li>
+<li><strong>Complete.</strong> When every item is ticked a green bar appears. In the normal sequence it offers the next checklist; in a procedure it offers the Status page.</li>
+<li><strong>Reset</strong> at the top right clears that one checklist. Resetting everything for a new flight is on the Status page.</li>
+</ul>
+
+<h2 id="emerg">5. Abnormal and emergency procedures</h2>
+<ul>
+<li><strong>Memory items</strong> have a red bar on the left and a red "(memory)" tag. These are the recall actions to do first; the app is for confirming them afterwards.</li>
+<li><strong>Land banners.</strong> A red banner reads LAND IMMEDIATELY or LAND AS SOON AS POSSIBLE; an amber one reads LAND AS SOON AS PRACTICAL. They follow the usual meanings of those phrases.</li>
+<li><strong>Entry condition.</strong> Some procedures show the triggering indication under the title, for example the annunciator that brings you here.</li>
+<li><strong>Deferred items</strong> appear in amber with the response NOTED. Ticking one records a consequence for later, such as "flaps inoperative – flaps-up landing, longer runway". They are collected on the Status page under landing considerations.</li>
+<li>In emergency procedures the responses are white rather than cyan so that red stays the only accent on the page.</li>
+</ul>
+
+<h2 id="status">6. The Status page</h2>
+<ul>
+<li><strong>Active procedures</strong> lists any abnormal or emergency procedure started and not finished, with its progress and land banner. Tap one to return to it.</li>
+<li><strong>Deferred items / landing considerations</strong> gathers every deferred item you have ticked.</li>
+<li><strong>Normal checklists</strong> shows completion of the flight sequence at a glance.</li>
+<li><strong>Flight</strong> holds "Reset all … for a new flight", which asks you to confirm before clearing that aircraft only, plus the favourite toggle and Change aircraft.</li>
+<li><strong>EFB files for this aircraft</strong> is covered in section 10.</li>
+<li><strong>App</strong> shows the version, a What's new row, when updates were last checked and a manual check button.</li>
+</ul>
+
+<h2 id="theme">7. Day and night display</h2>
+<p>The switch at the far right of the header cycles through three settings:</p>
+<ul>
+<li><strong>Auto</strong> follows the phone's own light or dark setting.</li>
+<li><strong>Day</strong> forces the light display: pale grey background with darker colours for glare.</li>
+<li><strong>Night</strong> forces the dark display: charcoal background, softened text and desaturated colours for a dark cockpit.</li>
+</ul>
+<p>The choice is remembered on the device and applied before the page draws, so there is no flash on launch. The hues never change between modes, only brightness and background.</p>
+
+<h2 id="updates">8. Updates and what's new</h2>
+<p>Updates arrive automatically; nothing has to be reinstalled.</p>
+<ul>
+<li>Opening the app with signal loads the newest version. The first launch after an update shows a <span class="g">green bar</span> naming the version and what changed, with a What's new button for the full notes.</li>
+<li>If a new version finishes downloading while the app is open, an <span class="a">amber bar</span> appears with the incoming version's headline and a Refresh now button.</li>
+<li>Release notes for every version are under What's new on the Status page.</li>
+<li>After a new version is published it can take up to ten minutes to reach every device, because the web host keeps the previous files for that long. "Check for updates now" on the Status page picks it up once it is there.</li>
+</ul>
+
+<h2 id="offline">9. Offline use and saved progress</h2>
+<ul>
+<li>After the first online visit every part of the app is stored on the device, including all aircraft. No network is needed to open it or use any checklist.</li>
+<li>Ticks, branch answers, favourites, the display setting and the aircraft you were on are saved on the device as you go. They survive closing the app, locking the phone and updates.</li>
+<li>Progress is kept separately for each aircraft. Resetting one does not affect another.</li>
+<li>The screen is kept awake while a checklist is open, on devices that allow it.</li>
+</ul>
+
+<h2 id="efb">10. EFB files for OzRunways and AvPlan</h2>
+<p>For pilots who prefer to keep everything inside their EFB, each aircraft is also available as two stand-alone files. Find them on the aircraft's Status page under "EFB files for this aircraft", or all together from the link at the bottom of the picker.</p>
+<ul>
+<li><strong>Interactive checklist (HTML).</strong> The same tap-to-tick checklist in one file that works offline inside the EFB's document viewer. On an iPad or iPhone, open the link, tap Share, then <strong>Copy to OzRWY</strong>; it appears on the OzRunways Documents page. Or save the file to the Dropbox folder linked to your EFB. Companies can push the file to every pilot through the OzRunways Dashboard or an AvPlan Cloud Group.</li>
+<li><strong>Printable checklist (PDF).</strong> An A4 copy of every procedure with branches shown in full, for AvPlan (which documents PDF import) or for paper.</li>
+</ul>
+<div class="note">The EFB files carry the content of the version they were downloaded from and do not update themselves. After an app update, download the file again and replace it in the EFB. Ticks inside the EFB viewer are kept between sessions only where that viewer allows browser storage.</div>
+
+<h2 id="links">11. Direct links to an aircraft</h2>
+<p>Adding <code>#</code> and the aircraft's id to the app address opens that aircraft straight away, for example <code>…/AeroE-checklist/#c172s</code>. The id is shown in the address bar when an aircraft is open. Useful for a club or school that flies one type.</p>
+
+<h2 id="trouble">12. If something looks wrong</h2>
+<ul>
+<li><strong>A change you were told about is not showing.</strong> Check the Version row in the App section of the Status page. If it is older than expected, wait ten minutes from publication, tap "Check for updates now", close the app fully and reopen it.</li>
+<li><strong>There is no Version row.</strong> The copy on the device is from before updates were tracked, usually one installed from the old address. Delete the icon and install again from the address in section 1. Progress and favourites carry over.</li>
+<li><strong>Progress disappeared.</strong> Browser site data was cleared, or the app was opened in a private window. Saved data lives only in the device's browser storage.</li>
+<li><strong>A figure or procedure looks wrong.</strong> It may well be. The repository's review list records which figures the authors were least sure of for each aircraft, and corrections are made in the data file for that type. Report it with the aircraft and the checklist line.</li>
+</ul>
+
+<footer>AeroE Checklist is an open prototype. Content and software are provided as a starting point for an operator's own approved checklist, not as a substitute for one.</footer>
+</main>
+</body>
+</html>

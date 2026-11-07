@@ -11,6 +11,8 @@ The Status page shows the installed version and checks for updates; a bar appear
 
 ## Files
 
+- `guide.html` – user guide (linked from the app, works offline)
+
 - `index.html` – the app (one page, no build step, no dependencies)
 - `aircraft/<id>.js` – one checklist data file per aircraft type
 - `sw.js` – service worker that precaches everything for offline use

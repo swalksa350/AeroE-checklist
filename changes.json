@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.6",
+    "date": "2026-11-07",
+    "title": "User guide",
+    "notes": [
+      "A user guide explaining installation, the picker and favourites, working through checklists, emergency procedures, the Status page, day and night display, updates, offline use, EFB files and troubleshooting. Linked from the picker and every aircraft's Status page, and available offline.",
+      "Fixed: opening the app with signal now reliably loads the newest page on the first launch (a fault in the page fetch meant it could take one extra launch)."
+    ]
+  },
+  {
     "version": "1.5",
     "date": "2026-11-07",
     "title": "EFB files inside the app, and release notes",
@@ -49,6 +58,8 @@
     "version": "1.0",
     "date": "2026-11-07",
     "title": "C208B offline checklist",
-    "notes": ["First installable version with the Cessna 208B checklists, saved progress and offline use."]
+    "notes": [
+      "First installable version with the Cessna 208B checklists, saved progress and offline use."
+    ]
   }
 ]
