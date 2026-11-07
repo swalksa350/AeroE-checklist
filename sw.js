@@ -1,9 +1,20 @@
-const VERSION = "ga-ecl-10577b0312";
+const VERSION = "ga-ecl-9d99fa951b";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
+  "./aircraft/c152.js",
+  "./aircraft/c172s.js",
+  "./aircraft/c182t.js",
+  "./aircraft/c206h.js",
   "./aircraft/c208b.js",
+  "./aircraft/da40.js",
+  "./aircraft/da42.js",
+  "./aircraft/pa28-161.js",
+  "./aircraft/pa28-181.js",
+  "./aircraft/pa28r-201.js",
+  "./aircraft/pa44-180.js",
+  "./aircraft/sr20.js",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
