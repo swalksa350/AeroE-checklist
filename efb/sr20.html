@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SR20 Checklist – AeroE</title>
+<meta name="description" content="AeroE Checklist EFB edition: Cirrus SR20 G3 / G6 normal, abnormal and emergency checklists in one offline file.">
+<style>
+
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:#12181d}
+
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);background:#12181d}
+/* Layout: full-height two-pane app (list | procedure) that collapses to one pane on a phone.
+   Dark-first: cockpit-style charcoal panels, cyan responses, amber/red for abnormal/emergency. */
+:root{
+  color-scheme: dark;
+  --bg:#12181d; --panel:#1b2329; --panel-2:#222d35; --line:#2f3c46;
+  --ink:#dfe5e9; --ink-dim:#8b9aa6; --ink-mute:#5c6b76;
+  --amber:#e6ad3c; --red:#e0524a; --green:#5cc48d; --cyan:#5bb7d2;
+  --done-ink:#56c88a; --tap:#2a3741;
+  --on-green:#042a18; --on-amber:#1a1200; --on-red:#ffffff;
+  --radius:6px;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    color-scheme: light;
+    --bg:#eef1f3; --panel:#ffffff; --panel-2:#f3f6f8; --line:#d3dade;
+    --ink:#131a1f; --ink-dim:#5a6873; --ink-mute:#8e9ba5;
+    --amber:#b7780a; --red:#c2322a; --green:#1f8f55; --cyan:#1a7f9c;
+    --done-ink:#1f8f55; --tap:#e4eaee;
+    --on-green:#ffffff; --on-amber:#ffffff; --on-red:#ffffff;
+  }
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --bg:#eef1f3; --panel:#ffffff; --panel-2:#f3f6f8; --line:#d3dade;
+  --ink:#131a1f; --ink-dim:#5a6873; --ink-mute:#8e9ba5;
+  --amber:#b7780a; --red:#c2322a; --green:#1f8f55; --cyan:#1a7f9c;
+  --done-ink:#1f8f55; --tap:#e4eaee;
+  --on-green:#ffffff; --on-amber:#ffffff; --on-red:#ffffff;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%;box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:17px;line-height:1.3;-webkit-user-select:none;user-select:none;overflow:hidden}
+body{overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+#app{display:flex;flex-direction:column;height:100%}
+header{display:flex;align-items:stretch;background:var(--panel);border-bottom:1px solid var(--line);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+header .brand{padding:12px 16px;font-weight:700;letter-spacing:.02em;display:flex;flex-direction:column;justify-content:center;min-width:120px}
+header .brand small{font-weight:400;color:var(--ink-dim);font-size:12px}
+nav.modes{display:flex;flex:1;min-width:0}
+nav.modes button{flex:1;padding:14px 4px;font-size:14px;font-weight:600;color:var(--ink-dim);border-bottom:3px solid transparent;min-width:0;white-space:nowrap}
+nav.modes button.norm{color:var(--green)}
+nav.modes button.abn{color:var(--amber)}
+nav.modes button.emerg{color:var(--red)}
+nav.modes button:not(.on){opacity:.72}
+nav.modes button.on{color:var(--ink);border-bottom-color:var(--cyan)}
+nav.modes button.on.norm{color:var(--green);border-bottom-color:var(--green)}
+nav.modes button.on.abn{color:var(--amber);border-bottom-color:var(--amber)}
+nav.modes button.on.emerg{color:var(--red);border-bottom-color:var(--red)}
+nav.modes button .badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:9px;background:var(--amber);color:var(--on-amber);font-size:11px;line-height:18px;font-variant-numeric:tabular-nums}
+header .theme{flex:none;width:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--ink-dim);border-left:1px solid var(--line);font-size:11px;line-height:1}
+header .theme .g{font-size:17px;line-height:1}
+header .theme:active{background:var(--tap)}
+header .theme.on{color:var(--ink)}
+@media (max-width:480px){
+  header .brand{min-width:0;padding:10px 12px}
+  header .brand small{display:none}
+  nav.modes button{font-size:13px;padding:14px 2px}
+}
+@media (max-width:400px){ nav.modes button{font-size:12px;letter-spacing:-.01em} }
+
+main{flex:1;display:flex;min-height:0}
+aside{width:300px;border-right:1px solid var(--line);overflow:auto;background:var(--panel);padding-left:env(safe-area-inset-left,0px);-webkit-overflow-scrolling:touch}
+section.view{flex:1;min-width:0;overflow:auto;padding:0 env(safe-area-inset-right,0px) 60px 0;-webkit-overflow-scrolling:touch}
+@media (max-width:760px){
+  aside{width:100%;border-right:0;padding-right:env(safe-area-inset-right,0px)}
+  section.view{padding-left:env(safe-area-inset-left,0px)}
+  main.showing-proc aside{display:none}
+  main:not(.showing-proc):not(.picker) section.view{display:none}
+}
+
+.group-title{padding:14px 16px 6px;color:var(--ink-dim);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.list button{display:flex;width:100%;align-items:center;gap:10px;padding:13px 16px;text-align:left;border-bottom:1px solid var(--line)}
+.list button:active{background:var(--tap)}
+.list button.sel{background:var(--panel-2)}
+.list .dot{width:10px;height:10px;border-radius:50%;background:var(--ink-mute);flex:none}
+.list .dot.done{background:var(--green)}
+.list .dot.partial{background:var(--amber)}
+.list .dot.active{background:var(--red)}
+.list .name{flex:1;min-width:0}
+.list .n{color:var(--ink-mute);font-size:13px;font-variant-numeric:tabular-nums}
+
+.proc-head{position:sticky;top:0;z-index:2;background:var(--bg);padding:14px 16px 10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.proc-head .back{display:none;padding:6px 10px 6px 0;color:var(--cyan);white-space:nowrap}
+@media (max-width:760px){.proc-head .back{display:block}}
+.proc-head h1{margin:0;font-size:20px;flex:1;min-width:0;font-weight:700;text-wrap:balance}
+.proc-head h1.emerg{color:var(--red)}
+.proc-head h1.abn{color:var(--amber)}
+.proc-head h1.norm{color:var(--green)}
+.proc-head .cond{display:block;font-size:13px;font-weight:400;color:var(--ink-dim);margin-top:2px}
+.proc-head .tools{display:flex;gap:6px}
+.tools button{padding:7px 12px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;color:var(--ink-dim)}
+.tools button:active{background:var(--tap)}
+
+.items{padding:6px 0}
+.item{display:flex;align-items:baseline;gap:10px;width:100%;padding:12px 16px;text-align:left;border-bottom:1px solid var(--line);position:relative}
+.item:active{background:var(--tap)}
+.item .chal{flex:0 1 auto;min-width:0}
+.item .lead{flex:1;border-bottom:2px dotted var(--ink-mute);transform:translateY(-5px);min-width:16px}
+.item .resp{flex:0 1 auto;min-width:0;text-align:right;font-weight:700;color:var(--cyan)}
+.item.next{background:var(--panel-2)}
+.item.next::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mode,var(--cyan))}
+section.view.norm{--mode:var(--green)} section.view.abn{--mode:var(--amber)} section.view.emerg{--mode:var(--red)}
+section.view.emerg .item .resp{color:var(--ink)}
+.item.defer .chal,.item.defer .resp{color:var(--amber)}
+.item.done.defer .chal,.item.done.defer .resp{color:var(--done-ink)}
+.item.done{color:var(--ink-mute)}
+.item.done .resp{color:var(--done-ink)}
+.item.done .chal::before{content:"✓ ";color:var(--green)}
+.item.done .lead{border-color:var(--line)}
+.item.mem{border-left:4px solid var(--red)}
+.item.mem.next::before{display:none}
+.item.mem .chal::after{content:" (memory)";color:var(--red);font-size:12px;font-weight:600}
+.item.note{color:var(--ink-dim);font-size:15px;display:block;padding:9px 16px 9px 24px;border-bottom:0;cursor:default}
+.item.note.warn{color:var(--red)}
+.item.note.caution{color:var(--amber)}
+.item.sub{padding-left:40px}
+.item.sub .chal::before{content:"– ";color:var(--ink-mute)}
+.item.done.sub .chal::before{content:"✓ "}
+
+.branch{padding:10px 16px;border-bottom:1px solid var(--line)}
+.branch .q{color:var(--amber);font-weight:600;margin-bottom:8px}
+.branch .opts{display:flex;gap:8px;flex-wrap:wrap}
+.branch .opts button{padding:9px 14px;border:1px solid var(--amber);border-radius:var(--radius);color:var(--amber);font-weight:600}
+.branch .opts button.sel{background:var(--amber);color:var(--on-amber)}
+.branch .opts button.off{opacity:.35}
+
+.complete{margin:16px;padding:14px 16px;border-radius:var(--radius);background:var(--green);color:var(--on-green);font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.complete button{padding:8px 14px;border-radius:var(--radius);background:var(--on-green);color:var(--green);font-size:14px}
+.land{margin:12px 16px 0;padding:10px 14px;border-radius:var(--radius);background:var(--red);color:var(--on-red);font-weight:700;text-align:center}
+.land.amber{background:var(--amber);color:var(--on-amber)}
+
+.status{padding:0 16px 16px}
+.status .proc-head{margin:0 -16px 8px}
+.status h2{font-size:13px;color:var(--ink-dim);margin:18px 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.status .row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.status .row>*{min-width:0}
+.status .row.red{color:var(--red)}
+.status .row.amb{color:var(--amber)}
+.status .row button{text-align:left;color:inherit;text-decoration:underline;text-decoration-color:var(--line)}
+.status .ok{color:var(--green)}
+.status .pend{color:var(--amber)}
+.status .empty{color:var(--ink-mute);padding:8px 0}
+.status .num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.deferred li{padding:6px 0;border-bottom:1px solid var(--line)}
+.deferred ul{list-style:none;padding:0;margin:0}
+.confirm{margin-top:10px;padding:12px 14px;border:1px solid var(--red);border-radius:var(--radius);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.confirm span{flex:1;min-width:160px}
+.confirm button{padding:8px 14px;border-radius:var(--radius);border:1px solid var(--line);font-size:14px}
+.confirm button.danger{background:var(--red);color:var(--on-red);border-color:var(--red)}
+.link{color:var(--cyan)}
+.saved{font-size:12px;color:var(--ink-mute);margin-top:8px}
+
+.upd{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;width:100%;padding:12px 16px;background:var(--cyan);color:#06202a;font-weight:700;font-size:15px;text-align:center;border-bottom:1px solid var(--line)}
+.upd.ready{background:var(--amber);color:var(--on-amber)}
+.upd.info{background:var(--green);color:var(--on-green)}
+#updstate.ready{color:var(--amber);font-weight:700}
+.upd .x{padding:6px 12px;border:1px solid currentColor;border-radius:var(--radius);font-size:13px;font-weight:600}
+.favp{margin:12px 16px 0;padding:12px 14px;border:1px solid var(--amber);border-radius:var(--radius);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel)}
+.favp span{flex:1;min-width:180px}
+.favp button{padding:8px 14px;border-radius:var(--radius);border:1px solid var(--line);font-size:14px}
+.favp button.add{background:var(--amber);color:var(--on-amber);border-color:var(--amber);font-weight:700}
+footer{font-size:11px;color:var(--ink-mute);text-align:center;padding:8px 16px;border-top:1px solid var(--line);background:var(--panel)}
+@media (prefers-reduced-motion:no-preference){.item{transition:background .12s}}
+
+/* ---- aircraft picker and header additions ---- */
+header .brand{cursor:pointer;gap:2px}
+header .brand .ac{display:flex;align-items:center;gap:6px}
+header .brand .ac .chev{font-size:11px;color:var(--ink-dim)}
+header .brand:active{background:var(--tap)}
+header.picker-head nav.modes{display:none}
+header.picker-head .brand{flex:1;cursor:default}
+header .brand .title{font-weight:700}
+main.picker aside{display:none}
+main.picker section.view{display:block}
+.picker{padding:0 16px 40px}
+.picker .intro{color:var(--ink-dim);font-size:14px;padding:14px 0 4px;max-width:60ch}
+.picker .continue{margin:12px 0 4px;padding:12px 14px;border-radius:var(--radius);background:var(--panel-2);border:1px solid var(--line);display:flex;align-items:center;gap:12px;width:100%;text-align:left}
+.picker .continue .lbl{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em}
+.picker .continue .nm{font-weight:700}
+.picker .continue .go{margin-left:auto;color:var(--cyan);font-weight:600;white-space:nowrap}
+.picker h2{font-size:13px;color:var(--ink-dim);margin:22px 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.card{display:flex;flex-direction:column;gap:4px;padding:12px 44px 12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);text-align:left;min-width:0;position:relative;cursor:pointer}
+.card .star{position:absolute;right:4px;top:4px;width:38px;height:38px;font-size:22px;line-height:1;color:var(--ink-mute);border-radius:var(--radius)}
+.card .star.on{color:var(--amber)}
+.card .star:active{background:var(--tap)}
+.card:active{background:var(--tap)}
+.card .mk{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em}
+.card .md{font-weight:700;font-size:17px}
+.card .en{font-size:13px;color:var(--ink-dim)}
+.card .pr{font-size:12px;color:var(--ink-mute);margin-top:4px;font-variant-numeric:tabular-nums}
+.card .pr.go{color:var(--green)}
+.card .pr.em{color:var(--red);font-weight:600}
+.card .short{position:absolute;right:44px;top:10px;font-size:11px;color:var(--ink-mute);border:1px solid var(--line);border-radius:4px;padding:1px 6px;letter-spacing:.04em}
+.vs{padding:4px 16px 16px}
+.vs .meta{color:var(--ink-dim);font-size:14px;padding:10px 0 4px}
+.vs table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.vs td{padding:9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.vs td:first-child{color:var(--ink-dim);width:38%;padding-right:12px}
+.vs td:last-child{font-weight:600;color:var(--cyan)}
+.list button.ref .dot{background:transparent;border:1px solid var(--ink-mute)}
+.status .acline{color:var(--ink-dim);font-size:14px;margin-top:-2px}
+
+/* EFB edition: single aircraft, header brand is not a button */
+header .brand{cursor:default}
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="hdr">
+    <div class="brand" id="brand"></div>
+    <nav class="modes" id="modes" aria-label="Checklist sections"></nav>
+    <button class="theme" id="theme" aria-label="Day or night display"></button>
+  </header>
+  <main id="main">
+    <aside id="side"></aside>
+    <section class="view" id="view"></section>
+  </main>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition cb0c6525</footer>
+</div>
+<script>
+window.AEROE_BUILD = "cb0c6525";
+/* Cirrus SR20 – checklist data.
+   Prototype content. Verify against the operator's approved checklist and the POH/AFM. */
+window.AIRCRAFT = window.AIRCRAFT || [];
+window.AIRCRAFT.push({
+  id: "sr20",
+  maker: "Cirrus",
+  model: "SR20 G3 / G6",
+  short: "SR20",
+  category: "Single-engine piston",
+  engine: "Continental IO-360-ES, 200 hp (G3) / Lycoming IO-390-C3B6, 215 hp (G6)",
+  seats: "4 (G6: 5)",
+  basis: "Typical SR20 G3 (IO-360-ES, Avidyne or Perspective) and G6 (IO-390, Perspective+) POH procedures; speeds are G3 figures, G6 differs by a few knots.",
+  vspeeds: [
+    {k:"Vr", v:"65–70 KIAS (flaps 50%)"},
+    {k:"Vx", v:"81 KIAS"},
+    {k:"Vy", v:"96 KIAS"},
+    {k:"Best glide", v:"87–88 KIAS"},
+    {k:"Vfe", v:"119 KIAS (50%) / 104 KIAS (100%)"},
+    {k:"Va", v:"130 KIAS (3,050 lb)"},
+    {k:"Vno", v:"163 KIAS"},
+    {k:"Vne", v:"200 KIAS"},
+    {k:"Vpd (CAPS max demonstrated)", v:"133 KIAS"},
+    {k:"Vs / Vso", v:"65 / 56 KIAS"},
+    {k:"Vref", v:"75–80 KIAS (flaps 100%)"}
+  ],
+
+  normal: [
+    {id:"pre", name:"Before Start", items:[
+      {c:"Preflight inspection", r:"COMPLETE (fuel drains, oil 6–8 qt, pitot cover removed)"},
+      {c:"CAPS handle safety pin", r:"REMOVED (handle cover closed, pin stowed)"},
+      {c:"Passenger briefing", r:"COMPLETE (belts, doors, CAPS location & use, exits)"},
+      {c:"Seats, belts, harnesses", r:"ADJUST & LOCK"},
+      {c:"Doors", r:"LATCHED (both handles)"},
+      {c:"Brakes", r:"TEST & SET (parking brake)"},
+      {c:"Fuel selector", r:"FULLER TANK (LEFT or RIGHT)"},
+      {c:"Power lever", r:"IDLE"},
+      {c:"Mixture", r:"CUTOFF"},
+      {c:"Alternate induction air", r:"CLOSED (pushed in)"},
+      {c:"Bat 2", r:"ON – check volts 23–25 V"},
+      {c:"Bat 1", r:"ON"},
+      {c:"Avionics", r:"OFF (Perspective: avionics master OFF)"},
+      {c:"Annunciators / CAS", r:"CHECK (no red)"},
+      {c:"Fuel quantity", r:"CHECK (vs visual check)"},
+      {c:"Flaps", r:"CHECK operation (50%, 100%), set UP"},
+      {c:"Strobes / nav lights", r:"ON"},
+    ]},
+    {id:"start", name:"Engine Start", items:[
+      {c:"Propeller area", r:"CLEAR"},
+      {c:"Power lever", r:"FULL FORWARD"},
+      {c:"Mixture", r:"FULL RICH"},
+      {c:"Fuel pump", r:"PRIME (hold 2–3 s cold, none when hot), then BOOST"},
+      {c:"Power lever", r:"OPEN 1/4 in"},
+      {c:"Ignition", r:"START (max 20 s, release when engine fires)"},
+      {c:"Power lever", r:"1,000 RPM"},
+      {c:"Oil pressure", r:"CHECK within 30 s (green 30–60 psi)"},
+      {c:"Alt 1 / Alt 2", r:"ON – check charging, no ALT 1 / ALT 2 caution"},
+      {c:"Fuel pump", r:"BOOST (leave on until after takeoff)"},
+      {c:"Avionics", r:"ON"},
+      {c:"Engine instruments", r:"CHECK"},
+      {c:"Pitot heat", r:"TEST then OFF"},
+    ]},
+    {id:"taxi", name:"Before Taxi", items:[
+      {c:"Flight instruments / PFD", r:"CHECK & SET (altimeter, HSI, CDI)"},
+      {c:"Radios / transponder", r:"SET"},
+      {c:"Trim", r:"SET for takeoff (neutral mark)"},
+      {c:"Flaps", r:"50%"},
+      {c:"Parking brake", r:"RELEASE"},
+      {c:"Brakes", r:"CHECK immediately after moving"},
+      {note:"Nosewheel is free-castoring: steer with differential braking at low speed. Avoid prolonged brake drag – brake overheat is a fire risk.", kind:"caution"},
+      {c:"HSI / turn indication", r:"CHECK during turns"},
+    ]},
+    {id:"runup", name:"Before Takeoff", items:[
+      {c:"Parking brake", r:"SET"},
+      {c:"Doors", r:"LATCHED"},
+      {c:"CAPS handle", r:"VERIFY pin removed, cover closed"},
+      {c:"Seat belts / harnesses", r:"SECURE"},
+      {c:"Flight controls", r:"FREE & CORRECT"},
+      {c:"Fuel selector", r:"FULLER TANK"},
+      {c:"Fuel pump", r:"BOOST"},
+      {c:"Mixture", r:"FULL RICH (lean for field elevation above 3,000 ft)"},
+      {c:"Power lever", r:"1,700 RPM"},
+      {c:"Alt 1 / Alt 2", r:"CHECK positive amps, Ess Bus / Main Bus volts green"},
+      {c:"Magnetos", r:"CHECK L / R (max drop 150 RPM, max diff 75 RPM)"},
+      {c:"Engine instruments", r:"CHECK green (oil temp min 100°F for takeoff)"},
+      {c:"Power lever", r:"IDLE check (600–800 RPM), then 1,000 RPM"},
+      {c:"Flaps", r:"50% (check indication)"},
+      {c:"Trim", r:"SET takeoff"},
+      {c:"Autopilot", r:"CHECK / disconnect"},
+      {c:"Pitot heat / lights", r:"AS REQUIRED"},
+      {c:"Transponder", r:"ALT"},
+      {c:"Takeoff briefing", r:"COMPLETE (Vr 65–70, Vy 96, abort point, CAPS available above approx 600 ft AGL)"},
+    ]},
+    {id:"climb", name:"After Takeoff / Climb", items:[
+      {c:"Airspeed", r:"Vy 96 KIAS (obstacles: Vx 81 KIAS)"},
+      {c:"Flaps", r:"UP (above 80 KIAS, positive rate)"},
+      {c:"Fuel pump", r:"OFF above 1,000 ft AGL (BOOST if fuel flow fluctuates)"},
+      {c:"Power", r:"FULL (cruise climb 110–120 KIAS)"},
+      {c:"Mixture", r:"FULL RICH (lean per fuel flow placard above 3,000 ft)"},
+      {c:"Engine instruments", r:"CHECK (CHT max 460°F, oil temp max 240°F)"},
+    ]},
+    {id:"cruise", name:"Cruise", items:[
+      {c:"Power", r:"SET (typ. 55–75%, 2,500–2,700 RPM)"},
+      {c:"Mixture", r:"LEAN (per power table / lean-assist, 50°F rich of peak or LOP as approved)"},
+      {c:"Fuel pump", r:"OFF (BOOST if fuel flow fluctuates or hot/high)"},
+      {c:"Fuel selector", r:"SWITCH tanks every 30 min, keep within 10 gal imbalance"},
+      {c:"Fuel quantity / totalizer", r:"CHECK vs flight plan"},
+      {c:"Engine instruments", r:"CHECK"},
+    ]},
+    {id:"desc", name:"Descent", items:[
+      {c:"Altimeter", r:"SET"},
+      {c:"Mixture", r:"ENRICH as altitude decreases"},
+      {c:"Power", r:"REDUCE gradually (keep CHT above 250°F)"},
+      {c:"Fuel selector", r:"FULLER TANK"},
+      {c:"Approach briefing", r:"COMPLETE (ATIS, approach, speeds)"},
+    ]},
+    {id:"land", name:"Before Landing", items:[
+      {c:"Seats / belts", r:"SECURE"},
+      {c:"Fuel selector", r:"FULLER TANK"},
+      {c:"Fuel pump", r:"BOOST"},
+      {c:"Mixture", r:"FULL RICH (as required for altitude)"},
+      {c:"Flaps", r:"50% below 119 KIAS, 100% below 104 KIAS"},
+      {c:"Airspeed", r:"FINAL 75–80 KIAS (100%), 80–85 KIAS (50%)"},
+      {c:"Autopilot", r:"OFF"},
+      {c:"Landing light", r:"ON"},
+    ]},
+    {id:"after", name:"After Landing", items:[
+      {c:"Flaps", r:"UP"},
+      {c:"Fuel pump", r:"OFF"},
+      {c:"Pitot heat", r:"OFF"},
+      {c:"Transponder", r:"STBY / as required"},
+      {c:"Lights", r:"AS REQUIRED"},
+      {c:"Power lever", r:"1,000 RPM taxi"},
+    ]},
+    {id:"shut", name:"Shutdown", items:[
+      {c:"Parking brake", r:"SET"},
+      {c:"Power lever", r:"IDLE, 1 min cool-down"},
+      {c:"Avionics", r:"OFF"},
+      {c:"Mixture", r:"CUTOFF"},
+      {c:"Ignition", r:"OFF (after prop stops), key removed"},
+      {c:"Alt 1 / Alt 2", r:"OFF"},
+      {c:"Bat 1 / Bat 2", r:"OFF"},
+      {c:"CAPS handle safety pin", r:"INSERT"},
+      {c:"Fuel selector", r:"LEFT or RIGHT (leave on a tank)"},
+      {c:"Pitot cover / chocks / tie-downs", r:"INSTALL"},
+    ]},
+  ],
+  emergency: [
+    {id:"caps", name:"CAPS Deployment", cond:"Loss of control, mid-air collision, structural failure, pilot incapacitation, or engine failure where a safe forced landing is not assured", items:[
+      {c:"Airspeed", r:"MINIMISE (below 133 KIAS, as slow as practical)", mem:true},
+      {c:"CAPS handle", r:"PULL straight down, both hands, full stroke (approx 45 lb)", mem:true},
+      {c:"Mixture", r:"CUTOFF", mem:true},
+      {c:"Fuel selector", r:"OFF", mem:true},
+      {c:"Bat 1 / Bat 2 / Alt 1 / Alt 2", r:"OFF", mem:true},
+      {c:"Seat belts / harnesses", r:"TIGHT", mem:true},
+      {c:"Brace", r:"ASSUME emergency landing body position (arms crossed, hands on shoulders)", mem:true},
+      {note:"CAPS is the primary response to loss of control, mid-air collision, structural failure, pilot incapacitation and engine failure over terrain where a safe forced landing is not assured. Recommended decision altitude 2,000 ft AGL; minimum demonstrated deployment from a loss of control 920 ft AGL, from level flight approx 400 ft AGL. Below the minimum, deploy anyway – it is still the best option.", kind:"warn"},
+      {c:"Ignition / fuel pump", r:"OFF (if time permits)"},
+      {c:"ELT", r:"ON (if time permits)"},
+      {c:"Descent", r:"EXPECT approx 1,700 ft/min, 8 s to full canopy, hard landing (approx 3 g)"},
+      {c:"After touchdown", r:"EVACUATE upwind if canopy drags, aircraft may be dragged by wind"},
+    ]},
+    {id:"eng-fail-roll", name:"Engine Failure During Takeoff Roll", items:[
+      {c:"Power lever", r:"IDLE", mem:true},
+      {c:"Brakes", r:"APPLY (differential for directional control)", mem:true},
+      {c:"Flaps", r:"UP"},
+      {c:"Mixture", r:"CUTOFF"},
+      {c:"Fuel selector", r:"OFF"},
+      {c:"Ignition", r:"OFF"},
+      {c:"Bat 1 / Bat 2 / Alt 1 / Alt 2", r:"OFF"},
+    ]},
+    {id:"eng-fail-to", name:"Engine Failure after Takeoff", cond:"Airborne, insufficient runway remaining", land:"LAND IMMEDIATELY", items:[
+      {c:"Airspeed", r:"BEST GLIDE or landing speed (80 KIAS flaps 50%)", mem:true},
+      {c:"Mixture", r:"FULL RICH", mem:true},
+      {c:"Fuel selector", r:"SWITCH tanks", mem:true},
+      {c:"Fuel pump", r:"BOOST", mem:true},
+      {c:"Alternate induction air", r:"OPEN", mem:true},
+      {c:"Ignition", r:"BOTH (check)", mem:true},
+      {note:"Below approx 600 ft AGL land straight ahead with only small heading changes – do not turn back. Above approx 600 ft AGL CAPS deployment is an option if a safe landing area is not available.", kind:"warn"},
+      {branch:"Safe landing area ahead?", opts:{
+        "Yes – land ahead":[
+          {c:"Flaps", r:"100% when landing assured"},
+          {c:"Mixture", r:"CUTOFF"},
+          {c:"Fuel selector", r:"OFF"},
+          {c:"Ignition", r:"OFF"},
+          {c:"Bat 1 / Bat 2 / Alt 1 / Alt 2", r:"OFF"},
+          {c:"Doors", r:"UNLATCH before touchdown"},
+        ],
+        "No – CAPS":[{note:"Deploy CAPS – see CAPS Deployment procedure.", kind:"warn"}]
+      }},
+    ]},
+    {id:"eng-fail-flt", name:"Engine Failure in Flight", cond:"Loss of power with altitude available", land:"LAND AS SOON AS POSSIBLE", items:[
+      {c:"Airspeed", r:"88 KIAS (best glide)", mem:true},
+      {c:"Mixture", r:"FULL RICH", mem:true},
+      {c:"Fuel selector", r:"SWITCH tanks", mem:true},
+      {c:"Fuel pump", r:"BOOST", mem:true},
+      {c:"Alternate induction air", r:"OPEN", mem:true},
+      {c:"Ignition", r:"BOTH (cycle L / R / BOTH)", mem:true},
+      {c:"Landing site", r:"SELECT, turn towards it"},
+      {branch:"Restart attempt practicable?", opts:{
+        "Yes – restart":[
+          {c:"Power lever", r:"1/2 in open"},
+          {c:"Mixture", r:"FULL RICH, then lean slowly"},
+          {c:"Ignition", r:"START if propeller stopped"},
+          {branch:"Engine restarted?", opts:{
+            "Yes":[{c:"Power", r:"AS REQUIRED (minimum needed)"},{c:"Engine instruments", r:"MONITOR"},{defer:"Engine restarted after in-flight failure – land as soon as possible, suspect fuel or induction problem."}],
+            "No":[{note:"Continue with forced landing or CAPS.", kind:"warn"}]
+          }},
+        ],
+        "No – forced landing / CAPS":[]
+      }},
+      {branch:"Safe forced landing assured?", opts:{
+        "Yes – forced landing":[
+          {c:"Mayday / 7700", r:"TRANSMIT"},
+          {c:"Seats / belts", r:"SECURE"},
+          {c:"Flaps", r:"100% when landing assured"},
+          {c:"Airspeed", r:"75–80 KIAS on final"},
+          {c:"Mixture", r:"CUTOFF"},
+          {c:"Fuel selector", r:"OFF"},
+          {c:"Ignition", r:"OFF"},
+          {c:"Bat 1 / Bat 2 / Alt 1 / Alt 2", r:"OFF"},
+          {c:"Doors", r:"UNLATCH before touchdown"},
+        ],
+        "No – deploy CAPS":[{note:"Deploy CAPS before descending through 2,000 ft AGL – see CAPS Deployment procedure.", kind:"warn"}]
+      }},
+    ]},
+    {id:"eng-fire-flt", name:"Engine Fire in Flight", land:"LAND IMMEDIATELY", items:[
+      {c:"Mixture", r:"CUTOFF", mem:true},
+      {c:"Fuel pump", r:"OFF", mem:true},
+      {c:"Fuel selector", r:"OFF", mem:true},
+      {c:"Power lever", r:"IDLE", mem:true},
+      {c:"Ignition", r:"OFF", mem:true},
+      {c:"Cabin heat / defrost", r:"OFF", mem:true},
+      {c:"Airspeed", r:"INCREASE (sideslip to keep flames from cabin)"},
+      {branch:"Fire extinguished and landing area within gliding range?", opts:{
+        "Yes":[{c:"Forced landing", r:"EXECUTE (do not attempt restart)"}],
+        "No":[{note:"Deploy CAPS – see CAPS Deployment procedure.", kind:"warn"}]
+      }},
+    ]},
+    {id:"eng-fire-start", name:"Engine Fire During Start", items:[
+      {c:"Mixture", r:"CUTOFF", mem:true},
+      {c:"Fuel pump", r:"OFF", mem:true},
+      {c:"Fuel selector", r:"OFF", mem:true},
+      {c:"Power lever", r:"FULL FORWARD", mem:true},
+      {c:"Ignition", r:"CONTINUE cranking (draw fire into engine)", mem:true},
+      {c:"Ignition / Bat / Alt", r:"OFF when fire out"},
+      {c:"Fire extinguisher", r:"OBTAIN"},
+      {c:"Aircraft", r:"EVACUATE"},
+    ]},
+    {id:"cabin-fire", name:"Cabin / Electrical Fire", land:"LAND AS SOON AS POSSIBLE", items:[
+      {c:"Bat 1 / Bat 2", r:"OFF", mem:true},
+      {c:"Alt 1 / Alt 2", r:"OFF", mem:true},
+      {c:"Avionics", r:"OFF", mem:true},
+      {c:"Cabin heat / fresh air", r:"CLOSE"},
+      {c:"Fire extinguisher", r:"ACTIVATE"},
+      {note:"After discharge, open fresh air vents / crack a door to ventilate once fire is out.", kind:"warn"},
+      {branch:"Fire out and electrical power required?", opts:{
+        "Yes":[
+          {c:"Circuit breakers", r:"CHECK – do not reset tripped breakers"},
+          {c:"Bat 2 / Alt 2", r:"ON (essential bus first)"},
+          {c:"Bat 1 / Alt 1 / avionics", r:"ON one at a time, check for smoke"},
+          {defer:"Electrical fire – suspect circuits isolated, affected systems unavailable."},
+        ],
+        "No":[{note:"Continue with electrics off. Standby instruments and magnetic compass only; no flaps, no electric trim.", kind:"caution"},{defer:"All electrics off – flaps-up landing approx 90 KIAS, no radios, no trim."}]
+      }},
+    ]},
+    {id:"emer-desc", name:"Emergency Descent", items:[
+      {c:"Power lever", r:"IDLE", mem:true},
+      {c:"Mixture", r:"AS REQUIRED", mem:true},
+      {c:"Flaps", r:"UP", mem:true},
+      {c:"Airspeed", r:"163 KIAS smooth air / 130 KIAS turbulence", mem:true},
+    ]},
+    {id:"spin", name:"Inadvertent Spin Entry", items:[
+      {c:"CAPS handle", r:"PULL immediately", mem:true},
+      {note:"The SR20 is not approved for spins and no spin recovery has been demonstrated – CAPS deployment is the only approved recovery. Minimum demonstrated deployment 920 ft AGL.", kind:"warn"},
+      {c:"Power lever", r:"IDLE"},
+      {c:"Controls", r:"NEUTRAL"},
+      {c:"After deployment", r:"CONTINUE CAPS Deployment procedure"},
+    ]},
+  ],
+  abnormal: [
+    {id:"alt-fail", name:"ALT 1 or ALT 2 Failure", cond:"ALT 1 / ALT 2 caution, Main or Ess Bus amps zero", items:[
+      {c:"ALT 1 / ALT 2 circuit breaker (affected)", r:"CHECK IN"},
+      {c:"Alt 1 / Alt 2 (affected)", r:"OFF, then ON (reset once)"},
+      {branch:"Alternator restored?", opts:{
+        "Yes":[{c:"Electrical load", r:"MONITOR"}],
+        "No – ALT 1 failed":[
+          {c:"Alt 1", r:"OFF"},
+          {c:"Non-essential loads", r:"OFF (Alt 2 supplies approx 20 A to the essential bus only)"},
+          {c:"Bat 1", r:"MONITOR – powers main bus until depleted (approx 30 min)"},
+          {defer:"ALT 1 failed – main bus on battery, limited endurance; flaps once on final, land as soon as practical."},
+        ],
+        "No – ALT 2 failed":[{c:"Alt 2", r:"OFF"},{c:"Flight", r:"CONTINUE – Alt 1 supplies both buses"},{defer:"ALT 2 failed – no electrical redundancy, avoid IMC / night if practical, land as soon as practical."}]
+      }},
+    ]},
+    {id:"low-volts", name:"Low Volts / Both Alternators Failed", cond:"LOW VOLTS warning on Main and Ess bus", items:[
+      {c:"Alt 1 / Alt 2", r:"OFF then ON (reset once)"},
+      {branch:"Voltage recovered?", opts:{
+        "Yes":[{c:"Electrical load", r:"MONITOR"}],
+        "No":[
+          {c:"Alt 1 / Alt 2", r:"OFF"},
+          {c:"Bat 1", r:"OFF (save Bat 2 for essential bus)"},
+          {c:"Non-essential loads", r:"OFF"},
+          {note:"Bat 2 powers the essential bus (PFD, standby attitude, COM1, NAV1) for approx 30 min. Flaps and trim are on the main bus – turn Bat 1 ON briefly for flaps on final.", kind:"caution"},
+          {defer:"Both alternators failed – battery only, flaps once on final with Bat 1 ON, land as soon as possible."},
+        ]
+      }},
+    ]},
+    {id:"oil-press", name:"Low Oil Pressure / High Oil Temperature", cond:"OIL PRESS warning (below 30 psi, 10 psi idle), oil temperature above 240°F or CHT above 460°F", items:[
+      {c:"Oil pressure / temperature / CHT", r:"CHECK all, cross-check"},
+      {branch:"Which indication?", opts:{
+        "Low pressure":[
+          {branch:"Oil temperature rising or pressure below 10 psi?", opts:{
+            "Yes":[
+              {c:"Power", r:"REDUCE to minimum required"},
+              {c:"Landing site", r:"SELECT, expect engine failure; CAPS if no safe site"},
+              {defer:"Low oil pressure – land as soon as possible, engine failure possible."},
+            ],
+            "No – temperature normal":[{c:"Flight", r:"CONTINUE, monitor closely"},{defer:"Suspect oil pressure indication – land as soon as practical."}]
+          }},
+        ],
+        "High temperature":[
+          {c:"Mixture", r:"ENRICH"},
+          {c:"Airspeed", r:"INCREASE (lower nose)"},
+          {c:"Power", r:"REDUCE"},
+          {branch:"Temperature returning to green?", opts:{
+            "Yes":[{c:"Flight", r:"CONTINUE, monitor"}],
+            "No":[{c:"Power", r:"MINIMUM practical"},{defer:"Engine overheating – land as soon as practical, expect possible power loss."}]
+          }},
+        ]
+      }},
+    ]},
+    {id:"rough", name:"Rough Running / Loss of Power", items:[
+      {c:"Fuel pump", r:"BOOST"},
+      {c:"Mixture", r:"ADJUST (richer, then leaner)"},
+      {c:"Fuel selector", r:"SWITCH tanks"},
+      {c:"Alternate induction air", r:"OPEN (induction icing or blockage)"},
+      {c:"Ignition", r:"CHECK L / R individually, BOTH"},
+      {branch:"Engine running smoothly?", opts:{
+        "Yes":[{c:"Configuration", r:"KEEP the working combination"},{defer:"Engine ran rough – land as soon as practical, maintenance check."}],
+        "No":[{c:"Power", r:"REDUCE to smoothest setting"},{c:"Land", r:"AS SOON AS POSSIBLE (prepare for engine failure / CAPS)"}]
+      }},
+    ]},
+    {id:"fuel-flow", name:"Low Fuel Flow / Fuel Flow Fluctuation", cond:"Fuel flow fluctuating, FUEL PRESS or low fuel caution", items:[
+      {c:"Fuel pump", r:"BOOST"},
+      {c:"Fuel selector", r:"SWITCH to fuller tank"},
+      {c:"Mixture", r:"FULL RICH"},
+      {c:"Fuel quantity", r:"CHECK both tanks"},
+      {branch:"Fuel flow steady?", opts:{
+        "Yes":[{c:"Fuel pump", r:"LEAVE ON BOOST"},{defer:"Fuel pump on BOOST continuously – engine-driven pump or vapour suspect."}],
+        "No":[{c:"Land", r:"AS SOON AS POSSIBLE, expect engine failure"}]
+      }},
+    ]},
+    {id:"flap-fail", name:"Flap Failure", items:[
+      {c:"FLAPS circuit breaker", r:"CHECK / RESET once"},
+      {c:"Flap switch", r:"CYCLE (UP / 50% / 100%)"},
+      {branch:"Flaps operable?", opts:{
+        "Yes":[{c:"Flap setting", r:"AS REQUIRED"}],
+        "No":[{c:"Approach", r:"FLAPS UP 85–90 KIAS / 50% 80–85 KIAS, flat approach"},{defer:"Flaps inoperative – flaps-up landing, increased approach speed and landing distance."}]
+      }},
+    ]},
+    {id:"door-open", name:"Door Open in Flight", items:[
+      {c:"Airspeed", r:"REDUCE below 119 KIAS"},
+      {c:"Door", r:"DO NOT attempt to close – hold shut if practical"},
+      {note:"A door open in flight is noisy and causes buffet; the aircraft remains controllable.", kind:"caution"},
+      {c:"Loose objects / belts", r:"SECURE"},
+      {defer:"Door open – land as soon as practical, keep speed below 119 KIAS."},
+    ]},
+    {id:"pfd-fail", name:"PFD / AHRS / ADC Failure", items:[
+      {c:"Display backup (red button)", r:"PRESS – reversionary mode on MFD"},
+      {c:"Standby instruments", r:"USE (airspeed, attitude, altimeter, compass)"},
+      {c:"Autopilot", r:"OFF if AHRS failed"},
+      {c:"PFD / AHRS circuit breakers", r:"CHECK"},
+      {branch:"Flight in IMC?", opts:{
+        "Yes":[{c:"ATC", r:"ADVISE, request radar assistance / nearest VMC"},{defer:"Primary flight display failed – partial panel, request vectors, avoid IMC."}],
+        "No":[{defer:"PFD / AHRS failed – standby instruments only."}]
+      }},
+    ]},
+    {id:"static", name:"Static Source Blocked / Erroneous Airspeed", items:[
+      {c:"Pitot heat", r:"ON"},
+      {c:"Alternate static source", r:"OPEN (valve under panel, left of pilot)"},
+      {c:"Airspeed / altitude", r:"CROSS-CHECK with GPS ground speed and standby altimeter"},
+      {c:"Attitude / power", r:"FLY known pitch and power settings"},
+      {defer:"Pitot-static unreliable – fly attitude and power, add margin to approach speed."},
+    ]},
+  ]
+});
+
+</script>
+<script>
+/* AeroE Checklist – EFB edition engine.
+   A trimmed copy of the main app's checklist logic for a single aircraft in one self-contained file:
+   no aircraft picker, no service worker, no update checks, no favourites. Saved ticks use browser
+   storage when the host viewer allows it and the page works normally when it does not. */
+const a = window.AIRCRAFT[0];
+const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["status","Status"]];
+const STORE_KEY = "aeroe-efb-" + a.id;
+const state = {mode:"normal", sel:null, showing:false, ticks:{}, branches:{}, confirmReset:false};
+try{ const s=JSON.parse(localStorage.getItem(STORE_KEY)||"null"); if(s&&typeof s==="object"){ if(s.ticks)state.ticks=s.ticks; if(s.branches)state.branches=s.branches; if(MODES.some(m=>m[0]===s.mode))state.mode=s.mode; if(typeof s.sel==="string"||s.sel===null)state.sel=s.sel; state.showing=!!s.showing; } }catch(e){}
+function save(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify({ticks:state.ticks,branches:state.branches,mode:state.mode,sel:state.sel,showing:state.showing})); }catch(e){} }
+
+/* day / night */
+const THEME_KEY="aeroe-efb-theme", THEMES=[["auto","Auto","◐"],["day","Day","☀"],["night","Night","☾"]];
+let theme="auto"; try{ const t=localStorage.getItem(THEME_KEY); if(THEMES.some(x=>x[0]===t)) theme=t; }catch(e){}
+function applyTheme(){ const r=document.documentElement; if(theme==="night")r.setAttribute("data-theme","dark"); else if(theme==="day")r.setAttribute("data-theme","light"); else r.removeAttribute("data-theme"); try{localStorage.setItem(THEME_KEY,theme);}catch(e){} }
+
+function proc(mode,id){return (a[mode]||[]).find(p=>p.id===id)}
+function key(pid,path){return pid+"/"+path}
+function rows(p){
+  const out=[];
+  const walk=(items,prefix)=>items.forEach((it,i)=>{
+    const path=prefix+i;
+    if(it.branch){const chosen=state.branches[key(p.id,path)];out.push({type:"branch",it,path,chosen});if(chosen&&it.opts[chosen])walk(it.opts[chosen],path+"."+chosen+".");}
+    else if(it.note)out.push({type:"note",it,path});
+    else if(it.defer)out.push({type:"defer",it,path});
+    else out.push({type:"item",it,path});
+  });
+  walk(p.items,"");return out;
+}
+const actionable=r=>r.type==="item"||r.type==="defer";
+const isDone=(p,r)=>!!state.ticks[key(p.id,r.path)];
+function progress(p){const all=rows(p),rs=all.filter(actionable),d=rs.filter(r=>isDone(p,r)).length,open=all.some(r=>r.type==="branch"&&!r.chosen);return{done:d,total:rs.length,complete:rs.length>0&&d===rs.length&&!open}}
+function resetProc(p){Object.keys(state.ticks).forEach(k=>{if(k.startsWith(p.id+"/"))delete state.ticks[k]});Object.keys(state.branches).forEach(k=>{if(k.startsWith(p.id+"/"))delete state.branches[k]})}
+const activeNonNormal=()=>["emergency","abnormal"].flatMap(m=>a[m].map(p=>({m,p}))).filter(x=>{const pr=progress(x.p);return pr.done>0&&!pr.complete});
+function deferredItems(){const out=[];["emergency","abnormal"].forEach(m=>a[m].forEach(p=>rows(p).forEach(r=>{if(r.type==="defer"&&isDone(p,r))out.push(r.it.defer)})));return out}
+
+const $=s=>document.querySelector(s);
+function h(tag,attrs,...kids){const e=document.createElement(tag);for(const k in attrs||{}){if(k==="class")e.className=attrs[k];else if(k.startsWith("on"))e.addEventListener(k.slice(2),attrs[k]);else e.setAttribute(k,attrs[k])}kids.flat().forEach(c=>e.append(c instanceof Node?c:document.createTextNode(c)));return e}
+function go(fn){fn();save();render()}
+
+function render(){
+  const brand=$("#brand");brand.innerHTML="";brand.append(h("span",{class:"ac"},h("span",{},a.short)),h("small",{},a.maker+" "+a.model));
+  const nav=$("#modes");nav.innerHTML="";const act=activeNonNormal().length;
+  MODES.forEach(([m,label])=>{const b=h("button",{class:(state.mode===m?"on ":"")+(m==="emergency"?"emerg":m==="abnormal"?"abn":m==="normal"?"norm":""),onclick:()=>go(()=>{state.mode=m;state.sel=null;state.showing=false;state.confirmReset=false})},label);if(m==="status"&&act)b.append(h("span",{class:"badge"},act));nav.append(b)});
+  const tb=$("#theme");tb.innerHTML="";const t=THEMES.find(x=>x[0]===theme);tb.className="theme"+(theme!=="auto"?" on":"");tb.append(h("span",{class:"g"},t[2]),h("span",{},t[1]));tb.onclick=()=>{const i=THEMES.findIndex(x=>x[0]===theme);theme=THEMES[(i+1)%THEMES.length][0];applyTheme();render()};
+  $("#main").classList.toggle("showing-proc",state.showing);
+  const view=$("#view");view.classList.remove("norm","abn","emerg");if(state.mode!=="status")view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
+  renderSide();renderView();
+}
+function renderSide(){
+  const s=$("#side");s.innerHTML="";
+  if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"))));return}
+  const list=h("div",{class:"list"});
+  s.append(h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures"));
+  if(state.mode==="normal")list.append(h("button",{class:"ref "+(state.sel==="__vs"?"sel":""),onclick:()=>go(()=>{state.sel="__vs";state.showing=true})},h("span",{class:"dot"}),h("span",{class:"name"},"V-speeds & limits"),h("span",{class:"n"},"ref")));
+  a[state.mode].forEach(p=>{const pr=progress(p);const dot=pr.complete?"done":pr.done>0?(state.mode==="normal"?"partial":"active"):"";list.append(h("button",{class:state.sel===p.id?"sel":"",onclick:()=>go(()=>{state.sel=p.id;state.showing=true})},h("span",{class:"dot "+dot}),h("span",{class:"name"},p.name),h("span",{class:"n"},pr.total?pr.done+"/"+pr.total:"")))});
+  s.append(list);
+}
+function renderView(){
+  const v=$("#view");v.innerHTML="";
+  const back=()=>h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back");
+  if(state.mode==="status"){
+    const w=h("div",{class:"status"});
+    w.append(h("div",{class:"proc-head"},back(),h("h1",{},"Flight status",h("span",{class:"cond"},a.maker+" "+a.model))));
+    const act=activeNonNormal();w.append(h("h2",{},"Active procedures"));if(!act.length)w.append(h("div",{class:"empty"},"None."));
+    act.forEach(({m,p})=>{const pr=progress(p);w.append(h("div",{class:"row "+(m==="emergency"?"red":"amb")},h("button",{onclick:()=>go(()=>{state.mode=m;state.sel=p.id;state.showing=true})},p.name),h("span",{class:"num"},pr.done+"/"+pr.total+(p.land?"  ·  "+p.land:""))))});
+    const defs=deferredItems();w.append(h("h2",{},"Deferred items / landing considerations"));if(!defs.length)w.append(h("div",{class:"empty"},"None."));else{const ul=h("ul",{});defs.forEach(d=>ul.append(h("li",{},d)));w.append(h("div",{class:"deferred"},ul))}
+    w.append(h("h2",{},"Normal checklists"));a.normal.forEach(p=>{const pr=progress(p);w.append(h("div",{class:"row"},h("span",{},p.name),h("span",{class:"num "+(pr.complete?"ok":pr.done?"pend":"")},pr.complete?"Complete":pr.done?pr.done+"/"+pr.total:"—")))});
+    w.append(h("h2",{},"Flight"));
+    if(!state.confirmReset)w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>{state.confirmReset=true;render()}},"Reset all checklists for a new flight")));
+    else w.append(h("div",{class:"confirm"},h("span",{},"Clear every checklist and procedure for a new flight?"),h("button",{onclick:()=>{state.confirmReset=false;render()}},"Keep"),h("button",{class:"danger",onclick:()=>go(()=>{state.ticks={};state.branches={};state.confirmReset=false})},"Reset all")));
+    w.append(h("h2",{},"About"));
+    w.append(h("div",{class:"row"},h("span",{},"AeroE Checklist – EFB edition"),h("span",{class:"num"},window.AEROE_BUILD||"")));
+    w.append(h("div",{class:"saved"},"Ticks are kept between sessions only where the viewer app allows it. Basis: "+(a.basis||"")));
+    v.append(w);return;
+  }
+  if(state.mode==="normal"&&state.sel==="__vs"){
+    v.append(h("div",{class:"proc-head"},back(),h("h1",{},"V-speeds & limits",h("span",{class:"cond"},a.maker+" "+a.model))));
+    const w=h("div",{class:"vs"});w.append(h("div",{class:"meta"},a.engine+(a.seats?" · "+a.seats+" seats":"")));const t=h("table",{});(a.vspeeds||[]).forEach(s=>t.append(h("tr",{},h("td",{},s.k),h("td",{},s.v))));w.append(t);if(a.basis)w.append(h("div",{class:"meta"},"Basis: "+a.basis));v.append(w);return;
+  }
+  const p=proc(state.mode,state.sel);
+  if(!p){v.append(h("div",{class:"status"},h("div",{class:"empty"},"Select a checklist.")));return}
+  const cls=state.mode==="emergency"?"emerg":state.mode==="abnormal"?"abn":"norm";
+  v.append(h("div",{class:"proc-head"},back(),h("h1",{class:cls},p.name,p.cond?h("span",{class:"cond"},p.cond):""),h("div",{class:"tools"},h("button",{onclick:()=>go(()=>resetProc(p))},"Reset"))));
+  if(p.land)v.append(h("div",{class:"land"+(p.land.includes("PRACTICAL")?" amber":"")},p.land));
+  const rs=rows(p),next=rs.find(r=>actionable(r)&&!isDone(p,r)),items=h("div",{class:"items"});
+  rs.forEach(r=>{
+    if(r.type==="note"){items.append(h("div",{class:"item note "+(r.it.kind||"")},r.it.note));return}
+    if(r.type==="branch"){const opts=h("div",{class:"opts"});Object.keys(r.it.opts).forEach(o=>opts.append(h("button",{class:r.chosen===o?"sel":r.chosen?"off":"",onclick:()=>go(()=>{Object.keys(state.ticks).forEach(k=>{if(k.startsWith(key(p.id,r.path+".")))delete state.ticks[k]});Object.keys(state.branches).forEach(k=>{if(k!==key(p.id,r.path)&&k.startsWith(key(p.id,r.path+".")))delete state.branches[k]});state.branches[key(p.id,r.path)]=o})},o)));items.append(h("div",{class:"branch"},h("div",{class:"q"},r.it.branch),opts));return}
+    const done=isDone(p,r),it=r.it;
+    const cl=["item",done?"done":"",r===next?"next":"",it.mem?"mem":"",it.sub?"sub":"",r.type==="defer"?"defer":""].join(" ");
+    items.append(h("button",{class:cl,onclick:()=>go(()=>{const k=key(p.id,r.path);if(state.ticks[k])delete state.ticks[k];else state.ticks[k]=1})},h("span",{class:"chal"},r.type==="defer"?"Deferred: "+it.defer:it.c),h("span",{class:"lead"}),h("span",{class:"resp"},r.type==="defer"?"NOTED":it.r)));
+  });
+  v.append(items);
+  const pr=progress(p);
+  if(pr.complete){const nextProc=a[state.mode][a[state.mode].indexOf(p)+1];const bar=h("div",{class:"complete"},p.name.toUpperCase()+" COMPLETE");if(state.mode==="normal"&&nextProc)bar.append(h("button",{onclick:()=>go(()=>{state.sel=nextProc.id})},"Next: "+nextProc.name));else if(state.mode!=="normal")bar.append(h("button",{onclick:()=>go(()=>{state.mode="status";state.sel=null;state.showing=true})},"View status"));v.append(bar)}
+}
+applyTheme();render();
+
+</script>
+</body>
+</html>

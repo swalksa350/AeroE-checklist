@@ -19,11 +19,19 @@ The Status page shows the installed version and checks for updates; a bar appear
 - `tools/build.js` – regenerates the aircraft script tags and the service-worker precache list / version
 - `tools/AUTHORING.md` – how to write a data file
 
+## EFB edition (add-on)
+
+`efb/` holds a self-contained HTML file and a printable PDF for every aircraft, for loading into an
+EFB's Documents area (OzRunways, AvPlan). They are generated from the same data files by
+`node tools/build-efb.js` and served at `/efb/` with a download page and loading instructions.
+The folder is not part of the app's offline cache and the app does not depend on it.
+
 ## Adding or editing an aircraft
 
 1. Copy an existing file in `aircraft/` to `aircraft/<new-id>.js` and edit it (see `tools/AUTHORING.md`).
 2. `node tools/validate.js`
 3. `node tools/build.js`  (updates `index.html` and bumps the service-worker version so installed phones update)
+   then `node tools/build-efb.js` to regenerate the EFB files
 4. Commit and push to `main`. GitHub Actions deploys to Pages.
 
 Deep links: `https://<site>/#<id>` opens that aircraft directly, e.g. `#c172s`.
