@@ -166,6 +166,29 @@ section.view.emerg .item .resp{color:var(--ink)}
 .confirm button{padding:8px 14px;border-radius:var(--radius);border:1px solid var(--line);font-size:14px}
 .confirm button.danger{background:var(--red);color:var(--on-red);border-color:var(--red)}
 .link{color:var(--cyan)}
+/* voice bar */
+.vbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--panel);border-top:2px solid var(--cyan);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.vbar .st{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em;grid-column:1/-1;display:flex;gap:8px;align-items:center}
+.vbar .st .lis{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red)}
+@media (prefers-reduced-motion:no-preference){.vbar .st .lis{animation:pulse 1s infinite alternate}}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+.vbar .cur{font-size:16px;min-width:0}
+.vbar .cur b{color:var(--cyan)}
+.vbar .heard{font-size:13px;color:var(--ink-dim);grid-column:1/-1}
+.vbar .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.vbar button{padding:10px 14px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-weight:600;color:var(--ink)}
+.vbar button.ok{background:var(--green);color:var(--on-green);border-color:var(--green);font-size:16px;padding:12px 22px}
+.vbar button.stop{color:var(--red);border-color:var(--red)}
+.vbar button:active{background:var(--tap)}
+main.voice-on section.view{padding-bottom:150px}
+@media (max-width:480px){.vbar{grid-template-columns:1fr}.vbar .btns{justify-content:stretch}.vbar .btns button{flex:1}}
+.group-title{display:flex;align-items:center;gap:8px}
+.group-title .mic{margin-left:auto;padding:4px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:12px;color:var(--cyan);text-transform:none;letter-spacing:0;font-weight:600}
+.group-title .mic.on{border-color:var(--red);color:var(--red)}
+.status .tog{padding:6px 12px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-weight:600;color:var(--ink-dim)}
+.status .tog.on{background:var(--green);color:var(--on-green);border-color:var(--green)}
+.status .seg{display:flex;gap:4px} .status .seg button{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;color:var(--ink-dim)} .status .seg button.on{color:var(--ink);border-color:var(--cyan)}
+.status select{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);max-width:55%}
 .sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
 .sheet .card2{width:100%;max-width:640px;max-height:85%;overflow:auto;background:var(--panel);color:var(--ink);border-radius:12px 12px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .sheet h2{font-size:18px;margin:0 0 4px}
@@ -251,11 +274,11 @@ header .brand{cursor:default}
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 1.7 (build 0d080c7b)</footer>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 1.8 (build c9e52546)</footer>
 </div>
 <script>
-window.AEROE_BUILD = "0d080c7b";
-window.AEROE_VERSION = "1.7";
+window.AEROE_BUILD = "c9e52546";
+window.AEROE_VERSION = "1.8";
 /* Cessna 441 Conquest II – checklist data.
    Prototype content. Verify against the operator's approved checklist and the POH/AFM. */
 window.AIRCRAFT = window.AIRCRAFT || [];

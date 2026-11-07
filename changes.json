@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.8",
+    "date": "2026-11-07",
+    "title": "Voice: read aloud, spoken replies and recall",
+    "notes": [
+      "Read aloud (Status → Voice): the app speaks each line of an open checklist, waits for ✓ Checked, then reads the next. Works offline and in Bluetooth headsets. Speaking rate and voice are selectable.",
+      "Voice replies (experimental): after each line the app listens for “checked”, “set”, “repeat”, “skip” or “stop”. What it heard is shown before anything is applied. Needs microphone permission and, on Apple devices, signal.",
+      "Say procedure: with voice replies on, a microphone button above each checklist list lets you say a procedure name, for example “engine failure in flight”, and the app opens it.",
+      "All of this is off by default; nothing changes unless you turn it on."
+    ]
+  },
+  {
     "version": "1.7",
     "date": "2026-11-07",
     "title": "Send to EFB, and Mac window fix",

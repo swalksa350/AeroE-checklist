@@ -53,6 +53,7 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <li><a href="#offline">Offline use and saved progress</a></li>
 <li><a href="#efb">EFB files for OzRunways and AvPlan</a></li>
 <li><a href="#links">Direct links to an aircraft</a></li>
+<li><a href="#voice">Voice: read aloud, spoken replies and recall</a></li>
 <li><a href="#trouble">If something looks wrong</a></li>
 </ol></div>
 
@@ -150,11 +151,22 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <h2 id="links">11. Direct links to an aircraft</h2>
 <p>Adding <code>#</code> and the aircraft's id to the app address opens that aircraft straight away, for example <code>…/AeroE-checklist/#c172s</code>. The id is shown in the address bar when an aircraft is open. Useful for a club or school that flies one type.</p>
 
-<h2 id="trouble">12. If something looks wrong</h2>
+<h2 id="voice">12. Voice: read aloud, spoken replies and recall</h2>
+<p>Voice is off until you turn it on under <strong>Status → Voice</strong>. It has three parts.</p>
+<h3>Read aloud</h3>
+<p>With Read aloud on, opening any checklist shows a voice bar at the bottom with a Start button. The app speaks each line, challenge then response, highlights it, and waits. Tap <strong>✓ Checked</strong> (or the line itself) to tick it and hear the next. <strong>Repeat</strong> says it again, <strong>Skip</strong> moves on without ticking, <strong>Stop</strong> pauses. Notes are read and passed over; at a branch the app reads the question and the options and waits for you to choose. At the end it says the checklist is complete. Speaking rate and voice are set on the Status page, and Test the voice lets you hear them. Read aloud works offline and plays through a paired Bluetooth headset.</p>
+<h3>Voice replies (experimental)</h3>
+<p>With Voice replies on, the app listens for a few seconds after each line. Say <strong>“checked”</strong> or <strong>“set”</strong> to tick and continue, <strong>“repeat”</strong>, <strong>“skip”</strong> or <strong>“stop”</strong>. At a branch, say the first word of the option, for example “hot” or “no”. The bar shows a red dot while listening and prints what it heard, so a wrong hearing is visible before it matters; a tick can always be undone by tapping the line. The first use asks for microphone permission. On iPad and iPhone the recognition is done by Apple and needs signal; Android can work offline. A paired Bluetooth headset supplies the microphone, which keeps engine noise out. If the app cannot hear you it simply waits for a tap.</p>
+<h3>Say procedure</h3>
+<p>With Voice replies on, a <strong>Say procedure</strong> button appears above the checklist list. Tap it and say the name, for example “engine failure in flight” or “low oil pressure”. The app opens the best match for the current aircraft and, if Read aloud is on, starts reading it. There is no always-listening wake word: an installed web app cannot keep the microphone open in the background.</p>
+<div class="note">Voice is an aid to the displayed checklist, not a replacement for it. Read the screen, and treat a spoken tick like any other tick.</div>
+
+<h2 id="trouble">13. If something looks wrong</h2>
 <ul>
 <li><strong>A change you were told about is not showing.</strong> Check the Version row in the App section of the Status page. If it is older than expected, wait ten minutes from publication, tap "Check for updates now", close the app fully and reopen it.</li>
 <li><strong>There is no Version row.</strong> The copy on the device is from before updates were tracked, usually one installed from the old address. Delete the icon and install again from the address in section 1. Progress and favourites carry over.</li>
 <li><strong>Progress disappeared.</strong> Browser site data was cleared, or the app was opened in a private window. Saved data lives only in the device's browser storage.</li>
+<li><strong>Voice replies do nothing.</strong> Check that the microphone was allowed for the app (Settings → the browser or the installed app → Microphone), that the device has signal on iPad or iPhone, and that Voice replies is on under Status → Voice. If the device still cannot hear you, Read aloud with a tap to confirm continues to work.</li>
 <li><strong>A figure or procedure looks wrong.</strong> It may well be. The repository's review list records which figures the authors were least sure of for each aircraft, and corrections are made in the data file for that type. Report it with the aircraft and the checklist line.</li>
 </ul>
 

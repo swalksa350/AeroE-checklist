@@ -177,6 +177,29 @@ section.view.emerg .item .resp{color:var(--ink)}
 .confirm button{padding:8px 14px;border-radius:var(--radius);border:1px solid var(--line);font-size:14px}
 .confirm button.danger{background:var(--red);color:var(--on-red);border-color:var(--red)}
 .link{color:var(--cyan)}
+/* voice bar */
+.vbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--panel);border-top:2px solid var(--cyan);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+.vbar .st{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em;grid-column:1/-1;display:flex;gap:8px;align-items:center}
+.vbar .st .lis{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--red)}
+@media (prefers-reduced-motion:no-preference){.vbar .st .lis{animation:pulse 1s infinite alternate}}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+.vbar .cur{font-size:16px;min-width:0}
+.vbar .cur b{color:var(--cyan)}
+.vbar .heard{font-size:13px;color:var(--ink-dim);grid-column:1/-1}
+.vbar .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.vbar button{padding:10px 14px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-weight:600;color:var(--ink)}
+.vbar button.ok{background:var(--green);color:var(--on-green);border-color:var(--green);font-size:16px;padding:12px 22px}
+.vbar button.stop{color:var(--red);border-color:var(--red)}
+.vbar button:active{background:var(--tap)}
+main.voice-on section.view{padding-bottom:150px}
+@media (max-width:480px){.vbar{grid-template-columns:1fr}.vbar .btns{justify-content:stretch}.vbar .btns button{flex:1}}
+.group-title{display:flex;align-items:center;gap:8px}
+.group-title .mic{margin-left:auto;padding:4px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:12px;color:var(--cyan);text-transform:none;letter-spacing:0;font-weight:600}
+.group-title .mic.on{border-color:var(--red);color:var(--red)}
+.status .tog{padding:6px 12px;border:1px solid var(--line);border-radius:var(--radius);font-size:14px;font-weight:600;color:var(--ink-dim)}
+.status .tog.on{background:var(--green);color:var(--on-green);border-color:var(--green)}
+.status .seg{display:flex;gap:4px} .status .seg button{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;color:var(--ink-dim)} .status .seg button.on{color:var(--ink);border-color:var(--cyan)}
+.status select{font:inherit;font-size:14px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);max-width:55%}
 .sheet{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
 .sheet .card2{width:100%;max-width:640px;max-height:85%;overflow:auto;background:var(--panel);color:var(--ink);border-radius:12px 12px 0 0;padding:16px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .sheet h2{font-size:18px;margin:0 0 4px}
@@ -310,7 +333,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "0d080c7b";
+const BUILD = "c9e52546";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -490,8 +513,8 @@ function render(){
   $("#main").classList.toggle("showing-proc",!!a&&state.showing);
   $("#main").classList.toggle("picker",!a);
   const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
-  if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); return; }
-  renderSide();renderView();
+  if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); renderVoiceBar(); return; }
+  renderSide();renderView();renderVoiceBar();
 }
 
 function renderPicker(v){
@@ -547,7 +570,10 @@ function renderSide(){
   const fp=favPrompt(); if(fp) s.append(fp);
   if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"))));return}
   const list=h("div",{class:"list"});
-  s.append(h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures"));
+  const gt=h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures");
+  if(voice.reply&&SR) gt.append(h("button",{class:"mic"+(recallState.on?" on":""),title:"Say a procedure name",onclick:voiceRecall},recallState.on?"● Listening":"🎤 Say procedure"));
+  s.append(gt);
+  if(recallState.msg) s.append(h("div",{class:"saved",style:"padding:0 16px 8px"},recallState.msg));
   if(state.mode==="normal"){
     list.append(h("button",{class:"ref "+(state.sel==="__vs"?"sel":""),onclick:()=>go(()=>{state.sel="__vs";state.showing=true})},h("span",{class:"dot"}),h("span",{class:"name"},"V-speeds & limits"),h("span",{class:"n"},"ref")));
   }
@@ -593,11 +619,11 @@ function renderView(){
     if(r.type==="note"){items.append(h("div",{class:"item note "+(r.it.kind||"")},r.it.note));return}
     if(r.type==="branch"){
       const opts=h("div",{class:"opts"});
-      Object.keys(r.it.opts).forEach(o=>opts.append(h("button",{class:r.chosen===o?"sel":r.chosen?"off":"",onclick:()=>go(()=>{
+      Object.keys(r.it.opts).forEach(o=>opts.append(h("button",{class:r.chosen===o?"sel":r.chosen?"off":"",onclick:()=>{go(()=>{
         const per=PER();
         Object.keys(per.ticks).forEach(k=>{if(k.startsWith(key(p.id,r.path+".")))delete per.ticks[k]});
         Object.keys(per.branches).forEach(k=>{if(k!==key(p.id,r.path)&&k.startsWith(key(p.id,r.path+".")))delete per.branches[k]});
-        per.branches[key(p.id,r.path)]=o;})},o)));
+        per.branches[key(p.id,r.path)]=o;}); if(vs.active&&vs.pending&&vs.pending.path===r.path){ stopListening(); vs.pending=null; voiceNext(); }}},o)));
       items.append(h("div",{class:"branch"},h("div",{class:"q"},r.it.branch),opts));return;
     }
     const done=isDone(p,r);
@@ -605,7 +631,7 @@ function renderView(){
     const cl=["item",done?"done":"",r===next?"next":"",it.mem?"mem":"",it.sub?"sub":"",r.type==="defer"?"defer":""].join(" ");
     const chal=r.type==="defer"?"Deferred: "+it.defer:it.c;
     const resp=r.type==="defer"?"NOTED":it.r;
-    items.append(h("button",{class:cl,"aria-pressed":done?"true":"false",onclick:()=>go(()=>{const per=PER();const k=key(p.id,r.path);if(per.ticks[k])delete per.ticks[k];else per.ticks[k]=1})},
+    items.append(h("button",{class:cl,"aria-pressed":done?"true":"false",onclick:()=>{const wasPending=vs.active&&vs.pending&&vs.pending.path===r.path&&!done; go(()=>{const per=PER();const k=key(p.id,r.path);if(per.ticks[k])delete per.ticks[k];else per.ticks[k]=1}); if(wasPending){ stopListening(); vs.pending=null; voiceNext(); }}},
       h("span",{class:"chal"},chal),h("span",{class:"lead"}),h("span",{class:"resp"},resp)));
   });
   v.append(items);
@@ -671,6 +697,19 @@ function renderStatus(v){
     :"On this device the file opens in the browser; save it from there (File → Save, or Share) and put it in your EFB's Documents or Dropbox folder."));
   efb.append(h("div",{class:"saved"},"The file works offline inside the EFB and carries this version's content; send it again after an app update."));
   w.append(efb);
+  w.append(h("h2",{},"Voice"));
+  const tog=(label,get,set,hint)=>h("div",{class:"row"},h("span",{},label,h("div",{class:"saved",style:"margin-top:2px"},hint)),h("button",{class:"tog"+(get()?" on":""),onclick:()=>{set(!get());saveVoice();render()}},get()?"On":"Off"));
+  if(!TTS) w.append(h("div",{class:"empty"},"This browser cannot read text aloud."));
+  else{
+    w.append(tog("Read aloud",()=>voice.read,v=>{voice.read=v; if(!v) voiceStop(true);},"Speaks each line of an open checklist and waits for ✓ Checked before the next."));
+    w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked”, “set”, “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
+    const seg=h("div",{class:"seg"});[0.8,1,1.2].forEach(rt=>seg.append(h("button",{class:voice.rate===rt?"on":"",onclick:()=>{voice.rate=rt;saveVoice();render()}},rt===0.8?"Slower":rt===1?"Normal":"Faster")));
+    w.append(h("div",{class:"row"},h("span",{},"Speaking rate"),seg));
+    if(!voicesCache.length) loadVoices();
+    if(voicesCache.length){ const sel=h("select",{id:"voice-select",onchange:ev=>{voice.voiceURI=ev.target.value;saveVoice();}}); const cur=pickVoice(); voicesCache.forEach(v=>{const o=h("option",{value:v.voiceURI},v.name+" ("+v.lang+")"); if(cur&&v.voiceURI===cur.voiceURI) o.selected=true; sel.append(o)}); w.append(h("div",{class:"row"},h("span",{},"Voice"),sel)); }
+    w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>speak("Fuel selectors. Both on. Airspeed. "+sayable("85 KIAS")+".")},"Test the voice")));
+    w.append(h("div",{class:"saved"},"With a Bluetooth headset paired to the device, speech plays in the headset and the headset microphone is used for replies, which keeps engine noise out. Every spoken reply is shown on screen before it is applied, and a tap always works."));
+  }
   w.append(h("h2",{},"App"));
   w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},APP_VERSION()||BUILD)));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>showWhatsNew(null,"What's new")},"What's new in this version")));
@@ -761,6 +800,150 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
       setInterval(() => checkForUpdate(false), 6 * 60 * 60 * 1000);
     }).catch(() => {});
   });
+}
+
+/* ---------------- VOICE ----------------
+   Opt-in. "Read aloud" speaks each line and waits for a tap (or a spoken reply) before the next.
+   "Voice replies" listens for checked / set / repeat / skip / stop after each line, and powers the
+   tap-then-speak procedure recall button. Everything here degrades to the normal tap behaviour. */
+const VOICE_KEY="ga-ecl-voice";
+const voice={read:false, reply:false, rate:1, voiceURI:""};
+try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if([0.8,1,1.2].includes(v.rate)) voice.rate=v.rate; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; } }catch(e){}
+function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)); }catch(e){} }
+const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+let voicesCache=[]; function loadVoices(){ try{ voicesCache=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)); }catch(e){} }
+if(TTS){ loadVoices(); try{ speechSynthesis.onvoiceschanged=()=>{ loadVoices(); }; }catch(e){} }
+function pickVoice(){ if(!voicesCache.length) loadVoices(); return voicesCache.find(v=>v.voiceURI===voice.voiceURI) || voicesCache.find(v=>/en-AU/i.test(v.lang)) || voicesCache.find(v=>v.default) || voicesCache[0] || null; }
+function sayable(t){
+  return String(t)
+    .replace(/\bKIAS\b/g,"knots").replace(/\bKTS?\b/g,"knots").replace(/\bRPM\b/g,"R P M").replace(/\bITT\b/g,"I T T").replace(/\bTIT\b/g,"T I T")
+    .replace(/\bEGT\b/g,"E G T").replace(/\bCHT\b/g,"C H T").replace(/\bNg\b/g,"N G").replace(/\bNp\b/g,"N P").replace(/\bN1\b/g,"N 1")
+    .replace(/°C/g," degrees C").replace(/°F/g," degrees F").replace(/°/g," degrees").replace(/\bpsi\b/g,"P S I").replace(/\bin Hg\b/g,"inches")
+    .replace(/\bGPH\b/g,"gallons per hour").replace(/\bft\b/g,"feet").replace(/\bAGL\b/g,"A G L").replace(/\bMSL\b/g,"M S L").replace(/\bMP\b/g,"manifold pressure")
+    .replace(/\bPFD\b/g,"P F D").replace(/\bMFD\b/g,"M F D").replace(/\bECU\b/g,"E C U").replace(/\bCBs\b/g,"circuit breakers").replace(/\bCB\b/g,"circuit breaker")
+    .replace(/\bVmca?\b/g,"V M C").replace(/\bVyse\b/g,"V Y S E").replace(/\bVxse\b/g,"V X S E").replace(/\bVref\b/g,"V ref").replace(/\bVfe\b/g,"V F E").replace(/\bVle\b/g,"V L E").replace(/\bVlo\b/g,"V L O")
+    .replace(/&/g," and ").replace(/[–—]/g,", ").replace(/\s*\/\s*/g,", ").replace(/\(([^)]*)\)/g,", $1,").replace(/\s+,/g,",").replace(/,\s*,/g,",");
+}
+let utterSeq=0;
+function speak(text, onend){
+  if(!TTS){ onend&&onend(); return; }
+  const id=++utterSeq;
+  try{ speechSynthesis.cancel(); }catch(e){}
+  const u=new SpeechSynthesisUtterance(text); u.rate=voice.rate; const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang; }
+  let done=false; const fin=()=>{ if(done||id!==utterSeq) return; done=true; clearTimeout(t); onend&&onend(); };
+  u.onend=fin; u.onerror=fin;
+  const t=setTimeout(fin, 2000 + text.length*95/voice.rate);   // fallback if the engine never reports the end
+  try{ speechSynthesis.speak(u); }catch(e){ fin(); }
+}
+function stopSpeaking(){ utterSeq++; try{ speechSynthesis.cancel(); }catch(e){} }
+
+/* --- read-aloud session for the open procedure --- */
+const vs={active:false, pid:null, pending:null, readNotes:{}, skipped:{}, status:"", heard:"", listening:false, rec:null, retries:0};
+function currentRows(){ const p=proc(state.mode,state.sel); return p?{p,rs:rows(p)}:null; }
+function voiceStart(){ const c=currentRows(); if(!c||!voice.read) return; vs.active=true; vs.pid=c.p.id; vs.pending=null; vs.retries=0; vs.heard=""; vs.status="Reading"; renderVoiceBar(); voiceNext(); }
+function voiceStop(silent){ vs.active=false; vs.pending=null; vs.status="Paused"; stopListening(); stopSpeaking(); if(!silent) renderVoiceBar(); }
+function voiceNext(){
+  if(!vs.active) return;
+  const c=currentRows(); if(!c||c.p.id!==vs.pid){ voiceStop(); return; }
+  const {p,rs}=c;
+  for(const r of rs){
+    const k=key(p.id,r.path);
+    if(r.type==="note"){ if(vs.readNotes[k]) continue; vs.readNotes[k]=1; vs.pending=null; vs.status="Reading"; renderVoiceBar(); speak(sayable(r.it.note), voiceNext); return; }
+    if(r.type==="branch"){ if(r.chosen) continue; vs.pending=r; vs.retries=0; vs.status="Choose an option"; renderVoiceBar();
+      speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r)); return; }
+    if(actionable(r)){ if(isDone(p,r)||vs.skipped[k]) continue; vs.pending=r; vs.retries=0; vs.status="Reading"; renderVoiceBar();
+      const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+". "+sayable(r.it.r)+".");
+      speak(text, ()=>{ vs.status=voice.reply&&SR?"Listening":"Waiting for Checked"; renderVoiceBar(); listenFor(r); }); return; }
+  }
+  const pr=progress(p);
+  vs.pending=null; vs.active=false; vs.status=pr.complete?"Complete":"Nothing left to read";
+  renderVoiceBar();
+  speak(pr.complete?(sayable(p.name)+" checklist complete."):("End of "+sayable(p.name)+". Some items were skipped."));
+}
+function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; const c=currentRows(); if(!c) return; stopListening(); PER().ticks[key(c.p.id,r.path)]=1; save(); vs.pending=null; render(); voiceNext(); }
+function voiceSkip(){ const r=vs.pending; if(!r) return; const c=currentRows(); if(!c) return; stopListening(); vs.skipped[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); }
+function voiceRepeat(){ const r=vs.pending; if(!r){ voiceNext(); return; } stopListening(); const c=currentRows(); if(!c) return;
+  if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r));
+  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+". "+sayable(r.it.r)+"."), ()=>listenFor(r)); }
+function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; save(); vs.pending=null; render(); voiceNext(); }
+
+/* --- speech recognition --- */
+function stopListening(){ if(vs.rec){ try{ vs.rec.onend=null; vs.rec.abort(); }catch(e){} vs.rec=null; } vs.listening=false; }
+function listenOnce(onAlts, onFail){
+  if(!SR) { onFail&&onFail("unsupported"); return; }
+  stopListening();
+  let r; try{ r=new SR(); }catch(e){ onFail&&onFail("unsupported"); return; }
+  r.lang=navigator.language||"en-AU"; r.interimResults=false; r.maxAlternatives=4; r.continuous=false;
+  let got=false;
+  r.onresult=e=>{ got=true; const alts=[]; for(let i=0;i<e.results.length;i++){ for(let j=0;j<e.results[i].length;j++) alts.push(String(e.results[i][j].transcript||"").toLowerCase().trim()); } onAlts(alts); };
+  r.onerror=e=>{ const err=(e&&e.error)||"error"; if(err==="not-allowed"||err==="service-not-allowed"){ voice.reply=false; saveVoice(); vs.status="Microphone not allowed – voice replies turned off"; } onFail&&onFail(err); };
+  r.onend=()=>{ vs.listening=false; vs.rec=null; if(!got) onFail&&onFail("no-speech"); renderVoiceBar(); };
+  try{ r.start(); vs.rec=r; vs.listening=true; }catch(e){ onFail&&onFail("error"); }
+}
+const CMDS=[[/\b(checked?|set|complete|completed|done|roger|affirm|confirmed?|next|yes)\b/,"confirm"],[/\b(repeat|again)\b/,"repeat"],[/\bskip\b/,"skip"],[/\b(stop|pause|cancel)\b/,"stop"]];
+function listenFor(r){
+  if(!vs.active||!voice.reply||!SR||vs.pending!==r) return;
+  vs.status="Listening"; vs.heard=""; renderVoiceBar();
+  let failed=false;
+  listenOnce(alts=>{
+    vs.heard=alts[0]||""; renderVoiceBar();
+    if(r.type==="branch"){
+      const opts=Object.keys(r.it.opts);
+      for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ voiceChoose(r,hit); return; } }
+    }else{
+      for(const a of alts){ const c=CMDS.find(([re])=>re.test(a)); if(c){ const cmd=c[1]; if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return; } }
+    }
+    vs.status="Not understood – say checked, repeat, skip or stop"; renderVoiceBar(); if(vs.retries++<3) setTimeout(()=>listenFor(r),400);
+  }, err=>{
+    if(failed) return; failed=true;
+    if(!vs.active||vs.pending!==r) return;
+    if(err==="no-speech"||err==="aborted"||err==="network"){ if(vs.retries++<4){ setTimeout(()=>listenFor(r),300); } else { vs.status=err==="network"?"No connection for voice – tap Checked":"Waiting for Checked"; renderVoiceBar(); } }
+    else { renderVoiceBar(); }
+  });
+}
+
+/* --- tap-then-speak recall of a procedure --- */
+let recallState={on:false,msg:""};
+function voiceRecall(){
+  if(!SR){ recallState.msg="Speech recognition is not available in this browser."; render(); return; }
+  recallState.on=true; recallState.msg="Listening… say the procedure name"; render();
+  let done=false;
+  listenOnce(alts=>{
+    if(done) return; done=true; recallState.on=false;
+    const all=["emergency","abnormal","normal"].flatMap(m=>DATA()[m].map(p=>({m,p})));
+    const norm=t=>t.toLowerCase().replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(w=>w&&!["the","a","an","in","of","and","or","procedure","checklist","open","go","to"].includes(w));
+    let best=null,bestScore=0;
+    for(const a of alts){ const words=norm(a); for(const x of all){ const nw=norm(x.p.name+" "+(x.p.cond||"")); let sc=0; for(const w of words){ if(nw.includes(w)) sc+=2; else if(nw.some(n=>n.startsWith(w)&&w.length>3)) sc+=1; } if(sc>bestScore){bestScore=sc;best=x;} } }
+    if(best&&bestScore>=2){ recallState.msg=""; state.mode=best.m; state.sel=best.p.id; state.showing=true; save(); render(); speak("Opening "+sayable(best.p.name)+".", ()=>{ if(voice.read) voiceStart(); }); }
+    else { recallState.msg="Heard \""+(alts[0]||"")+"\" – no matching procedure."; render(); }
+  }, err=>{ if(done) return; done=true; recallState.on=false; recallState.msg=err==="not-allowed"?"Microphone not allowed.":err==="network"?"No connection for voice recognition.":"Nothing heard – tap the microphone and try again."; render(); });
+}
+
+/* --- voice bar --- */
+function renderVoiceBar(){
+  const old=document.getElementById("vbar"); if(old) old.remove();
+  const main=$("#main");
+  const c=currentRows();
+  const show=voice.read && c && state.mode!=="status" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
+  main.classList.toggle("voice-on",!!show);
+  if(!show){ if(vs.active) voiceStop(true); return; }
+  if(vs.pid!==c.p.id){ vs.pid=c.p.id; vs.active=false; vs.pending=null; vs.readNotes={}; vs.skipped={}; vs.status=""; vs.heard=""; }
+  const r=vs.pending;
+  const cur=r ? (r.type==="branch" ? h("div",{class:"cur"},h("b",{},r.it.branch)) : h("div",{class:"cur"},(r.type==="defer"?"Deferred: "+r.it.defer:r.it.c)+" ",h("b",{},r.type==="defer"?"NOTED":r.it.r)))
+              : h("div",{class:"cur"},vs.active?"…":"Read aloud is on. Tap Start to hear this checklist.");
+  const st=h("div",{class:"st"},vs.listening?h("span",{class:"lis"}):"",vs.status||(vs.active?"Reading":"Ready"));
+  const btns=h("div",{class:"btns"});
+  if(!vs.active){ btns.append(h("button",{onclick:()=>{ if(!vs.active) voiceStart(); }},"▶ Start")); }
+  else{
+    btns.append(h("button",{class:"stop",onclick:()=>voiceStop()},"■ Stop"));
+    btns.append(h("button",{onclick:voiceRepeat},"Repeat"));
+    if(r&&r.type!=="branch") btns.append(h("button",{onclick:voiceSkip},"Skip"));
+    if(r&&r.type!=="branch") btns.append(h("button",{class:"ok",onclick:voiceConfirm},"✓ Checked"));
+  }
+  const bar=h("div",{class:"vbar",id:"vbar"},st,cur,btns);
+  if(vs.heard) bar.append(h("div",{class:"heard"},"Heard: “"+vs.heard+"”"));
+  document.body.append(bar);
 }
 
 /* ---------------- BOOT ---------------- */
