@@ -4,6 +4,8 @@ Tap-to-tick normal, abnormal and emergency checklists for common general aviatio
 Pick an aircraft, work through the flight, and the app keeps progress per type on the device.
 Installable on a phone and works with no network once opened once.
 The header switch cycles the display between Auto (follows the phone), Day and Night; the choice is remembered on the device.
+Tap the ☆ on an aircraft to add it to Favourites at the top of the picker (tap ★ to remove); the app also offers this after an aircraft has been opened three times.
+The Status page shows the installed version and checks for updates; a bar appears when a new version is ready or has just been applied.
 
 **Prototype content. Verify every item against the operator's approved checklist and the aircraft's POH/AFM before any use.**
 

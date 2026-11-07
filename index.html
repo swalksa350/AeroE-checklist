@@ -175,7 +175,13 @@ section.view.emerg .item .resp{color:var(--ink)}
 .link{color:var(--cyan)}
 .saved{font-size:12px;color:var(--ink-mute);margin-top:8px}
 
-.upd{display:block;width:100%;padding:12px 16px;background:var(--cyan);color:#06202a;font-weight:700;font-size:15px;text-align:center;border-bottom:1px solid var(--line)}
+.upd{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;width:100%;padding:12px 16px;background:var(--cyan);color:#06202a;font-weight:700;font-size:15px;text-align:center;border-bottom:1px solid var(--line)}
+.upd.info{background:var(--panel-2);color:var(--ink);font-weight:500;border-top:3px solid var(--cyan)}
+.upd .x{padding:6px 12px;border:1px solid currentColor;border-radius:var(--radius);font-size:13px;font-weight:600}
+.favp{margin:12px 16px 0;padding:12px 14px;border:1px solid var(--amber);border-radius:var(--radius);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--panel)}
+.favp span{flex:1;min-width:180px}
+.favp button{padding:8px 14px;border-radius:var(--radius);border:1px solid var(--line);font-size:14px}
+.favp button.add{background:var(--amber);color:var(--on-amber);border-color:var(--amber);font-weight:700}
 footer{font-size:11px;color:var(--ink-mute);text-align:center;padding:8px 16px;border-top:1px solid var(--line);background:var(--panel)}
 @media (prefers-reduced-motion:no-preference){.item{transition:background .12s}}
 
@@ -197,7 +203,10 @@ main.picker section.view{display:block}
 .picker .continue .go{margin-left:auto;color:var(--cyan);font-weight:600;white-space:nowrap}
 .picker h2{font-size:13px;color:var(--ink-dim);margin:22px 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
-.card{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);text-align:left;min-width:0;position:relative}
+.card{display:flex;flex-direction:column;gap:4px;padding:12px 44px 12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);text-align:left;min-width:0;position:relative;cursor:pointer}
+.card .star{position:absolute;right:4px;top:4px;width:38px;height:38px;font-size:22px;line-height:1;color:var(--ink-mute);border-radius:var(--radius)}
+.card .star.on{color:var(--amber)}
+.card .star:active{background:var(--tap)}
 .card:active{background:var(--tap)}
 .card .mk{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em}
 .card .md{font-weight:700;font-size:17px}
@@ -205,7 +214,7 @@ main.picker section.view{display:block}
 .card .pr{font-size:12px;color:var(--ink-mute);margin-top:4px;font-variant-numeric:tabular-nums}
 .card .pr.go{color:var(--green)}
 .card .pr.em{color:var(--red);font-weight:600}
-.card .short{position:absolute;right:12px;top:10px;font-size:11px;color:var(--ink-mute);border:1px solid var(--line);border-radius:4px;padding:1px 6px;letter-spacing:.04em}
+.card .short{position:absolute;right:44px;top:10px;font-size:11px;color:var(--ink-mute);border:1px solid var(--line);border-radius:4px;padding:1px 6px;letter-spacing:.04em}
 .vs{padding:4px 16px 16px}
 .vs .meta{color:var(--ink-dim);font-size:14px;padding:10px 0 4px}
 .vs table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
@@ -273,7 +282,8 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, confirmReset:false, savedAt:null};
+const BUILD = "6a44ec02";
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
 const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
@@ -288,6 +298,9 @@ function load(){
         if(s.per && typeof s.per==="object") state.per = s.per;
         if(typeof s.ac==="string" && byId(s.ac)) state.ac = s.ac;
         if(typeof s.lastAc==="string" && byId(s.lastAc)) state.lastAc = s.lastAc;
+        if(Array.isArray(s.fav)) state.fav = s.fav.filter(id=>byId(id));
+        if(s.uses && typeof s.uses==="object") state.uses = s.uses;
+        if(s.favAsked && typeof s.favAsked==="object") state.favAsked = s.favAsked;
         if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
         if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
         state.showing = !!s.showing;
@@ -306,7 +319,7 @@ function load(){
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
@@ -403,8 +416,19 @@ const $=s=>document.querySelector(s);
 function h(tag,attrs,...kids){const e=document.createElement(tag);for(const k in attrs||{}){if(k==="class")e.className=attrs[k];else if(k.startsWith("on"))e.addEventListener(k.slice(2),attrs[k]);else e.setAttribute(k,attrs[k])}kids.flat().forEach(c=>e.append(c instanceof Node?c:document.createTextNode(c)));return e}
 
 function go(fn){ fn(); save(); render(); }
+const FAV_PROMPT_AT = 3;          // opens before the app suggests adding an aircraft to favourites
+const FAV_PROMPT_AGAIN = 10;      // further opens before asking again after "Not now"
+function isFav(id){ return state.fav.includes(id); }
+function toggleFav(id){ if(isFav(id)) state.fav = state.fav.filter(x=>x!==id); else state.fav.push(id); state.favAsked[id] = -1; }
+function favPromptDue(){
+  const id=state.ac; if(!id || isFav(id) || state.favPromptHidden) return false;
+  const n=state.uses[id]||0, asked=state.favAsked[id];
+  if(asked===-1) return false;                     // pilot set it explicitly (added or removed) – never nag
+  if(asked===undefined) return n>=FAV_PROMPT_AT;
+  return n>=asked+FAV_PROMPT_AGAIN;
+}
 function selectAircraft(id){
-  state.ac=id; state.lastAc=id; state.mode="normal"; state.sel=null; state.showing=false; state.confirmReset=false;
+  state.ac=id; state.lastAc=id; state.uses[id]=(state.uses[id]||0)+1; state.favPromptHidden=false; state.mode="normal"; state.sel=null; state.showing=false; state.confirmReset=false;
   if(location.hash!=="#"+id){ try{ history.replaceState(null,"","#"+id); }catch(e){} }
 }
 function showPicker(){
@@ -448,28 +472,47 @@ function renderPicker(v){
   let last=byId(state.lastAc);
   if(!last){ const l=Object.keys(state.per).filter(id=>byId(id)); if(l.length===1) last=byId(l[0]); }
   if(last) w.append(h("button",{class:"continue",onclick:()=>go(()=>selectAircraft(last.id))},h("span",{},h("div",{class:"lbl"},"Continue"),h("div",{class:"nm"},last.maker+" "+last.model)),h("span",{class:"go"},"Open ›")));
+  const card=a=>{
+    const s=aircraftSummary(a);
+    let pr="", cls="pr";
+    if(s.act){pr=s.act+" procedure"+(s.act>1?"s":"")+" in progress";cls+=" em"}
+    else if(s.complete===s.total){pr="All normal checklists complete";cls+=" go"}
+    else if(s.started){pr=s.complete+"/"+s.total+" normal checklists complete"}
+    else pr="Not started";
+    const fav=isFav(a.id);
+    const star=h("button",{class:"star"+(fav?" on":""),"aria-label":(fav?"Remove ":"Add ")+a.short+(fav?" from favourites":" to favourites"),"aria-pressed":fav?"true":"false",
+      onclick:ev=>{ev.stopPropagation();go(()=>toggleFav(a.id))}},fav?"★":"☆");
+    return h("div",{class:"card",role:"button",tabindex:"0",onclick:()=>go(()=>selectAircraft(a.id)),onkeydown:ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();go(()=>selectAircraft(a.id))}}},
+      star,h("span",{class:"short"},a.short),h("span",{class:"mk"},a.maker),h("span",{class:"md"},a.model),h("span",{class:"en"},a.engine),h("span",{class:cls},pr));
+  };
+  const favs=state.fav.map(byId).filter(Boolean);
+  if(favs.length){
+    w.append(h("h2",{},"Favourites"));
+    const grid=h("div",{class:"cards"}); favs.forEach(a=>grid.append(card(a))); w.append(grid);
+  }else{
+    w.append(h("div",{class:"intro"},"Tap the ☆ on an aircraft to keep it at the top of this list."));
+  }
   CATEGORIES.forEach(cat=>{
     const list=AIRCRAFT.filter(a=>a.category===cat);
     if(!list.length) return;
     w.append(h("h2",{},cat));
     const grid=h("div",{class:"cards"});
-    list.forEach(a=>{
-      const s=aircraftSummary(a);
-      let pr="", cls="pr";
-      if(s.act){pr=s.act+" procedure"+(s.act>1?"s":"")+" in progress";cls+=" em"}
-      else if(s.complete===s.total){pr="All normal checklists complete";cls+=" go"}
-      else if(s.started){pr=s.complete+"/"+s.total+" normal checklists complete"}
-      else pr="Not started";
-      grid.append(h("button",{class:"card",onclick:()=>go(()=>selectAircraft(a.id))},
-        h("span",{class:"short"},a.short),h("span",{class:"mk"},a.maker),h("span",{class:"md"},a.model),h("span",{class:"en"},a.engine),h("span",{class:cls},pr)));
-    });
+    list.forEach(a=>grid.append(card(a)));
     w.append(grid);
   });
   v.append(w);
 }
 
+function favPrompt(){
+  const a=AC(); if(!favPromptDue()) return null;
+  return h("div",{class:"favp"},
+    h("span",{},"You have opened the "+a.short+" "+(state.uses[a.id]||0)+" times. Add it to your favourites?"),
+    h("button",{class:"add",onclick:()=>go(()=>{toggleFav(a.id)})},"Add ★"),
+    h("button",{onclick:()=>go(()=>{state.favAsked[a.id]=state.uses[a.id]||0;state.favPromptHidden=true})},"Not now"));
+}
 function renderSide(){
   const s=$("#side");s.innerHTML="";
+  const fp=favPrompt(); if(fp) s.append(fp);
   if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"))));return}
   const list=h("div",{class:"list"});
   s.append(h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures"));
@@ -567,9 +610,69 @@ function renderStatus(v){
       h("button",{onclick:()=>{state.confirmReset=false;render()}},"Keep"),
       h("button",{class:"danger",onclick:()=>go(()=>{state.per[state.ac]={ticks:{},branches:{}};state.confirmReset=false})},"Reset all")));
   }
+  w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(()=>toggleFav(a.id))},isFav(a.id)?"★ Remove "+a.short+" from favourites":"☆ Add "+a.short+" to favourites")));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(showPicker)},"Change aircraft")));
+  w.append(h("h2",{},"App"));
+  w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},BUILD)));
+  w.append(h("div",{class:"row"},h("span",{},"Updates"),h("span",{id:"updstate",class:"num"},updateState())));
+  w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>checkForUpdate(true)},"Check for updates now")));
   w.append(h("div",{class:"saved"},state.savedAt?"Progress is saved on this device. Last change "+new Date(state.savedAt).toLocaleString()+".":"Progress is saved on this device as you tick items."));
   v.append(w);
+}
+
+/* Update awareness.
+   - A bar appears while the app is open if a new build has been downloaded (tap to refresh).
+   - On reopening after an update was applied, a one-time "updated" bar says so.
+   - The Status page shows the version, the last check time and a manual check button. */
+const UPD_KEY = "ga-ecl-build";
+let updInfo = {lastCheck:null, waiting:false};
+function updateState(){
+  if(updInfo.waiting) return "New version ready – refresh";
+  return updInfo.lastCheck ? "Up to date · checked "+new Date(updInfo.lastCheck).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "Not checked yet";
+}
+function refreshUpdState(){ const el=document.getElementById("updstate"); if(el) el.textContent=updateState(); }
+function showBar(id, text, cls, action){
+  if(document.getElementById(id)) return;
+  const bar=document.createElement("div"); bar.id=id; bar.className="upd "+(cls||"");
+  bar.append(document.createTextNode(text));
+  const b=document.createElement("button"); b.className="x"; b.textContent=action.label;
+  b.onclick=()=>{ action.run(bar); };
+  bar.append(b);
+  document.getElementById("app").insertBefore(bar, document.getElementById("main"));
+}
+function showUpdateReady(){
+  updInfo.waiting=true; refreshUpdState();
+  showBar("upd","A new version is ready.","",{label:"Refresh now",run:bar=>{bar.textContent="Refreshing…";location.reload();}});
+}
+(function noticeAppliedUpdate(){
+  try{
+    const prev=localStorage.getItem(UPD_KEY);
+    if(prev && prev!==BUILD){
+      showBar("updok","AeroE Checklist was updated to version "+BUILD+".","info",{label:"OK",run:bar=>bar.remove()});
+    }
+    localStorage.setItem(UPD_KEY, BUILD);
+  }catch(e){}
+})();
+let swReg=null;
+function checkForUpdate(manual){
+  if(!swReg){ if(manual){ updInfo.lastCheck=Date.now(); refreshUpdState(); } return; }
+  swReg.update().then(()=>{ updInfo.lastCheck=Date.now(); refreshUpdState(); }).catch(()=>{ updInfo.lastCheck=Date.now(); refreshUpdState(); });
+}
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
+      swReg=reg; updInfo.lastCheck=Date.now(); refreshUpdState();
+      if (reg.waiting && navigator.serviceWorker.controller) showUpdateReady();
+      reg.addEventListener("updatefound", () => {
+        const nw = reg.installing;
+        nw && nw.addEventListener("statechange", () => {
+          if (nw.state === "installed" && navigator.serviceWorker.controller) showUpdateReady();
+        });
+      });
+      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") checkForUpdate(false); });
+      setInterval(() => checkForUpdate(false), 6 * 60 * 60 * 1000);
+    }).catch(() => {});
+  });
 }
 
 /* ---------------- BOOT ---------------- */
@@ -588,32 +691,6 @@ function start(){
   document.addEventListener("pointerdown", keepAwake, {once:true});
 }
 start();
-</script>
-<script>
-if ("serviceWorker" in navigator && location.protocol !== "file:") {
-  const showUpdate = () => {
-    if (document.getElementById("upd")) return;
-    const bar = document.createElement("button");
-    bar.id = "upd"; bar.className = "upd";
-    bar.textContent = "A new version is ready. Tap to refresh.";
-    bar.onclick = () => { bar.textContent = "Refreshing…"; location.reload(); };
-    document.getElementById("app").insertBefore(bar, document.getElementById("main"));
-  };
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then(reg => {
-      if (reg.waiting && navigator.serviceWorker.controller) showUpdate();
-      reg.addEventListener("updatefound", () => {
-        const nw = reg.installing;
-        nw && nw.addEventListener("statechange", () => {
-          if (nw.state === "installed" && navigator.serviceWorker.controller) showUpdate();
-        });
-      });
-      // check for a newer build whenever the app comes back to the foreground
-      document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") reg.update().catch(() => {}); });
-      setInterval(() => reg.update().catch(() => {}), 6 * 60 * 60 * 1000);
-    }).catch(() => {});
-  });
-}
 </script>
 </body>
 </html>

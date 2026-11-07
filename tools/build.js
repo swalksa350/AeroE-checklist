@@ -13,10 +13,13 @@ fs.writeFileSync(path.join(root, "index.html"), html);
 const assets = ["./", "./index.html", "./manifest.webmanifest", ...files.map(f => `./aircraft/${f}`),
   ...fs.readdirSync(path.join(root, "icons")).sort().map(f => `./icons/${f}`)];
 const hash = crypto.createHash("sha1");
-for (const a of assets.slice(1)) hash.update(fs.readFileSync(path.join(root, a)));
-const version = "ga-ecl-" + hash.digest("hex").slice(0, 10);
+hash.update(html.replace(/const BUILD = "[^"]*";/, 'const BUILD = "";'));
+for (const a of assets.slice(2)) hash.update(fs.readFileSync(path.join(root, a)));
+const version = hash.digest("hex").slice(0, 8);
+html = html.replace(/const BUILD = "[^"]*";/, `const BUILD = "${version}";`);
+fs.writeFileSync(path.join(root, "index.html"), html);
 let sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
-sw = sw.replace(/const VERSION = "[^"]*";/, `const VERSION = "${version}";`)
+sw = sw.replace(/const VERSION = "[^"]*";/, `const VERSION = "ga-ecl-${version}";`)
        .replace(/const ASSETS = \[[\s\S]*?\];/, `const ASSETS = [\n${assets.map(a => `  "${a}"`).join(",\n")}\n];`);
 fs.writeFileSync(path.join(root, "sw.js"), sw);
-console.log(`${files.length} aircraft, ${assets.length} precached files, service worker version ${version}`);
+console.log(`${files.length} aircraft, ${assets.length} precached files, build ${version}`);
