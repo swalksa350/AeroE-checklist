@@ -13,7 +13,8 @@
       "Default speaking rate lowered, with five steps from Slow to Fast; tapping a step plays a sample.",
       "Normal checklists are read in short form: the challenge and the capitalised action only, with bracketed detail left on screen. Can be turned off under Status → Voice.",
       "Listening is more dependable: the microphone stays open for as long as a line is waiting, opens a fraction of a second after the voice finishes, and accepts more ways of saying checked. Cue tones (one when listening, two when accepted) can be turned off.",
-      "Confirm a line by saying “checked” or the written response itself, for example “both on” or “idle cutoff”. Other words no longer tick a line."
+      "Confirm a line by saying “checked” or the written response itself, for example “both on” or “idle cutoff”. Other words no longer tick a line.",
+      "The microphone now opens while the line is being read, so a reply is caught the moment the voice stops; anything heard before that is ignored. Switchable under Status → Voice."
     ]
   },
   {

@@ -333,7 +333,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "48e99bd6";
+const BUILD = "219cd2ff";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -703,6 +703,7 @@ function renderStatus(v){
   else{
     w.append(tog("Read aloud",()=>voice.read,v=>{voice.read=v; if(!v) voiceStop(true);},"Speaks each line of an open checklist and waits for ✓ Checked before the next."));
     w.append(tog("Short responses in normal checklists",()=>voice.brief,v=>{voice.brief=v;},"Reads only the capitalised action, e.g. “Fuel shutoff, ON”, and leaves the bracketed detail for the screen. Abnormal and emergency procedures are always read in full."));
+    w.append(tog("Open microphone early",()=>voice.early,v=>{voice.early=v;},"Starts listening while the line is still being read so your reply is caught the instant the voice stops. Anything heard before then is ignored. Best with a headset; turn off if the voice cuts out or lines tick themselves when using the device speaker."));
     w.append(tog("Cue tones",()=>voice.tones,v=>{voice.tones=v;},"One short tone when the app starts listening, two when it accepts your word."));
     w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked” or the written response (for example “both on”), plus “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
     const seg=h("div",{class:"seg"});RATES.forEach(([rt,label])=>seg.append(h("button",{class:voice.rate===rt?"on":"",onclick:()=>{voice.rate=rt;saveVoice();render();speak("Fuel selectors. Both on.")}},label)));
@@ -812,8 +813,8 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
    tap-then-speak procedure recall button. Everything here degrades to the normal tap behaviour. */
 const VOICE_KEY="ga-ecl-voice";
 const RATES=[[0.7,"Slow"],[0.8,"Slower"],[0.9,"Normal"],[1,"Brisk"],[1.15,"Fast"]];
-const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true, tones:true};
-try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; if(typeof v.tones==="boolean") voice.tones=v.tones; } }catch(e){}
+const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true, tones:true, early:true};
+try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; if(typeof v.tones==="boolean") voice.tones=v.tones; if(typeof v.early==="boolean") voice.early=v.early; } }catch(e){}
 function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)); }catch(e){} }
 const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
@@ -894,10 +895,16 @@ function voiceNext(){
     const k=key(p.id,r.path);
     if(r.type==="note"){ if(vs.readNotes[k]) continue; vs.readNotes[k]=1; vs.pending=null; vs.status="Reading"; renderVoiceBar(); speak(sayable(r.it.note), voiceNext); return; }
     if(r.type==="branch"){ if(r.chosen) continue; vs.pending=r; vs.retries=0; vs.status="Choose an option"; renderVoiceBar();
-      speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r)); return; }
+      vs.gate=Infinity;
+      speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>{ vs.gate=Date.now()+120; if(voice.reply&&SR) beep(880,70,1); if(!(voice.early&&voice.reply&&SR&&vs.listening)) listenFor(r); });
+      if(voice.early&&voice.reply&&SR) listenFor(r,true);
+      return; }
     if(actionable(r)){ if(isDone(p,r)||vs.skipped[k]) continue; vs.pending=r; vs.retries=0; vs.status="Reading"; renderVoiceBar();
       const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+".");
-      speak(text, ()=>{ vs.status=voice.reply&&SR?"Listening":"Waiting for Checked"; renderVoiceBar(); listenFor(r); }); return; }
+      vs.gate=Infinity;
+      speak(text, ()=>{ vs.gate=Date.now()+120; vs.status=voice.reply&&SR?"Listening":"Waiting for Checked"; if(voice.reply&&SR) beep(880,70,1); renderVoiceBar(); if(!(voice.early&&voice.reply&&SR&&vs.listening)) listenFor(r); });
+      if(voice.early&&voice.reply&&SR) listenFor(r,true);
+      return; }
   }
   const pr=progress(p);
   vs.pending=null; vs.active=false; vs.status=pr.complete?"Complete":"Nothing left to read";
@@ -907,21 +914,37 @@ function voiceNext(){
 function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; const c=currentRows(); if(!c) return; stopListening(); PER().ticks[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); save(); render(); }
 function voiceSkip(){ const r=vs.pending; if(!r) return; const c=currentRows(); if(!c) return; stopListening(); vs.skipped[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); }
 function voiceRepeat(){ const r=vs.pending; if(!r){ voiceNext(); return; } stopListening(); const c=currentRows(); if(!c) return;
-  if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>listenFor(r));
-  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+"."), ()=>listenFor(r)); }
+  vs.gate=Infinity;
+  const after=()=>{ vs.gate=Date.now()+120; if(voice.reply&&SR) beep(880,70,1); if(!(voice.early&&voice.reply&&SR&&vs.listening)) listenFor(r); };
+  if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", after);
+  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+"."), after);
+  if(voice.early&&voice.reply&&SR) listenFor(r,true); }
 function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; vs.pending=null; voiceNext(); save(); render(); }
 
 /* --- speech recognition --- */
 function stopListening(){ if(vs.rec){ try{ vs.rec.onend=null; vs.rec.abort(); }catch(e){} vs.rec=null; } vs.listening=false; }
-function listenOnce(onAlts, onFail, onInterim){
+function listenOnce(onAlts, onFail, onInterim, gate){
   if(!SR) { onFail&&onFail("unsupported"); return; }
   stopListening();
   let r; try{ r=new SR(); }catch(e){ onFail&&onFail("unsupported"); return; }
   r.lang=navigator.language||"en-AU"; r.interimResults=!!onInterim; r.maxAlternatives=4; r.continuous=!!onInterim;
-  let got=false;
+  let got=false; const snap={};
   r.onresult=e=>{
-    const alts=[]; let anyFinal=false;
-    for(let i=0;i<e.results.length;i++){ if(e.results[i].isFinal!==false) anyFinal=anyFinal||e.results[i].isFinal===true; for(let j=0;j<e.results[i].length;j++) alts.push(String(e.results[i][j].transcript||"").toLowerCase().trim()); }
+    const alts=[]; let anyFinal=false; const open = !gate || Date.now()>=gate();
+    for(let i=0;i<e.results.length;i++){
+      const res=e.results[i]; if(res.isFinal===true) anyFinal=true;
+      const first=String(res[0]&&res[0].transcript||"").toLowerCase().trim();
+      if(!open){ snap[i]=first; continue; }                         // still speaking: remember what the app's own voice produced
+      const pre=snap[i]||"";
+      for(let j=0;j<res.length;j++){
+        let t=String(res[j].transcript||"").toLowerCase().trim();
+        if(pre && t.startsWith(pre)) t=t.slice(pre.length).trim();   // keep only what was said after the gate
+        else if(pre && t===pre) t="";
+        if(t) alts.push(t);
+      }
+    }
+    if(!open) return;
+    if(!alts.length) return;
     if(onInterim && !anyFinal){ if(onInterim(alts)===true){ got=true; } return; }   // acted on an interim word: treat as handled
     got=true; onAlts(alts);
   };
@@ -941,8 +964,9 @@ function saidResponse(transcript, response){
   if(joined.length<=3) return words.every(w=>new RegExp("\\b"+w+"\\b").test(t));
   return t.replace(/[^a-z]/g,"").includes(joined) || words.every(w=>new RegExp("\\b"+w+"\\b").test(t));
 }
-function listenFor(r){
+function listenFor(r, early){
   if(!vs.active||!voice.reply||!SR||vs.pending!==r) return;
+  if(!early && vs.listening && vs.gate<=Date.now()) return;   // already listening from an early start
   let acted=false;
   const act=(alts)=>{                     // returns true when a command or option was recognised and applied
     if(acted) return true;
@@ -960,9 +984,7 @@ function listenFor(r){
   };
   const open=()=>{
     if(!vs.active||vs.pending!==r||acted) return;
-    vs.status="Listening"; renderVoiceBar();
-    const firstOpen=!vs.listenedOnce; vs.listenedOnce=true;
-    if(firstOpen) beep(880,70,1);
+    if(!(vs.gate>Date.now())){ vs.status="Listening"; renderVoiceBar(); }
     listenOnce(alts=>{
       vs.heard=alts[0]||""; renderVoiceBar();
       if(act(alts)) return;
@@ -972,10 +994,11 @@ function listenFor(r){
       if(err==="not-allowed"||err==="service-not-allowed"||err==="unsupported"||err==="audio-capture"||err==="language-not-supported"){ vs.status=srErrorText(err)+" – tap Checked"; renderVoiceBar(); return; }
       if(err==="network"){ vs.netFails=(vs.netFails||0)+1; if(vs.netFails>5){ vs.status="No connection for voice – tap Checked"; renderVoiceBar(); return; } setTimeout(open,1200); return; }
       setTimeout(open, 150);               // session ended or nothing heard yet: keep the microphone open while the line is pending
-    }, alts=>act(alts));
+    }, alts=>act(alts), ()=>vs.gate||0);
   };
-  vs.listenedOnce=false; vs.netFails=0;
-  setTimeout(open, 180);                   // let the speech engine release the audio channel before the microphone opens
+  vs.netFails=0;
+  if(early){ open(); }                     // microphone opens while the line is still being read; results before the gate are ignored
+  else setTimeout(open, 180);              // otherwise let the speech engine release the audio channel first
 }
 function srErrorText(err){
   return ({"not-allowed":"Microphone not allowed for this app","service-not-allowed":"Speech recognition not allowed here","audio-capture":"No microphone found","network":"No connection for speech recognition","no-speech":"Nothing heard","aborted":"Listening stopped","unsupported":"Speech recognition not available in this app","language-not-supported":"Language not supported"})[err] || ("Speech recognition error: "+err);
