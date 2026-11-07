@@ -343,7 +343,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "90680382";
+const BUILD = "02d71f60";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
@@ -727,6 +727,7 @@ function renderStatus(v){
     w.append(tog("Read aloud",()=>voice.read,v=>{voice.read=v; if(!v) voiceStop(true);},"Speaks each line of an open checklist and waits for ✓ Checked before the next."));
     w.append(tog("Short responses in normal checklists",()=>voice.brief,v=>{voice.brief=v;},"Reads only the capitalised action, e.g. “Fuel shutoff, ON”, and leaves the bracketed detail for the screen. Abnormal and emergency procedures are always read in full."));
     w.append(tog("“Hey Aero” wake word",()=>voice.wake,v=>{voice.wake=v; if(!v&&wake.on){stopListening();wake.on=false;}},SR?"Keeps the microphone open while the app is on screen. Say “hey Aero, landing checklist” or “hey Aero, engine failure in flight”. Also “hey Aero, status” and “hey Aero, stop”. Uses battery and, on iPad and iPhone, signal. A red dot by the aircraft name shows it is listening.":"Not available in this browser."));
+    if(SR) w.append(h("div",{class:"saved",id:"wakestate"},wakeStatusText()));
     w.append(tog("Open microphone early",()=>voice.early,v=>{voice.early=v;},"Starts listening while the line is still being read so your reply is caught the instant the voice stops. Anything heard before then is ignored. Best with a headset; turn off if the voice cuts out or lines tick themselves when using the device speaker."));
     w.append(tog("Cue tones",()=>voice.tones,v=>{voice.tones=v;},"One short tone when the app starts listening, two when it accepts your word."));
     w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked” or the written response (for example “both on”), plus “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
@@ -1085,15 +1086,16 @@ function runMicTest(){
 }
 
 /* --- "hey Aero" wake word: a continuous listener while the app is on screen and idle --- */
-const WAKE_RE=/\b(?:hey|hi|ok|okay|a|hay|hate)?\s*(?:aero|arrow|aro|airo|air o|era|aerial|arrows|errol|arrow's)\b[,.!]?\s*(.*)$/i;
+const WAKE_RE=/\b(?:hey|hi|ok|okay|a|hay|hate|he|hei|hair|hay)?\s*(?:aero|arrow|arrows|arrow's|aro|airo|air o|air oh|era|aerial|arial|ariel|errol|euro|euros|zero|hero|eero|ero|erro|aero's|arrowhead|heyarrow|heyaero|hiro|nero|aeroe|aerie|airy|oreo)\b[,.!]?\s*(.*)$/i;
 const ALIASES=[[/\b(before )?landing\b/,"land"],[/\bapproach\b/,"approach"],[/\b(pre[- ]?)?take ?off\b|\brun ?up\b|\bbefore takeoff\b/,"runup"],[/\bengine start\b|\bstart(ing)? (the )?engine\b|\bstart\b/,"start"],[/\bbefore start\b|\bpre[- ]?start\b|\bpreflight\b/,"pre"],[/\bafter landing\b/,"after"],[/\bshut ?down\b|\bsecure\b/,"shut"],[/\bclimb\b|\bafter take ?off\b/,"climb"],[/\bcruise\b/,"cruise"],[/\bdescent\b|\bdescend\b/,"desc"],[/\btaxi\b/,"taxi"]];
-let wake={on:false, busy:false, last:0, timer:null};
+let wake={on:false, busy:false, last:0, timer:null, heard:"", err:"", sessions:0, since:0};
 function wakeShouldRun(){ return voice.wake && voice.reply && SR && !!AC() && document.visibilityState==="visible" && !vs.active && !recallState.on && !vs.listening && !wake.busy; }
 function wakeLoop(){
   if(!wakeShouldRun()){ wake.on=false; return; }
-  wake.on=true; renderWakeDot();
+  wake.on=true; wake.sessions++; wake.since=wake.since||Date.now(); renderWakeDot(); renderWakeStatus();
   let handled=false;
   const consider=alts=>{
+    wake.heard=alts[0]||""; renderWakeStatus();
     for(const a of alts){
       const m=WAKE_RE.exec(a); if(!m) continue;
       const rest=(m[1]||"").trim();
@@ -1106,12 +1108,20 @@ function wakeLoop(){
     return false;
   };
   listenOnce(alts=>{ consider(alts); }, err=>{
-    wake.on=false; renderWakeDot();
+    wake.on=false; renderWakeDot(); if(err!=="ended"&&err!=="no-speech"){ wake.err=err; } renderWakeStatus();
     if(handled) return;
     if(err==="not-allowed"||err==="service-not-allowed"||err==="unsupported"||err==="audio-capture"){ voice.wake=false; saveVoice(); render(); return; }
     clearTimeout(wake.timer); wake.timer=setTimeout(wakeLoop, err==="network"?2000:250);
   }, alts=>consider(alts), ()=>0);
 }
+function wakeStatusText(){
+  if(!voice.wake) return "Off";
+  if(!voice.reply) return "Needs Voice replies on";
+  if(!SR) return "Not available in this browser";
+  const st=wake.on?"Listening":(vs.active?"Paused while a checklist is being read":(vs.listening?"Paused while listening for a reply":"Restarting…"));
+  return st+(wake.sessions?" · "+wake.sessions+" sessions":"")+(wake.heard?" · last heard “"+wake.heard+"”":"")+(wake.err?" · last error: "+srErrorText(wake.err)+" ("+wake.err+")":"");
+}
+function renderWakeStatus(){ const el=document.getElementById("wakestate"); if(el) el.textContent=wakeStatusText(); }
 function renderWakeDot(){ const b=$("#brand small"); if(!b) return; const d=b.querySelector(".wakedot"); if(wake.on&&!d) b.append(h("span",{class:"wakedot",title:"Listening for “hey Aero”"})); else if(!wake.on&&d) d.remove(); }
 setInterval(()=>{ if(wakeShouldRun()&&!wake.on) wakeLoop(); }, 1000);
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState!=="visible"){ if(wake.on){ stopListening(); wake.on=false; } } });
