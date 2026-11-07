@@ -308,7 +308,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "dce92715";
+const BUILD = "849ad9ab";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null};
@@ -665,17 +665,17 @@ function renderStatus(v){
   efb.append(shareRow("Send printable checklist to EFB…",a.id+".pdf","application/pdf","PDF · A4, all procedures"));
   efb.append(h("div",{class:"row"},h("a",{href:"efb/",target:"_blank",rel:"noopener"},"How to load into an EFB ›"),h("span",{class:"num"},"all aircraft")));
   efb.append(h("div",{class:"saved"},canShareFiles
-    ?"Tap a button to open the share sheet with the file attached, then choose Copy to OzRWY, Save to Files, or your EFB's Dropbox folder. On a computer the file opens in the browser instead; save it from there."
+    ?"Tap a button to open the share sheet with the file attached. If your EFB is listed (for example Copy to OzRWY), choose it. If it is not, choose Save to Files, then open the file from the Files app and share it from there, or save it into your EFB's Dropbox folder."
     :"On this device the file opens in the browser; save it from there (File → Save, or Share) and put it in your EFB's Documents or Dropbox folder."));
   efb.append(h("div",{class:"saved"},"The file works offline inside the EFB and carries this version's content; send it again after an app update."));
   w.append(efb);
   w.append(h("h2",{},"App"));
-  w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},(APP_VERSION()?APP_VERSION()+" · ":"")+BUILD)));
+  w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},APP_VERSION()||BUILD)));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>showWhatsNew(null,"What's new")},"What's new in this version")));
   w.append(h("div",{class:"row efb"},h("a",{href:"guide.html"},"User guide ›"),h("span",{class:"num"},"how everything works")));
   w.append(h("div",{class:"row"},h("span",{},"Updates"),h("span",{id:"updstate",class:"num"+(updInfo.waiting?" ready":"")},updateState())));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>checkForUpdate(true)},"Check for updates now")));
-  w.append(h("div",{class:"saved"},"If a newer version was published in the last few minutes it can take up to 10 minutes to reach every phone. Checking again after that will pick it up."));
+  w.append(h("div",{class:"saved"},"If a newer version was published in the last few minutes it can take up to 10 minutes to reach every phone. Checking again after that will pick it up. Build "+BUILD+"."));
   w.append(h("div",{class:"saved"},state.savedAt?"Progress is saved on this device. Last change "+new Date(state.savedAt).toLocaleString()+".":"Progress is saved on this device as you tick items."));
   v.append(w);
 }

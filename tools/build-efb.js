@@ -11,6 +11,7 @@ const appHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const style = appHtml.split("<style>")[1].split("</style>")[0];
 const engine = fs.readFileSync(path.join(__dirname, "efb-engine.js"), "utf8");
 const build = (appHtml.match(/const BUILD = "([^"]*)"/) || [, "dev"])[1];
+let appVersion = ""; try { appVersion = JSON.parse(fs.readFileSync(path.join(root, "changes.json"), "utf8"))[0].version; } catch (e) {}
 const files = fs.readdirSync(path.join(root, "aircraft")).filter(f => f.endsWith(".js")).sort();
 const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -43,10 +44,11 @@ header .brand{cursor:default}
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition ${build}</footer>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version ${appVersion} (build ${build})</footer>
 </div>
 <script>
 window.AEROE_BUILD = "${build}";
+window.AEROE_VERSION = "${appVersion}";
 ${data}
 </script>
 <script>
@@ -117,7 +119,7 @@ table{border-collapse:collapse;width:60%;margin:4pt 0 8pt} td{padding:2pt 6pt 2p
 ${section("Normal procedures", "norm", a.normal)}
 ${section("Abnormal procedures", "abn", a.abnormal)}
 ${section("Emergency procedures", "emerg", a.emergency)}
-<div class="foot">Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. AeroE Checklist ${build} · ${new Date().toISOString().slice(0, 10)}</div>
+<div class="foot">Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. AeroE Checklist version ${appVersion} (build ${build}) · ${new Date().toISOString().slice(0, 10)}</div>
 </body></html>`;
 };
 
@@ -173,7 +175,7 @@ ol li{margin:6px 0}
 <strong>Loading into AvPlan EFB:</strong>
 <ol><li>Save the file into the <em>Apps/AvPlan EFB</em> folder of a linked Dropbox account; it appears under Text → Dropbox. AvPlan's Dropbox import is documented for PDF, so test the HTML file on your device first and use the PDF if it does not open.</li>
 <li>Cloud Group administrators can distribute files to members.</li></ol>
-<p><small>Ticks and day/night choice are remembered only where the EFB's viewer allows browser storage. Files carry the build id ${build}; replace them when the main app updates. Prototype content – verify against the POH/AFM before any use.</small></p></div>
+<p><small>Ticks and day/night choice are remembered only where the EFB's viewer allows browser storage. Files are from version ${appVersion}; replace them when the main app updates. Prototype content – verify against the POH/AFM before any use.</small></p></div>
 ${rowsHtml}
 </body></html>`);
   console.log(`${list.length} EFB html files, ${pdfs} PDFs, build ${build}`);

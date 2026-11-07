@@ -70,7 +70,8 @@ function renderView(){
     if(!state.confirmReset)w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>{state.confirmReset=true;render()}},"Reset all checklists for a new flight")));
     else w.append(h("div",{class:"confirm"},h("span",{},"Clear every checklist and procedure for a new flight?"),h("button",{onclick:()=>{state.confirmReset=false;render()}},"Keep"),h("button",{class:"danger",onclick:()=>go(()=>{state.ticks={};state.branches={};state.confirmReset=false})},"Reset all")));
     w.append(h("h2",{},"About"));
-    w.append(h("div",{class:"row"},h("span",{},"AeroE Checklist – EFB edition"),h("span",{class:"num"},window.AEROE_BUILD||"")));
+    w.append(h("div",{class:"row"},h("span",{},"Version"),h("span",{class:"num"},window.AEROE_VERSION||window.AEROE_BUILD||"")));
+    w.append(h("div",{class:"row"},h("span",{},"Edition"),h("span",{class:"num"},"EFB single file")));
     w.append(h("div",{class:"saved"},"Ticks are kept between sessions only where the viewer app allows it. Basis: "+(a.basis||"")));
     v.append(w);return;
   }
