@@ -1,0 +1,555 @@
+/* Piper PA-46-310P Malibu – checklist data.
+   Prototype content. Verify against the operator's approved checklist and the POH/AFM. */
+window.AIRCRAFT = window.AIRCRAFT || [];
+window.AIRCRAFT.push({
+  id: "pa46-310p",
+  maker: "Piper",
+  model: "PA-46-310P Malibu",
+  short: "MALIBU",
+  category: "High-performance single",
+  engine: "Continental TSIO-520-BE, twin-turbocharged and intercooled, 310 hp",
+  seats: "6",
+  basis: "Typical PA-46-310P (1984–88, TSIO-520-BE, 4,100 lb, 5.5 psi cabin, hydraulic gear) POH procedures; analogue panel with King KFC 150 autopilot. Deice equipment and standby alternator where fitted; TIT and manifold pressure limits vary slightly with POH revision – use the placarded red lines.",
+  vspeeds: [
+    {k:"Vr", v:"70–74 KIAS (liftoff)"},
+    {k:"Vx", v:"81 KIAS"},
+    {k:"Vy", v:"110 KIAS"},
+    {k:"Best glide", v:"90 KIAS (gear & flaps up, prop low RPM)"},
+    {k:"Vfe", v:"165 KIAS (10°) / 130 KIAS (20°) / 116 KIAS (36° full)"},
+    {k:"Vlo", v:"165 KIAS extend / 130 KIAS retract"},
+    {k:"Vle", v:"165 KIAS"},
+    {k:"Va", v:"135 KIAS (4,100 lb)"},
+    {k:"Vno", v:"173 KIAS"},
+    {k:"Vne", v:"203 KIAS"},
+    {k:"Vs / Vso", v:"approx 69 / 58 KIAS (max weight)"},
+    {k:"Vref", v:"80 KIAS final (full flaps); approx 75 KIAS short field"},
+    {k:"Emergency descent", v:"165 KIAS gear down / 135 KIAS in turbulence"}
+  ],
+
+  normal: [
+    {id:"pre", name:"Before Start", items:[
+      {c:"Preflight inspection", r:"COMPLETE (fuel sumps, deice boots and static wicks, tyres, cowl and turbo area, no oil leaks)"},
+      {c:"Weight & balance / takeoff data", r:"COMPUTED (4,100 lb max takeoff, 4,118 lb ramp)"},
+      {c:"Passenger briefing", r:"COMPLETE (belts, airstair door, emergency exit, oxygen masks, no smoking)"},
+      {c:"Seats, belts, shoulder harnesses", r:"ADJUST & LOCK"},
+      {c:"Cabin door (upper & lower) / baggage doors", r:"CLOSED & LATCHED (DOOR AJAR annunciator out once power is on)"},
+      {c:"Parking brake", r:"SET"},
+      {c:"Landing gear selector", r:"DOWN"},
+      {c:"Emergency gear extension lever", r:"NORMAL / STOWED (floor, between front seats)"},
+      {c:"Throttle / propeller / mixture", r:"CLOSED / FULL FORWARD / IDLE CUTOFF"},
+      {c:"Fuel selector", r:"FULLEST TANK (LEFT or RIGHT – OFF is detented, there is no BOTH)"},
+      {c:"Fuel quantity", r:"CHECK both gauges (120 gal usable total)"},
+      {c:"Avionics master", r:"OFF"},
+      {c:"Battery master", r:"ON – voltage CHECK (approx 24 V)"},
+      {c:"Annunciator panel", r:"PRESS TO TEST (all lights; gear lights three green)"},
+      {c:"Cabin pressurisation dump switch", r:"NORMAL (not DUMP)"},
+      {c:"Pressurisation controller", r:"SET field elevation + 500 ft; rate knob approx mid-range"},
+      {c:"Oxygen", r:"CHECK pressure (approx 1,800 psi full) and quantity for flight; masks available"},
+      {c:"Alternate static source", r:"OFF (normal)"},
+      {c:"Beacon", r:"ON"},
+    ]},
+    {id:"start", name:"Engine Start", items:[
+      {c:"Propeller area", r:"CLEAR"},
+      {c:"Mixture", r:"FULL RICH"},
+      {c:"Propeller", r:"FULL FORWARD (high RPM)"},
+      {c:"Throttle", r:"FULL OPEN"},
+      {c:"Fuel pump", r:"HI until fuel flow peaks (approx 3–5 sec), then OFF"},
+      {c:"Throttle", r:"APPROX 1/4 OPEN"},
+      {branch:"Engine hot or flooded?", opts:{
+        "No":[],
+        "Yes":[{c:"Mixture", r:"IDLE CUTOFF"},{c:"Throttle", r:"FULL OPEN"},{c:"Mixture", r:"ADVANCE to FULL RICH as engine fires, throttle to idle"}]
+      }},
+      {c:"Starter", r:"ENGAGE (release when engine fires; 30 sec max, then cool)"},
+      {c:"Throttle", r:"1,000 RPM"},
+      {c:"Oil pressure", r:"10 psi within 30 sec (normal 30–60 psi)"},
+      {c:"Fuel pump", r:"OFF (LO if fuel flow fluctuates)"},
+      {c:"Alternator switch", r:"ON – charging (ammeter / voltage approx 28 V)"},
+      {c:"Standby alternator", r:"ON / ARMED (if fitted – STBY ALT light out)"},
+      {c:"Avionics master", r:"ON"},
+      {c:"Engine instruments", r:"CHECK (oil pressure, oil temp rising, fuel flow, TIT, CHT)"},
+    ]},
+    {id:"taxi", name:"Before Taxi", items:[
+      {c:"Brakes", r:"CHECK on initial roll"},
+      {c:"Flight instruments", r:"CHECK & SET (altimeter, HSI slaved, attitude erect, turn coordinator in turns)"},
+      {c:"Avionics / GPS", r:"SET"},
+      {c:"KFC 150 autopilot / electric trim", r:"PREFLIGHT TEST – disconnect checks, trim both directions – OFF"},
+      {c:"Pitot heat / stall warning heat", r:"ON momentarily – CHECK (ammeter rise), then AS REQUIRED"},
+      {c:"Propeller deice", r:"ON – ammeter in green, then AS REQUIRED (if fitted)"},
+      {c:"Windshield hot plate", r:"ON – CHECK, then AS REQUIRED (if fitted)"},
+      {c:"Surface deice (boots)", r:"SINGLE CYCLE – pneumatic pressure in green, boots inflate / deflate (if fitted)"},
+      {c:"Elevator / rudder trim", r:"SET for takeoff"},
+      {c:"Fuel selector", r:"CHECK fullest tank (LEFT or RIGHT)"},
+      {c:"Flaps", r:"SET for takeoff (0° normal; 10° short field) – indicator CHECK"},
+    ]},
+    {id:"runup", name:"Before Takeoff", items:[
+      {c:"Parking brake", r:"SET"},
+      {c:"Flight controls", r:"FREE & CORRECT"},
+      {c:"Mixture", r:"FULL RICH"},
+      {c:"Throttle", r:"1,700 RPM"},
+      {c:"Magnetos", r:"CHECK L & R (150 RPM max drop, 50 RPM max difference)"},
+      {c:"Propeller", r:"CYCLE 2–3 times (RPM drops, then returns)"},
+      {c:"Engine instruments", r:"CHECK (oil pressure 30–60 psi, oil temp in green, fuel flow steady, TIT / CHT)"},
+      {c:"Alternator / standby alternator", r:"CHECK charging, voltage approx 28 V"},
+      {c:"Suction / pneumatic pressure", r:"CHECK in green (gyro suction approx 4.5–5.2 in Hg; deice pressure in green)"},
+      {c:"Throttle", r:"IDLE check, then 1,000 RPM"},
+      {c:"Fuel selector", r:"FULLEST TANK (feel for detent)"},
+      {c:"Fuel pump", r:"LO"},
+      {c:"Pressurisation", r:"Dump switch NORMAL; controller field elevation + 500 ft; door seal inflated, DOOR AJAR out"},
+      {c:"Oxygen", r:"ON / AVAILABLE as required"},
+      {c:"Propeller", r:"FULL FORWARD"},
+      {c:"Flaps", r:"SET & INDICATING (0° or 10°)"},
+      {c:"Trim", r:"SET takeoff range"},
+      {c:"Landing gear selector", r:"DOWN – three green"},
+      {c:"Ice protection / pitot heat", r:"AS REQUIRED"},
+      {c:"Lights", r:"AS REQUIRED"},
+      {c:"Transponder", r:"ALT"},
+      {c:"Doors & windows", r:"LATCHED (DOOR AJAR out)"},
+      {c:"Takeoff briefing", r:"COMPLETE (abort point; throttle slowly to red line – do not exceed max manifold pressure; gear up with positive rate and no usable runway, below 130 KIAS)"},
+    ]},
+    {id:"climb", name:"After Takeoff / Climb", items:[
+      {c:"Takeoff power", r:"FULL THROTTLE applied slowly – manifold pressure at or below red line (approx 36–38 in Hg per placard), 2,600 RPM"},
+      {c:"Landing gear", r:"UP (positive rate, no usable runway, below 130 KIAS) – lights out, HYD PUMP light out"},
+      {c:"Flaps", r:"UP (above approx 85 KIAS, obstacles cleared)"},
+      {c:"Climb power", r:"REDUCE SLOWLY to approx 32 in Hg / 2,500 RPM (cruise climb)"},
+      {c:"Mixture", r:"FULL RICH / climb fuel flow per POH schedule (TIT below 1,650°F)"},
+      {c:"Fuel pump", r:"OFF above 1,000 ft AGL (LO if fuel flow fluctuates)"},
+      {c:"Airspeed", r:"110 KIAS (Vy) / 120–130 KIAS cruise climb for cooling"},
+      {c:"Pressurisation", r:"CHECK cabin climbing on rate, differential increasing (5.5 psi max); controller SET cruise altitude + 500 ft"},
+      {c:"Engine instruments", r:"CHECK (CHT, TIT, oil temp 240°F max, oil pressure)"},
+      {c:"Ice protection", r:"AS REQUIRED"},
+      {c:"Landing / taxi lights", r:"OFF"},
+    ]},
+    {id:"cruise", name:"Cruise", items:[
+      {c:"Cruise power", r:"SET (2,300–2,400 RPM, approx 26–31 in Hg; 75% max recommended) – change power slowly"},
+      {c:"Mixture", r:"LEAN SLOWLY per POH cruise table – TIT 1,650°F max recommended cruise (1,750°F red line)"},
+      {c:"Fuel selector", r:"ALTERNATE LEFT / RIGHT to keep tanks balanced – note time"},
+      {c:"Fuel pump", r:"LO if fuel flow fluctuates (vapour suppression at altitude / hot fuel), otherwise OFF"},
+      {c:"Fuel quantity / flow", r:"CHECK against plan"},
+      {c:"Pressurisation", r:"CHECK cabin altitude, rate zero, differential 5.5 psi max (cabin approx 8,000 ft at FL250)"},
+      {c:"Oxygen", r:"CHECK pressure; masks available (CABIN ALT warning approx 10,000 ft cabin)"},
+      {c:"Engine instruments", r:"CHECK (oil 30–60 psi / 240°F max, CHT, TIT)"},
+      {c:"Ice protection", r:"AS REQUIRED"},
+      {c:"Altimeter / heading", r:"CHECK"},
+    ]},
+    {id:"desc", name:"Descent", items:[
+      {c:"Altimeter", r:"SET"},
+      {c:"Pressurisation controller", r:"SET destination field elevation + 500 ft; rate approx 500 fpm (cabin ahead of aircraft)"},
+      {c:"Power", r:"REDUCE SLOWLY (approx 1 in Hg per minute) – keep approx 18–20 in Hg minimum to hold cabin pressure"},
+      {c:"Mixture", r:"ENRICH progressively (TIT / CHT monitored)"},
+      {c:"Fuel selector", r:"FULLEST TANK (LEFT or RIGHT)"},
+      {c:"Windshield heat / ice protection", r:"AS REQUIRED"},
+      {c:"Airspeed", r:"BELOW 173 KIAS (Vno); plan below 165 KIAS before gear extension"},
+      {c:"Approach briefing", r:"COMPLETE (Vref 80, flap setting, go-around power applied slowly)"},
+      {c:"Seat belts / harnesses", r:"SECURE"},
+    ]},
+    {id:"land", name:"Before Landing", items:[
+      {c:"Pressurisation", r:"CHECK cabin altitude at or above field elevation, differential approaching zero"},
+      {c:"Fuel selector", r:"FULLEST TANK (LEFT or RIGHT)"},
+      {c:"Fuel pump", r:"LO"},
+      {c:"Mixture", r:"FULL RICH (as required at high field elevation)"},
+      {c:"Airspeed", r:"BELOW 165 KIAS"},
+      {c:"Landing gear", r:"DOWN – three green, HYD PUMP light out"},
+      {c:"Flaps", r:"10° below 165 KIAS; 20° below 130 KIAS; 36° on final below 116 KIAS"},
+      {c:"Propeller", r:"FULL FORWARD (on final)"},
+      {c:"Autopilot / yaw damper", r:"OFF"},
+      {c:"Airspeed", r:"80 KIAS final (full flaps; approx 75 KIAS short field; add 10–15 KIAS with residual ice)"},
+      {c:"Landing light", r:"ON"},
+      {c:"Landing gear", r:"THREE GREEN – CONFIRMED on final"},
+    ]},
+    {id:"after", name:"After Landing", items:[
+      {c:"Flaps", r:"UP"},
+      {c:"Pressurisation", r:"CONFIRM depressurised (differential zero; dump if required)"},
+      {c:"Fuel pump", r:"OFF"},
+      {c:"Ice protection", r:"OFF (pitot heat, prop deice, windshield heat, boots)"},
+      {c:"Landing light / strobes", r:"AS REQUIRED"},
+      {c:"Transponder", r:"STBY / as required"},
+      {c:"Trim", r:"SET takeoff"},
+    ]},
+    {id:"shut", name:"Shutdown", items:[
+      {c:"Parking brake", r:"SET"},
+      {c:"Throttle", r:"1,000 RPM – turbocharger cool-down 3–5 min (TIT stabilised / falling)"},
+      {c:"Avionics master", r:"OFF"},
+      {c:"Electrical equipment / lights", r:"OFF"},
+      {c:"Oxygen", r:"OFF"},
+      {c:"Mixture", r:"IDLE CUTOFF"},
+      {c:"Magnetos", r:"OFF (after propeller stops)"},
+      {c:"Alternator / standby alternator / battery master", r:"OFF"},
+      {c:"Control lock", r:"INSTALL"},
+      {c:"Chocks / tiedowns / covers", r:"AS REQUIRED"},
+    ]},
+  ],
+  emergency: [
+    {id:"eng-fail-roll", name:"Engine Failure During Takeoff Roll", items:[
+      {c:"Throttle", r:"CLOSED", mem:true},
+      {c:"Brakes", r:"AS REQUIRED – stop straight ahead", mem:true},
+      {c:"Mixture", r:"IDLE CUTOFF"},
+      {c:"Fuel selector", r:"OFF"},
+      {c:"Magnetos", r:"OFF"},
+      {c:"Battery master / alternator", r:"OFF"},
+    ]},
+    {id:"eng-fail-to", name:"Engine Failure After Takeoff", cond:"Airborne at low altitude", land:"LAND IMMEDIATELY", items:[
+      {c:"Airspeed", r:"90 KIAS (best glide, gear & flaps up); 80–85 KIAS with gear / flaps down", mem:true},
+      {c:"Fuel pump", r:"HI (if fuel flow low); fuel selector SWITCH TANKS if time permits", mem:true},
+      {branch:"Runway remaining to land on?", opts:{
+        "Yes":[
+          {c:"Landing gear", r:"DOWN (if retracted)"},
+          {c:"Flaps", r:"AS REQUIRED"},
+          {c:"Land", r:"STRAIGHT AHEAD"},
+        ],
+        "No – land ahead off-field":[
+          {c:"Landing gear", r:"DOWN on firm surface / UP on rough terrain or water"},
+          {c:"Flaps", r:"DOWN (36°) when landing assured"},
+          {c:"Cabin pressurisation", r:"DUMP (so the door opens after landing)"},
+          {c:"Fuel selector", r:"OFF"},
+          {c:"Mixture", r:"IDLE CUTOFF"},
+          {c:"Magnetos", r:"OFF"},
+          {c:"Battery master", r:"OFF (after gear position set)"},
+          {note:"Land straight ahead with only small changes of direction. Do not attempt a turn back.", kind:"warn"},
+        ]
+      }},
+    ]},
+    {id:"eng-fail-flt", name:"Engine Failure in Flight", cond:"Loss of power with altitude available", land:"LAND AS SOON AS POSSIBLE", items:[
+      {c:"Airspeed", r:"90 KIAS (best glide, gear & flaps up)", mem:true},
+      {c:"Fuel selector", r:"SWITCH TANKS (feel for detent)", mem:true},
+      {c:"Fuel pump", r:"LO; HI if fuel flow reads zero (lean if engine floods)", mem:true},
+      {c:"Mixture", r:"FULL RICH, then lean as required", mem:true},
+      {c:"Propeller", r:"FULL AFT (low RPM) to extend glide", mem:true},
+      {c:"Oxygen", r:"ON if cabin altitude climbs above 10,000 ft (pressurisation is lost without engine power)"},
+      {branch:"Restart attempt practicable?", opts:{
+        "Yes – restart":[
+          {c:"Magnetos", r:"BOTH – check"},
+          {c:"Alternate induction air", r:"OPEN (if fitted / induction icing suspected)"},
+          {c:"Throttle", r:"1/4 OPEN"},
+          {c:"Starter", r:"ENGAGE if propeller has stopped"},
+          {branch:"Engine restarted?", opts:{
+            "Yes":[{c:"Power", r:"AS REQUIRED – apply slowly"},{c:"Fuel pump", r:"LO if required"},{defer:"Engine restarted after in-flight failure – land as soon as possible, suspect fuel or induction system."}],
+            "No":[{note:"Continue with forced landing.", kind:"warn"}]
+          }},
+        ],
+        "No – forced landing":[]
+      }},
+      {note:"Forced landing without power:", kind:"warn"},
+      {c:"ATC / ELT", r:"MAYDAY, squawk 7700"},
+      {c:"Seats / belts / harnesses", r:"SECURE; passengers briefed"},
+      {c:"Landing gear", r:"DOWN on firm surface (below 165 KIAS; use emergency extension if hydraulic pump fails) / UP on rough terrain or water"},
+      {c:"Flaps", r:"DOWN when landing assured"},
+      {c:"Airspeed", r:"80–85 KIAS on final"},
+      {c:"Cabin pressurisation", r:"DUMP"},
+      {c:"Fuel selector", r:"OFF"},
+      {c:"Mixture", r:"IDLE CUTOFF"},
+      {c:"Magnetos", r:"OFF"},
+      {c:"Battery master / alternator", r:"OFF (after gear and flaps set)"},
+      {c:"Cabin door", r:"UNLATCH before touchdown"},
+    ]},
+    {id:"eng-fire-flt", name:"Engine Fire in Flight", land:"LAND IMMEDIATELY", items:[
+      {c:"Fuel selector", r:"OFF", mem:true},
+      {c:"Mixture", r:"IDLE CUTOFF", mem:true},
+      {c:"Fuel pump", r:"OFF", mem:true},
+      {c:"Throttle", r:"CLOSED", mem:true},
+      {c:"Cabin pressurisation", r:"DUMP (bleed air OFF to cabin); cabin heat / defroster OFF", mem:true},
+      {c:"Oxygen", r:"ON if smoke in cabin / cabin altitude above 10,000 ft"},
+      {c:"Airspeed", r:"INCREASE (up to 165 KIAS) to help extinguish fire"},
+      {c:"Landing gear", r:"DOWN while battery power remains (emergency extension if needed)"},
+      {c:"Forced landing", r:"EXECUTE (do not attempt restart)"},
+    ]},
+    {id:"eng-fire-start", name:"Engine Fire During Start", items:[
+      {c:"Starter", r:"CONTINUE CRANKING", mem:true},
+      {branch:"Engine starts?", opts:{
+        "Yes":[{c:"Throttle", r:"1,700 RPM for a few minutes"},{c:"Engine", r:"SHUT DOWN and inspect for damage"}],
+        "No":[
+          {c:"Mixture", r:"IDLE CUTOFF"},
+          {c:"Throttle", r:"FULL OPEN"},
+          {c:"Fuel pump", r:"OFF"},
+          {c:"Fuel selector", r:"OFF"},
+          {c:"Starter", r:"CONTINUE CRANKING to draw fire into engine"},
+          {c:"Magnetos", r:"OFF"},
+          {c:"Battery master / alternator", r:"OFF"},
+          {c:"Fire extinguisher", r:"OBTAIN / USE"},
+          {c:"Aircraft", r:"EVACUATE"},
+        ]
+      }},
+    ]},
+    {id:"cabin-fire", name:"Electrical / Cabin Fire and Smoke", land:"LAND AS SOON AS POSSIBLE", items:[
+      {c:"Battery master / alternator / standby alternator", r:"OFF", mem:true},
+      {c:"Avionics master", r:"OFF", mem:true},
+      {c:"Cabin heat / defroster / vents", r:"OFF / CLOSED"},
+      {c:"Fire extinguisher", r:"ACTIVATE (then ventilate cabin)"},
+      {c:"Oxygen", r:"CREW MASKS ON if smoke persists (keep oxygen away from flames)"},
+      {branch:"Fire out and electrical power required?", opts:{
+        "Yes":[
+          {c:"Circuit breakers", r:"CHECK – do not reset faulted"},
+          {c:"Battery master", r:"ON"},
+          {c:"Alternator / avionics / equipment", r:"ON one at a time, check for smoke"},
+          {defer:"Electrical fire – suspect circuits isolated, affected systems unavailable."},
+        ],
+        "No":[
+          {note:"Landing gear hydraulic pump and flaps are electric: plan an emergency free-fall gear extension and a flaps-up landing.", kind:"caution"},
+          {defer:"Electrical power off – emergency gear extension, flaps-up landing, no landing light, no gear lights."},
+        ]
+      }},
+      {note:"Smoke evacuation:", kind:"warn"},
+      {c:"Descent", r:"TO 10,000 ft or below if practicable"},
+      {c:"Cabin pressurisation", r:"DUMP (below 10,000 ft) to ventilate"},
+      {c:"Fresh air vents / storm window", r:"OPEN"},
+    ]},
+    {id:"emer-desc", name:"Emergency Descent", items:[
+      {c:"Throttle", r:"CLOSED (reduce smoothly if time permits)", mem:true},
+      {c:"Propeller", r:"FULL FORWARD", mem:true},
+      {c:"Landing gear", r:"DOWN (below 165 KIAS)", mem:true},
+      {c:"Flaps", r:"10° (below 165 KIAS)", mem:true},
+      {c:"Airspeed", r:"165 KIAS (smooth air) / 135 KIAS (turbulence)", mem:true},
+      {c:"Oxygen", r:"ON if cabin altitude above 10,000 ft"},
+      {c:"Mixture", r:"ENRICH as required"},
+      {c:"ATC", r:"ADVISE – emergency descent"},
+      {c:"Level-off", r:"10,000 ft or MEA – restore power slowly; gear up below 130 KIAS if continuing"},
+    ]},
+    {id:"rapid-decomp", name:"Rapid Decompression / Cabin Altitude High", cond:"CABIN ALT warning (approx 10,000 ft cabin), ears / fog / loud decompression, or cabin climbing uncontrolled", land:"LAND AS SOON AS PRACTICAL", items:[
+      {c:"Oxygen masks (crew)", r:"DON – oxygen ON, 100%", mem:true},
+      {c:"Passenger oxygen", r:"ON – masks DON", mem:true},
+      {c:"Emergency descent", r:"INITIATE to 12,500 ft or below (10,000 ft preferred)", mem:true},
+      {c:"ATC", r:"ADVISE"},
+      {c:"Pressurisation", r:"CHECK: dump switch NORMAL, controller set below flight altitude, manifold pressure above approx 20 in Hg, DOOR AJAR out"},
+      {branch:"Cabin pressurisation recovered?", opts:{
+        "Yes":[{c:"Cabin altitude", r:"MONITOR; stay at an altitude the cabin holds below 10,000 ft"},{defer:"Pressurisation fault – low cruise altitude, oxygen used, maintenance inspection required."}],
+        "No":[{c:"Altitude", r:"REMAIN at or below 12,500 ft (10,000 ft without oxygen for passengers)"},{defer:"Unpressurised – remain low, oxygen quantity limited, no high-altitude diversion."}]
+      }},
+    ]},
+    {id:"gear-manual", name:"Emergency Gear Extension (Free Fall)", cond:"Gear does not extend hydraulically / HYD PUMP light stays on", items:[
+      {c:"Airspeed", r:"REDUCE to approx 100 KIAS (below 165 KIAS Vle; slower aids free fall)"},
+      {c:"Hydraulic pump circuit breaker", r:"PULL"},
+      {c:"Landing gear selector", r:"DOWN"},
+      {c:"Emergency gear extension lever", r:"PULL / EMERGENCY position (floor, between front seats) – hydraulic pressure released, gear free-falls"},
+      {c:"Aircraft", r:"YAW left and right to assist gear into locks"},
+      {c:"Landing gear indicator", r:"THREE GREEN"},
+      {note:"Do not reset the hydraulic pump circuit breaker or move the gear selector up after an emergency extension. Leave the lever in the emergency position and the gear down.", kind:"warn"},
+      {branch:"Three green obtained?", opts:{
+        "Yes":[{defer:"Gear extended by free fall – do not retract; gear and hydraulic system inspection required."}],
+        "No":[{note:"Continue to Gear-Up / Partial Gear Landing.", kind:"warn"}]
+      }},
+    ]},
+    {id:"gear-up-landing", name:"Gear-Up / Partial Gear Landing", cond:"Gear cannot be confirmed down", items:[
+      {c:"Runway", r:"LONGEST HARD SURFACE available, emergency services advised"},
+      {c:"Passenger briefing", r:"COMPLETE (belts tight, brace, exits)"},
+      {c:"Landing gear", r:"UP (or as it is – do not cycle)"},
+      {c:"Flaps", r:"DOWN (36°)"},
+      {c:"Approach", r:"NORMAL, 80 KIAS"},
+      {c:"Fuel pump", r:"OFF"},
+      {c:"Cabin pressurisation", r:"DUMP"},
+      {c:"Cabin door", r:"UNLATCHED"},
+      {note:"On short final:", kind:"warn"},
+      {c:"Mixture", r:"IDLE CUTOFF"},
+      {c:"Fuel selector", r:"OFF"},
+      {c:"Magnetos", r:"OFF"},
+      {c:"Battery master / alternator", r:"OFF"},
+      {c:"Touchdown", r:"MINIMUM SPEED, slightly nose high, wings level"},
+      {c:"Aircraft", r:"EVACUATE once stopped"},
+    ]},
+    {id:"icing-emer", name:"Inadvertent Icing Beyond Capability", cond:"Ice accumulating faster than the deice system clears it, or aircraft not approved for icing", land:"LAND AS SOON AS PRACTICAL", items:[
+      {c:"Pitot heat / stall warning heat", r:"ON", mem:true},
+      {c:"Propeller deice / windshield heat", r:"ON (if fitted)", mem:true},
+      {c:"Surface deice (boots)", r:"CYCLE at first sign of ice – repeat as required (if fitted)", mem:true},
+      {c:"Exit icing", r:"TURN BACK / CLIMB / DESCEND – ATC advised, request new altitude", mem:true},
+      {c:"Power", r:"INCREASE to hold airspeed; manifold pressure monitored (induction ice – alternate air if fitted)"},
+      {c:"Autopilot", r:"OFF – hand fly, note control feel and trim"},
+      {c:"Airspeed", r:"MAINTAIN higher than normal; no abrupt pitch changes"},
+      {c:"Cabin heat / defroster", r:"FULL ON – windshield hot plate for forward view"},
+      {branch:"Residual ice on airframe for landing?", opts:{
+        "No":[{c:"Ice protection", r:"OFF when clear"}],
+        "Yes":[
+          {c:"Flaps", r:"10° maximum for landing"},
+          {c:"Approach speed", r:"INCREASE 10–15 KIAS (approx 90–95 KIAS); expect stall warning unreliable"},
+          {c:"Landing", r:"LONGER RUNWAY, minimal flare, no steep turns"},
+          {defer:"Residual airframe ice – flaps 10°, approach 90–95 KIAS, longer landing distance."},
+        ]
+      }},
+    ]},
+    {id:"spin", name:"Spin Recovery", cond:"Intentional spins prohibited – inadvertent spin entry", items:[
+      {c:"Throttle", r:"IDLE", mem:true},
+      {c:"Ailerons", r:"NEUTRAL", mem:true},
+      {c:"Rudder", r:"FULL OPPOSITE to rotation", mem:true},
+      {c:"Control wheel", r:"FULL FORWARD (release back pressure)", mem:true},
+      {c:"Rudder", r:"NEUTRAL as rotation stops", mem:true},
+      {c:"Recovery", r:"SMOOTH pull-out from dive; do not exceed 203 KIAS (Vne) or load limits"},
+      {c:"Flaps / gear", r:"UP during recovery if extended"},
+      {c:"Power", r:"RESTORE slowly once in level flight"},
+    ]},
+  ],
+  abnormal: [
+    {id:"alt-fail", name:"Alternator Failure / Standby Alternator", cond:"ALT INOP annunciator, ammeter zero or voltage below approx 25 V", items:[
+      {c:"Alternator switch", r:"OFF, then ON (reset)"},
+      {c:"Alternator field circuit breaker", r:"CHECK / RESET once"},
+      {branch:"Alternator restored?", opts:{
+        "Yes":[{c:"Ammeter / voltmeter", r:"MONITOR"}],
+        "No – standby alternator fitted":[
+          {c:"Alternator switch", r:"OFF"},
+          {c:"Standby alternator", r:"ON – STBY ALT ON light; voltage CHECK"},
+          {c:"Electrical load", r:"REDUCE to within standby alternator capacity (approx 20 A: essential avionics, pitot heat; windshield heat and prop deice OFF)"},
+          {c:"Landing gear / flaps", r:"PLAN early gear extension – hydraulic pump and flaps draw heavily"},
+          {defer:"Main alternator failed – standby alternator, limited electrical load; land as soon as practical."},
+        ],
+        "No – battery only":[
+          {c:"Alternator switch", r:"OFF"},
+          {c:"Non-essential electrical load", r:"OFF (avionics to minimum, deice OFF, lights OFF)"},
+          {c:"Landing gear", r:"EXTEND EARLY while battery power remains (free-fall extension if the pump fails)"},
+          {c:"Pressurisation", r:"UNAFFECTED (pneumatic), but CABIN ALT warning and gear lights may fail – monitor"},
+          {defer:"Alternator failed – battery only; extend gear early, flaps-up landing possible, land as soon as practical."},
+        ]
+      }},
+    ]},
+    {id:"oil-press", name:"Low Oil Pressure", cond:"Oil pressure below 30 psi in flight", items:[
+      {c:"Oil pressure / oil temperature", r:"CHECK and cross-check"},
+      {branch:"Oil temperature rising or pressure below 10 psi?", opts:{
+        "Yes – genuine":[
+          {c:"Power", r:"REDUCE to minimum required (turbochargers are oil-lubricated – expect failure)"},
+          {c:"Airport", r:"DIVERT to nearest suitable, stay within glide of a landing area"},
+          {c:"Altitude", r:"HOLD altitude as long as practicable for glide range"},
+          {defer:"Low oil pressure – land as soon as possible, expect possible engine failure."},
+        ],
+        "No – gauge suspect":[{c:"Flight", r:"CONTINUE, monitor oil temperature and pressure"},{defer:"Oil pressure indication suspect – maintenance check required."}]
+      }},
+    ]},
+    {id:"turbo-fail", name:"Turbocharger Failure / Manifold Pressure Loss", cond:"Manifold pressure falls or cannot be obtained, fuel flow high for the MP, rough running, possible exhaust smell", items:[
+      {c:"Throttle", r:"REDUCE, then re-set smoothly"},
+      {c:"Mixture", r:"LEAN to smooth running at the manifold pressure available (fuel flow too high for MP)"},
+      {c:"Engine instruments", r:"CHECK (TIT, CHT, oil pressure and temperature)"},
+      {c:"Exhaust leak indications", r:"CHECK (smell, smoke, discoloured cowl, cabin CO) – exhaust gas in cowling is a fire hazard"},
+      {branch:"Exhaust leak or fire suspected?", opts:{
+        "Yes":[
+          {c:"Power", r:"MINIMUM required"},
+          {c:"Cabin heat", r:"OFF (CO risk)"},
+          {c:"Landing", r:"NEAREST SUITABLE AIRPORT – be ready for Engine Fire in Flight"},
+          {defer:"Turbocharger / exhaust failure – fire hazard, land as soon as possible, no go-around."},
+        ],
+        "No – power loss only":[
+          {c:"Altitude", r:"DESCEND to where naturally-aspirated power is adequate (approx 25 in Hg available near sea level, less with altitude)"},
+          {c:"Pressurisation", r:"EXPECT cabin to climb (turbo bleed air lost) – oxygen ON above 10,000 ft cabin, descend"},
+          {defer:"Turbocharger failed – reduced power, no pressurisation, longer takeoff distance; land as soon as practical."},
+        ]
+      }},
+    ]},
+    {id:"high-tit", name:"High TIT / Overboost", cond:"TIT above 1,750°F red line or manifold pressure above red line", items:[
+      {branch:"Indication?", opts:{
+        "Overboost (MP above red line)":[
+          {c:"Throttle", r:"REDUCE below red line, re-apply slowly"},
+          {c:"Oil temperature", r:"CHECK (cold oil slows the controller – warm up before full power)"},
+          {note:"Momentary overboost of approx 1 in Hg for a few seconds is tolerated; sustained or large overboost requires a maintenance inspection before further flight.", kind:"caution"},
+          {defer:"Overboost occurred – record peak MP and duration, maintenance inspection required."},
+        ],
+        "High TIT":[
+          {c:"Mixture", r:"ENRICH until TIT below 1,650°F"},
+          {c:"Throttle", r:"REDUCE if TIT remains high"},
+          {c:"Fuel flow", r:"CHECK against POH for the power set (low flow – fuel pump LO)"},
+          {branch:"TIT within limits?", opts:{
+            "Yes":[{c:"Flight", r:"CONTINUE, richer mixture"}],
+            "No":[{c:"Power", r:"REDUCE to the highest setting that keeps TIT below 1,650°F"},{defer:"High TIT – reduced power, suspect fuel system or TIT probe; maintenance check."}]
+          }},
+        ]
+      }},
+    ]},
+    {id:"fuel-flow", name:"Fuel Flow Fluctuation / Low Fuel Pressure", items:[
+      {c:"Fuel pump", r:"LO (vapour suppression); HI only if fuel flow is very low – may flood engine at low power"},
+      {c:"Fuel selector", r:"SWITCH TANKS (check quantity in the tank being used)"},
+      {c:"Mixture", r:"ADJUST for smooth running"},
+      {c:"Engine instruments", r:"CHECK (fuel flow, TIT, CHT)"},
+      {branch:"Fuel flow steady and engine smooth?", opts:{
+        "Yes":[{defer:"Fuel flow fluctuation cleared – leave fuel pump LO; report to maintenance."}],
+        "No":[{c:"Power", r:"REDUCE to smoothest setting; lower altitude helps vapour"},{defer:"Fuel flow unstable – land as soon as practical at nearest suitable airport."}]
+      }},
+    ]},
+    {id:"press-fault", name:"Pressurisation Controller Fault / Cabin Not Holding", cond:"Cabin altitude or rate not following the controller; differential abnormal", items:[
+      {c:"Cabin pressurisation dump switch", r:"NORMAL"},
+      {c:"Pressurisation controller", r:"RESELECT cabin altitude / rate; cycle rate knob"},
+      {c:"Manifold pressure", r:"ABOVE approx 20 in Hg (bleed air inflow needs power)"},
+      {c:"Door seal / DOOR AJAR", r:"CHECK (hiss at door, light out)"},
+      {c:"Cabin differential", r:"CHECK – 5.5 psi max (safety valve relieves above)"},
+      {branch:"Cabin response?", opts:{
+        "Cabin following again":[{c:"Pressurisation", r:"MONITOR closely"},{defer:"Pressurisation controller intermittent – maintenance check."}],
+        "Cabin climbing":[
+          {c:"Oxygen", r:"ON if cabin above 10,000 ft"},
+          {c:"Altitude", r:"DESCEND to keep cabin below 10,000 ft; Rapid Decompression procedure if CABIN ALT warning"},
+          {defer:"Pressurisation failed – unpressurised or limited altitude, oxygen as required."},
+        ],
+        "Differential too high":[
+          {c:"Altitude / power", r:"DESCEND; reduce power to reduce inflow"},
+          {c:"Before landing", r:"DUMP below 10,000 ft so the cabin is depressurised at touchdown"},
+          {defer:"Outflow valve fault – dump before landing; do not open the door until differential is zero."},
+        ]
+      }},
+    ]},
+    {id:"door-open", name:"Door Seal Failure / Door Open in Flight", cond:"DOOR AJAR light, loud hiss at door, cabin will not hold pressure", items:[
+      {c:"Aircraft", r:"CONTROLLABLE – fly the airplane"},
+      {c:"Airspeed", r:"REDUCE to approx 110–120 KIAS"},
+      {c:"Belts / loose items", r:"SECURE; passengers away from the door"},
+      {branch:"Door seal only (door latched) or door unlatched?", opts:{
+        "Seal failed, door latched":[
+          {c:"Altitude", r:"DESCEND – cabin cannot hold pressure; oxygen if cabin above 10,000 ft"},
+          {defer:"Door seal failed – unpressurised, remain at or below 10,000–12,500 ft, maintenance required."},
+        ],
+        "Door unlatched":[
+          {c:"Cabin pressurisation", r:"DUMP (do not pressurise)"},
+          {note:"Do not attempt to close or re-latch the door in flight. Expect noise and buffet.", kind:"caution"},
+          {defer:"Cabin door unlatched – unpressurised, return and land as soon as practical, normal approach speed."},
+        ]
+      }},
+    ]},
+    {id:"gear-unsafe", name:"Landing Gear Unsafe / Fails to Retract or Extend", cond:"Red gear warning light, fewer than three green, or HYD PUMP light stays on", items:[
+      {c:"Airspeed", r:"BELOW 165 KIAS (below 130 KIAS to retract)"},
+      {c:"Gear indicator bulbs", r:"CHECK (press to test / dim switch) – navigation lights dim the gear lights"},
+      {c:"Hydraulic pump circuit breaker", r:"CHECK / RESET once"},
+      {c:"Landing gear selector", r:"CYCLE once to the desired position"},
+      {branch:"Gear in desired position?", opts:{
+        "Yes":[{c:"Gear indication", r:"CONFIRM three green / lights out"},{defer:"Gear system fault – do not retract after landing; hydraulic / gear inspection required."}],
+        "No – failed to retract":[{c:"Landing gear selector", r:"DOWN – leave down"},{c:"Hydraulic pump", r:"If HYD PUMP light stays on, PULL hydraulic pump circuit breaker (pump running against a leak)"},{c:"Airspeed", r:"BELOW 165 KIAS"},{defer:"Gear will not retract – gear down, 165 KIAS max, reduced range; land as soon as practical."}],
+        "No – failed to extend":[{note:"Use Emergency Gear Extension (Free Fall).", kind:"warn"}]
+      }},
+    ]},
+    {id:"flap-fail", name:"Flap Failure / Asymmetry", items:[
+      {c:"Flap selector", r:"STOP at current position – do not continue extension"},
+      {c:"Flap circuit breaker", r:"CHECK / RESET once"},
+      {branch:"Flaps operable and symmetric?", opts:{
+        "Yes":[{c:"Flap setting", r:"AS REQUIRED"}],
+        "No":[{c:"Landing", r:"AT CURRENT FLAP SETTING – approach approx 90 KIAS flaps up, longer runway"},{defer:"Flaps inoperative / asymmetric – flaps-up or partial-flap landing, approach approx 90 KIAS, increased landing distance."}]
+      }},
+    ]},
+    {id:"prop-overspeed", name:"Propeller Overspeed", cond:"RPM above 2,600 and not responding to the prop lever", items:[
+      {c:"Throttle", r:"REDUCE"},
+      {c:"Propeller", r:"FULL AFT (low RPM)"},
+      {c:"Airspeed", r:"REDUCE (pitch up) to bring RPM within limits"},
+      {c:"Oil pressure", r:"CHECK (governor uses engine oil)"},
+      {c:"Power", r:"SET minimum that keeps RPM at or below 2,600"},
+      {defer:"Propeller governor fault – control RPM with throttle and airspeed, land as soon as practical."},
+    ]},
+    {id:"vac-deice-loss", name:"Vacuum / Pneumatic Pressure Loss", cond:"Suction gauge low, VAC annunciator, or deice pressure low", items:[
+      {c:"Suction / pneumatic pressure gauges", r:"CHECK (dual pumps – one failed leaves reduced capacity)"},
+      {c:"Attitude / heading indicators", r:"CROSS-CHECK with turn coordinator, compass, GPS, electric standby instruments"},
+      {branch:"Suction and deice pressure?", opts:{
+        "One pump failed – suction still in green":[
+          {c:"Surface deice", r:"USE SPARINGLY – single pump; exit icing conditions"},
+          {defer:"One air pump failed – gyros on remaining pump, limited boot capacity; avoid icing."},
+        ],
+        "Suction lost":[
+          {c:"Failed gyro instruments", r:"COVER"},
+          {c:"KFC 150 autopilot / flight director", r:"OFF (air-driven attitude gyro feeds the autopilot – expect disconnect)"},
+          {c:"Surface deice", r:"INOPERATIVE – exit icing immediately"},
+          {c:"IMC", r:"EXIT / AVOID – partial panel"},
+          {defer:"Vacuum / pneumatic failure – partial panel, no autopilot, boots inoperative; prefer VMC approach."},
+        ]
+      }},
+    ]},
+    {id:"pitot-static", name:"Pitot / Static Source Blockage", cond:"Airspeed erratic or zero, altimeter / VSI frozen", items:[
+      {c:"Pitot heat", r:"ON"},
+      {c:"Attitude and power", r:"FLY KNOWN pitch / power settings; GPS ground speed as cross-check"},
+      {branch:"Static system blocked?", opts:{
+        "Yes":[
+          {c:"Cabin pressurisation", r:"DUMP / depressurise (below 10,000 ft) before using cabin static"},
+          {c:"Alternate static source", r:"ON (cabin) – only with cabin unpressurised; expect small altimeter / airspeed errors"},
+          {defer:"Static source blocked – alternate static in use, cabin depressurised, altimeter error on approach."},
+        ],
+        "No – pitot only":[
+          {c:"Airspeed indicator", r:"DISREGARD until heat clears the blockage; use attitude, power and GPS"},
+          {defer:"Airspeed unreliable – approach by attitude and power, add margin, longer runway."},
+        ]
+      }},
+    ]},
+  ]
+});
