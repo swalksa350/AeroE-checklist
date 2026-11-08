@@ -202,6 +202,7 @@ section.view.emerg .item .resp{color:var(--ink)}
 .vbar button.stop{color:var(--red);border-color:var(--red)}
 .vbar button:active{background:var(--tap)}
 main.voice-on section.view{padding-bottom:150px}
+main.voice-on aside{padding-bottom:150px}
 @media (max-width:480px){.vbar{grid-template-columns:1fr}.vbar .btns{justify-content:stretch}.vbar .btns button{flex:1}}
 .group-title{display:flex;align-items:center;gap:8px}
 .group-title .mic{margin-left:auto;padding:4px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:12px;color:var(--cyan);text-transform:none;letter-spacing:0;font-weight:600}
@@ -353,7 +354,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "648cd5df";
+const BUILD = "cde4a6c5";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -533,6 +534,9 @@ function showPicker(){
 }
 
 function render(){
+  const sideEl=document.getElementById("side"), viewEl=document.getElementById("view");
+  const keep={side:sideEl?sideEl.scrollTop:0, view:viewEl?viewEl.scrollTop:0, sel:state.sel, mode:state.mode};
+  render._keep=keep;
   const a=AC();
   const hdr=$("#hdr"); hdr.classList.toggle("picker-head",!a);
   const brand=$("#brand"); brand.innerHTML="";
@@ -558,6 +562,7 @@ function render(){
   const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
   if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); renderVoiceBar(); return; }
   renderSide();renderView();renderVoiceBar();renderWakeDot();
+  const k=render._keep; if(k){ const se=document.getElementById("side"), ve=document.getElementById("view"); if(se) se.scrollTop=k.side; if(ve&&k.sel===state.sel&&k.mode===state.mode) ve.scrollTop=k.view; }
 }
 
 function renderPicker(v){
