@@ -343,7 +343,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "095bea29";
+const BUILD = "c3382717";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
@@ -1125,7 +1125,18 @@ function runMicTest(){
 
 /* --- "hey Aero" wake word: a continuous listener while the app is on screen and idle --- */
 const WAKE_RE=/\b(?:hey|hi|ok|okay|a|hay|hate|he|hei|hair|hay)?\s*(?:aero|arrow|arrows|arrow's|aro|airo|air o|air oh|era|aerial|arial|ariel|errol|euro|euros|zero|hero|eero|ero|erro|aero's|arrowhead|heyarrow|heyaero|hiro|nero|aeroe|aerie|airy|oreo)\b[,.!]?\s*(.*)$/i;
-const ALIASES=[[/\b(before )?landing\b/,"land"],[/\bapproach\b/,"approach"],[/\b(pre[- ]?)?take ?off\b|\brun ?up\b|\bbefore takeoff\b/,"runup"],[/\bengine start\b|\bstart(ing)? (the )?engine\b|\bstart\b/,"start"],[/\bbefore start\b|\bpre[- ]?start\b|\bpreflight\b/,"pre"],[/\bafter landing\b/,"after"],[/\bshut ?down\b|\bsecure\b/,"shut"],[/\bclimb\b|\bafter take ?off\b/,"climb"],[/\bcruise\b/,"cruise"],[/\bdescent\b|\bdescend\b/,"desc"],[/\btaxi\b/,"taxi"]];
+const ALIASES=[   // most specific first
+  [/\bafter landing\b|\bpost landing\b/,"after"],
+  [/\bbefore start\b|\bpre[- ]?start\b|\bpreflight\b|\bpre[- ]?flight\b|\bbefore engine start\b/,"pre"],
+  [/\bafter take ?off\b|\bclimb\b/,"climb"],
+  [/\b(before )?landing\b/,"land"],
+  [/\bapproach\b/,"approach"],
+  [/\b(pre[- ]?)?take ?off\b|\brun ?up\b|\bbefore takeoff\b/,"runup"],
+  [/\bengine start\b|\bstart(ing)? (the )?engine\b|\bstart\b/,"start"],
+  [/\bshut ?down\b|\bsecure\b|\bsecuring\b/,"shut"],
+  [/\bcruise\b|\bcrews\b/,"cruise"],
+  [/\bdescent\b|\bdescend\b|\bdecent\b|\bdissent\b|\bdescending\b|\bthe scent\b|\bdissent\b/,"desc"],
+  [/\btaxi\b|\btaxes\b|\btaxing\b/,"taxi"]];
 let wake={on:false, busy:false, last:0, timer:null, heard:"", err:"", sessions:0, since:0};
 function wakeShouldRun(){ return voice.wake && voice.reply && SR && !!AC() && document.visibilityState==="visible" && !vs.active && !recallState.on && !vs.listening && !wake.busy && !primePending && !(TTS&&speechSynthesis.speaking); }
 function wakeLoop(){
@@ -1176,7 +1187,13 @@ function handleSpokenCommand(text){
   if(/\bstatus\b/.test(t)){ state.mode="status"; state.sel=null; state.showing=true; save(); render(); speak("Status."); return true; }
   const a=AC(); if(!a) return false;
   let target=null;
-  const shortPhrase = t.split(/\s+/).length<=3 && !/\b(fail|failure|fire|emergency|smoke|loss|unsafe|overspeed|decompression|runaway)\b/.test(t);
+  {  // 1. a checklist or procedure whose full name was said wins outright
+    const said=" "+t.replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim()+" ";
+    const all=["normal","emergency","abnormal"].flatMap(m=>DATA()[m].map(p=>({m,p})));
+    const hit=all.filter(x=>said.includes(" "+x.p.name.toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim()+" ")).sort((x,y)=>y.p.name.length-x.p.name.length)[0];
+    if(hit) target=hit;
+  }
+  const shortPhrase = !target && t.split(/\s+/).length<=3 && !/\b(fail|failure|fire|emergency|smoke|loss|unsafe|overspeed|decompression|runaway|gear|flap|flaps|manual|spin|icing|ice|door|alternator|generator|electrical|oil|fuel|vacuum|pressure|caps|parachute|single|engine)\b/.test(t);
   if(shortPhrase) for(const [re,id] of ALIASES){ if(re.test(t)){ if(id==="approach"){ target=customApproach(a.id)?{m:"normal",p:DATA().normal.find(p=>p.id===CUSTOM_ID)}:null; if(!target) continue; } else { const p=DATA().normal.find(p=>p.id===id); if(p) target={m:"normal",p}; } if(target) break; } }
   if(!target){
     const all=["emergency","abnormal","normal"].flatMap(m=>DATA()[m].map(p=>({m,p})));

@@ -11,7 +11,8 @@
       "Checklists opened by voice are now read aloud (the speech engine is primed by your first tap) and start by naming the checklist. Saying the wake word on its own can no longer tick a line.",
       "Wake-word commands wait until you have finished speaking and prefer the checklist whose full name you said. Speech after a voice command is more reliable on Apple devices.",
       "A spoken request to open a checklist always reads it, even if Read aloud was off. Status → Voice has a voice log for troubleshooting.",
-      "Apple devices: listening now always stops before the app speaks, so voice-opened checklists are read; the listening tone sounds when the microphone is actually live."
+      "Apple devices: listening now always stops before the app speaks, so voice-opened checklists are read; the listening tone sounds when the microphone is actually live.",
+      "Voice commands recognise Before Start, Descent and After Landing correctly (an exact checklist name now wins over shortcuts)."
     ]
   },
   {
