@@ -343,7 +343,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "6c0e65c5";
+const BUILD = "03eb70f2";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
@@ -923,12 +923,17 @@ let utterSeq=0;
 function speak(text, onend){
   if(!TTS){ onend&&onend(); return; }
   const id=++utterSeq;
-  try{ speechSynthesis.cancel(); }catch(e){}
-  const u=new SpeechSynthesisUtterance(text); u.rate=voice.rate; const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang; }
-  let done=false; const fin=()=>{ if(done||id!==utterSeq) return; done=true; clearTimeout(t); onend&&onend(); };
-  u.onend=fin; u.onerror=fin;
-  const t=setTimeout(fin, 2000 + text.length*95/voice.rate);   // fallback if the engine never reports the end
-  try{ speechSynthesis.speak(u); }catch(e){ fin(); }
+  try{ if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}   // cancelling an idle engine can swallow the next utterance on Apple devices
+  try{ speechSynthesis.resume(); }catch(e){}
+  let done=false, started=false, t=null;
+  const fin=()=>{ if(done||id!==utterSeq) return; done=true; clearTimeout(t); clearTimeout(wd); onend&&onend(); };
+  const make=()=>{ const u=new SpeechSynthesisUtterance(text); u.rate=voice.rate; const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang; } u.onstart=()=>{ started=true; }; u.onend=fin; u.onerror=e=>{ if(e&&e.error==="interrupted"&&id!==utterSeq) return; fin(); }; return u; };
+  t=setTimeout(fin, 2000 + text.length*95/voice.rate);          // fallback if the engine never reports the end
+  const wd=setTimeout(()=>{                                      // watchdog: nothing started within 1.2 s – try once more
+    if(done||started||id!==utterSeq) return;
+    try{ speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(make()); }catch(e){}
+  }, 1200);
+  try{ speechSynthesis.speak(make()); }catch(e){ fin(); }
 }
 function stopSpeaking(){ utterSeq++; try{ speechSynthesis.cancel(); }catch(e){} }
 let ttsPrimed=false;
@@ -1104,26 +1109,31 @@ function wakeShouldRun(){ return voice.wake && voice.reply && SR && !!AC() && do
 function wakeLoop(){
   if(!wakeShouldRun()){ wake.on=false; return; }
   wake.on=true; wake.sessions++; wake.since=wake.since||Date.now(); renderWakeDot(); renderWakeStatus();
-  let handled=false;
-  const consider=alts=>{
+  let handled=false, pendingRest="", stableTimer=null;
+  const fire=rest=>{
+    if(handled) return; handled=true; wake.busy=true; clearTimeout(stableTimer); stopListening(); beep(1320,55,2);
+    handleSpokenCommand(rest); setTimeout(()=>{ wake.busy=false; wakeLoop(); }, 1500);
+  };
+  const consider=(alts,isFinal)=>{
     wake.heard=alts[0]||""; renderWakeStatus();
     for(const a of alts){
       const m=WAKE_RE.exec(a); if(!m) continue;
       const rest=(m[1]||"").trim();
       if(!rest){ if(Date.now()-wake.last>2500){ wake.last=Date.now(); beep(880,60,1); } continue; }   // wake word heard, waiting for the rest
-      if(rest.split(/\s+/).length<1) continue;
-      handled=true; wake.busy=true; stopListening(); beep(1320,55,2);
-      handleSpokenCommand(rest); setTimeout(()=>{ wake.busy=false; wakeLoop(); }, 1500);
-      return true;
+      if(isFinal){ fire(rest); return true; }
+      // running guess: wait until it stops changing for 800 ms so the whole name is heard
+      if(rest!==pendingRest){ pendingRest=rest; clearTimeout(stableTimer); stableTimer=setTimeout(()=>{ if(!handled&&pendingRest) fire(pendingRest); }, 800); }
+      return false;
     }
     return false;
   };
-  listenOnce(alts=>{ consider(alts); }, err=>{
+  listenOnce(alts=>{ consider(alts,true); }, err=>{
     wake.on=false; renderWakeDot(); if(err!=="ended"&&err!=="no-speech"){ wake.err=err; } renderWakeStatus();
     if(handled) return;
+    if(pendingRest){ fire(pendingRest); return; }     // session ended right after the command: use what we have
     if(err==="not-allowed"||err==="service-not-allowed"||err==="unsupported"||err==="audio-capture"){ voice.wake=false; saveVoice(); render(); return; }
     clearTimeout(wake.timer); wake.timer=setTimeout(wakeLoop, err==="network"?2000:250);
-  }, alts=>consider(alts), ()=>0);
+  }, alts=>consider(alts,false), ()=>0);
 }
 function wakeStatusText(){
   if(!voice.wake) return "Off";
@@ -1144,12 +1154,21 @@ function handleSpokenCommand(text){
   if(/\bstatus\b/.test(t)){ state.mode="status"; state.sel=null; state.showing=true; save(); render(); speak("Status."); return true; }
   const a=AC(); if(!a) return false;
   let target=null;
-  for(const [re,id] of ALIASES){ if(re.test(t)){ if(id==="approach"){ target=customApproach(a.id)?{m:"normal",p:DATA().normal.find(p=>p.id===CUSTOM_ID)}:null; if(!target) continue; } else { const p=DATA().normal.find(p=>p.id===id); if(p) target={m:"normal",p}; } if(target) break; } }
+  const shortPhrase = t.split(/\s+/).length<=3 && !/\b(fail|failure|fire|emergency|smoke|loss|unsafe|overspeed|decompression|runaway)\b/.test(t);
+  if(shortPhrase) for(const [re,id] of ALIASES){ if(re.test(t)){ if(id==="approach"){ target=customApproach(a.id)?{m:"normal",p:DATA().normal.find(p=>p.id===CUSTOM_ID)}:null; if(!target) continue; } else { const p=DATA().normal.find(p=>p.id===id); if(p) target={m:"normal",p}; } if(target) break; } }
   if(!target){
     const all=["emergency","abnormal","normal"].flatMap(m=>DATA()[m].map(p=>({m,p})));
     const norm=x=>x.toLowerCase().replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(w=>w&&!["the","a","an","in","of","and","or","to"].includes(w));
     const words=norm(t); let best=null,bestScore=0;
-    for(const x of all){ const nw=norm(x.p.name+" "+(x.p.cond||"")); let sc=0; for(const w of words){ if(nw.includes(w)) sc+=2; else if(nw.some(n=>n.startsWith(w)&&w.length>3)) sc+=1; } if(sc>bestScore){bestScore=sc;best=x;} }
+    const said=" "+words.join(" ")+" ";
+    for(const x of all){
+      const nameWords=norm(x.p.name); const nw=nameWords.concat(norm(x.p.cond||""));
+      let sc=0; for(const w of words){ if(nw.includes(w)) sc+=2; else if(nw.some(n=>n.startsWith(w)&&w.length>3)) sc+=1; }
+      if(nameWords.length && said.includes(" "+nameWords.join(" ")+" ")) sc+=6;          // the whole name was said
+      else if(nameWords.every(n=>words.includes(n))) sc+=3;                                // every word of the name was said
+      sc-=Math.max(0,nameWords.length-words.length)*0.5;                                  // longer names that were not fully said lose a little
+      if(sc>bestScore){bestScore=sc;best=x;}
+    }
     if(best&&bestScore>=2) target=best;
   }
   if(!target){ recallState.msg="Heard “"+text+"” – no matching checklist."; render(); speak("No matching checklist."); return false; }
