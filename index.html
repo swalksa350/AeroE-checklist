@@ -85,7 +85,9 @@ header .theme.on{color:var(--ink)}
   header .brand small{display:none}
   nav.modes button{font-size:13px;padding:14px 2px}
 }
-@media (max-width:400px){ nav.modes button{font-size:11px;letter-spacing:-.01em;padding:14px 1px} }
+nav.modes button .short{display:none}
+@media (max-width:480px){ nav.modes button{padding:14px 3px} }
+@media (max-width:430px){ nav.modes button .full{display:none} nav.modes button .short{display:inline} nav.modes button{font-size:12px;padding:14px 2px} }
 .charts{padding:0 16px 40px}
 .charts .row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
 .charts .row a{color:var(--cyan);text-decoration:none;font-weight:600}
@@ -349,11 +351,11 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "2f039b7e";
+const BUILD = "9806a79f";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
-const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["charts","Charts"],["status","Status"]];
+const MODES = [["normal","Normal","Normal"],["abnormal","Abnormal","Abnorm"],["emergency","Emergency","Emerg"],["charts","Charts","Charts"],["status","Status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
 const CUSTOM_ID="approach-custom";
@@ -542,8 +544,8 @@ function render(){
   const nav=$("#modes");nav.innerHTML="";
   if(a){
     const act=activeNonNormal().length;
-    MODES.forEach(([m,label])=>{
-      const b=h("button",{class:(state.mode===m?"on ":"")+(m==="emergency"?"emerg":m==="abnormal"?"abn":m==="normal"?"norm":""),"aria-pressed":state.mode===m?"true":"false",onclick:()=>go(()=>{state.mode=m;state.sel=null;state.showing=false;state.confirmReset=false})},label);
+    MODES.forEach(([m,label,short])=>{
+      const b=h("button",{class:(state.mode===m?"on ":"")+(m==="emergency"?"emerg":m==="abnormal"?"abn":m==="normal"?"norm":""),"aria-pressed":state.mode===m?"true":"false","aria-label":label,onclick:()=>go(()=>{state.mode=m;state.sel=null;state.showing=false;state.confirmReset=false})},h("span",{class:"full"},label),h("span",{class:"short"},short));
       if(m==="status"&&act)b.append(h("span",{class:"badge"},act));
       nav.append(b);
     });
