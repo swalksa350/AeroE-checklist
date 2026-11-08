@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.1",
+    "date": "2026-11-08",
+    "title": "Offline voice recognition (experimental)",
+    "notes": [
+      "Status → Voice → Offline recognition: a one-off 46 MB download lets the app recognise replies, Say procedure and the “hey Aero” wake word on the device with no signal. It only listens for the words the app expects, which also makes it more accurate in engine noise.",
+      "The download is kept separately from the app and survives updates; Remove the offline download frees the space.",
+      "On Apple devices the microphone is released while the app speaks (switchable) so speech is never muted."
+    ]
+  },
+  {
     "version": "2.0",
     "date": "2026-11-08",
     "title": "Editable normal checklists",

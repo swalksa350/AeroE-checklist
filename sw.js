@@ -1,4 +1,4 @@
-const VERSION = "ga-ecl-4c661567";
+const VERSION = "ga-ecl-3bba067f";
 const ASSETS = [
   "./",
   "./index.html",
@@ -45,9 +45,11 @@ self.addEventListener("install", e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS.map(a => new Request(a, { cache: "no-cache" })))).then(() => self.skipWaiting()));
 });
 
+const OFFLINE_CACHE = "ga-ecl-offline";   // the optional on-device speech engine and model: kept across app updates
+
 self.addEventListener("activate", e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== OFFLINE_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -56,6 +58,17 @@ self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
   const url = new URL(e.request.url);
   if (url.origin !== self.location.origin) return;
+  if (url.pathname.includes("/offline/")) {
+    // large, versionless files: serve from the offline cache, store on first download, never refresh in the background
+    e.respondWith(caches.open(OFFLINE_CACHE).then(async c => {
+      const hit = await c.match(e.request, { ignoreSearch: true });
+      if (hit) return hit;
+      const res = await fetch(e.request);
+      if (res && res.ok && res.status === 200) c.put(e.request, res.clone()).catch(() => {});
+      return res;
+    }));
+    return;
+  }
   const isPage = e.request.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html");
   if (isPage) {
     // Page: try the network briefly so a launch with signal shows the newest build; fall back to the cache offline.

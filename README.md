@@ -18,6 +18,7 @@ The Status page shows the installed version and checks for updates; a bar appear
 - `aircraft/<id>.js` – one checklist data file per aircraft type
 - `sw.js` – service worker that precaches everything for offline use
 - `manifest.webmanifest`, `icons/` – home-screen install
+- `offline/` – optional on-device speech recogniser (vosk-browser) and its 41 MB English model, downloaded by the app only when Offline recognition is turned on; served from a separate cache that survives updates
 - `tools/validate.js` – checks every data file against the schema
 - `tools/build.js` – regenerates the aircraft script tags and the service-worker precache list / version
 - `tools/AUTHORING.md` – how to write a data file
