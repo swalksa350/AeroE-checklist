@@ -75,8 +75,10 @@ header .theme.on{color:var(--ink)}
   nav.modes button{font-size:13px;padding:14px 2px}
 }
 nav.modes button .short{display:none}
-@media (max-width:480px){ nav.modes button{padding:14px 3px} }
-@media (max-width:430px){ nav.modes button .full{display:none} nav.modes button .short{display:inline} nav.modes button{font-size:12px;padding:14px 2px} }
+@media (max-width:640px){ nav.modes button .full{display:none} nav.modes button .short{display:inline} nav.modes button{font-size:13px;padding:14px 2px} header .brand{min-width:0;padding:10px 12px} header .theme span:not(.g){display:none} header .theme{width:40px} }
+@media (max-width:430px){ nav.modes button{font-size:12px} }
+/* an installed iPad/Mac window keeps 96px clear for the window controls, so compact a little earlier */
+@media (max-width:760px){ html.win-controls nav.modes button .full{display:none} html.win-controls nav.modes button .short{display:inline} html.win-controls header .brand{min-width:0;padding:10px 10px} html.win-controls header .brand small{display:none} html.win-controls header .theme span:not(.g){display:none} html.win-controls header .theme{width:40px} }
 .charts{padding:0 16px 40px}
 .charts .row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
 .charts .row a{color:var(--cyan);text-decoration:none;font-weight:600}
@@ -292,10 +294,10 @@ header .brand{cursor:default}
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.0 (build bc916940)</footer>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.0 (build 7ac59fcd)</footer>
 </div>
 <script>
-window.AEROE_BUILD = "bc916940";
+window.AEROE_BUILD = "7ac59fcd";
 window.AEROE_VERSION = "2.0";
 /* Cessna 152 – checklist data.
    Prototype content. Verify against the operator's approved checklist and the POH/AFM. */

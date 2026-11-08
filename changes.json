@@ -10,7 +10,8 @@
       "Charts tab: one-tap links to the Airservices DAP, ERSA and NAIPS pages and to FD Pro, OzRunways or AvPlan if installed, with an aerodrome code for AIP searches. Charts cannot be embedded in the app; use iPad Split View alongside it.",
       "Status → Customised checklists has a switch to use one approach checklist for every favourite (★) aircraft.",
       "User guide brought fully up to date.",
-      "Charts tab: DAP and ERSA links now follow Airservices' dated amendment cycle, with the AIP index as a fallback; the Jeppesen button uses the FliteDeck Pro X link name."
+      "Charts tab: DAP and ERSA links now follow Airservices' dated amendment cycle, with the AIP index as a fallback; the Jeppesen button uses the FliteDeck Pro X link name.",
+      "Header tabs stay readable in iPad Split View; Charts tab adds a NAIPS app attempt and ERSA guidance."
     ]
   },
   {

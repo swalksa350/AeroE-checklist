@@ -86,8 +86,10 @@ header .theme.on{color:var(--ink)}
   nav.modes button{font-size:13px;padding:14px 2px}
 }
 nav.modes button .short{display:none}
-@media (max-width:480px){ nav.modes button{padding:14px 3px} }
-@media (max-width:430px){ nav.modes button .full{display:none} nav.modes button .short{display:inline} nav.modes button{font-size:12px;padding:14px 2px} }
+@media (max-width:640px){ nav.modes button .full{display:none} nav.modes button .short{display:inline} nav.modes button{font-size:13px;padding:14px 2px} header .brand{min-width:0;padding:10px 12px} header .theme span:not(.g){display:none} header .theme{width:40px} }
+@media (max-width:430px){ nav.modes button{font-size:12px} }
+/* an installed iPad/Mac window keeps 96px clear for the window controls, so compact a little earlier */
+@media (max-width:760px){ html.win-controls nav.modes button .full{display:none} html.win-controls nav.modes button .short{display:inline} html.win-controls header .brand{min-width:0;padding:10px 10px} html.win-controls header .brand small{display:none} html.win-controls header .theme span:not(.g){display:none} html.win-controls header .theme{width:40px} }
 .charts{padding:0 16px 40px}
 .charts .row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
 .charts .row a{color:var(--cyan);text-decoration:none;font-weight:600}
@@ -351,7 +353,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "bc916940";
+const BUILD = "7ac59fcd";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -707,7 +709,9 @@ function renderCharts(v){
   w.append(link("AIP online – DAP, ERSA, charts and supplements","https://www.airservicesaustralia.com/aip/aip.asp?pg=10","The official index. Always works; accept the terms once, then choose DAP or ERSA."));
   w.append(link("DAP index – amendment effective "+cycle.pretty,"https://www.airservicesaustralia.com/aip/current/dap/dap_"+cycle.tag+".htm","Direct link to the current DAP chart list. If it shows an error the cycle has changed early; use the AIP index above. Next amendment "+cycle.next+"."));
   w.append(link("ERSA contents – effective "+cycle.pretty,"https://www.airservicesaustralia.com/aip/current/ersa/ersa_rds_index_"+cycle.tag+".pdf","ERSA table of contents (PDF) for the current cycle; aerodrome entries are listed in the AIP index."));
-  w.append(link("NAIPS – briefing and flight plans","https://www.airservicesaustralia.com/naips/","Weather, NOTAM and plan submission."));
+  w.append(h("div",{class:"row"},h("span",{},h("a",{href:"https://www.airservicesaustralia.com/naips/",target:"_blank",rel:"noopener"},"NAIPS website ›"),h("small",{},"Weather, NOTAM and plan submission in the browser.")),h("a",{href:"naips://",class:"link",style:"white-space:nowrap;font-weight:600"},"Try NAIPS app ›")));
+  w.append(h("div",{class:"saved"},"The NAIPS app (published by OzRunways) does not publish a link name, so “Try NAIPS app” is a best guess: if Safari says the address is invalid, open NAIPS from the Dock or Split View instead."));
+  w.append(h("div",{class:"saved"},"ERSA is not a separate app. It is included in OzRunways (Airfields page) and AvPlan EFB, and the quickest way to an aerodrome's ERSA entry is the Open OzRunways button below; neither app publishes a link that jumps straight to a given aerodrome."));
   if(code().length===4) w.append(link("Search DAP and ERSA for "+code(),"https://www.google.com/search?q=site%3Aairservicesaustralia.com%2Faip%2Fcurrent+"+code(),"Web search limited to the current AIP."));
   w.append(h("h2",{style:"font-size:13px;color:var(--ink-dim);margin:22px 0 4px;text-transform:uppercase;letter-spacing:.06em"},"Chart apps"));
   w.append(link("Open Jeppesen FliteDeck Pro X","flitedeckx.jeppesen://","Switches to FliteDeck Pro X if it is installed (the link name Jeppesen uses for flight-plan loading). Nothing happens if it is not installed."));
