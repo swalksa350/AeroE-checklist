@@ -85,7 +85,13 @@ header .theme.on{color:var(--ink)}
   header .brand small{display:none}
   nav.modes button{font-size:13px;padding:14px 2px}
 }
-@media (max-width:400px){ nav.modes button{font-size:12px;letter-spacing:-.01em} }
+@media (max-width:400px){ nav.modes button{font-size:11px;letter-spacing:-.01em;padding:14px 1px} }
+.charts{padding:0 16px 40px}
+.charts .row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
+.charts .row a{color:var(--cyan);text-decoration:none;font-weight:600}
+.charts .row small{color:var(--ink-dim);display:block;font-weight:400;margin-top:2px}
+.charts input{font:inherit;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);width:7ch;text-transform:uppercase}
+.charts .tip{border-left:4px solid var(--cyan);padding:8px 12px;background:var(--panel-2);margin:14px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:15px}
 
 main{flex:1;display:flex;min-height:0}
 aside{width:300px;border-right:1px solid var(--line);overflow:auto;background:var(--panel);padding-left:env(safe-area-inset-left,0px);-webkit-overflow-scrolling:touch}
@@ -343,11 +349,11 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "dccac53f";
+const BUILD = "2f039b7e";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
-const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
-const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["status","Status"]];
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
+const MODES = [["normal","Normal"],["abnormal","Abnormal"],["emergency","Emergency"],["charts","Charts"],["status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
 const CUSTOM_ID="approach-custom";
@@ -358,7 +364,11 @@ function customFor(aid){
   if(!c.overrides) c.overrides={};
   return c;
 }
-function customApproach(aid){ const c=customFor(aid).approach; return c&&Array.isArray(c.items)&&c.items.length ? c : null; }
+function sharedApproachActive(aid){ return state.sharedApproach.on && isFav(aid) && state.sharedApproach.items.length>0; }
+function customApproach(aid){
+  if(sharedApproachActive(aid)) return {name:state.sharedApproach.name||"Approach (shared)",items:state.sharedApproach.items,shared:true};
+  const c=customFor(aid).approach; return c&&Array.isArray(c.items)&&c.items.length ? c : null;
+}
 function withCustom(a){
   const cf=customFor(a.id);
   const out=a.normal.map(p=>{ const o=cf.overrides[p.id]; return (o&&Array.isArray(o.items)&&o.items.length) ? Object.assign({},p,{items:o.items,edited:true}) : p; });
@@ -382,6 +392,7 @@ function load(){
         if(s.uses && typeof s.uses==="object") state.uses = s.uses;
         if(s.favAsked && typeof s.favAsked==="object") state.favAsked = s.favAsked;
         if(s.custom && typeof s.custom==="object") state.custom = s.custom;
+        if(s.sharedApproach && typeof s.sharedApproach==="object") state.sharedApproach = {on:!!s.sharedApproach.on, name:String(s.sharedApproach.name||""), items:Array.isArray(s.sharedApproach.items)?s.sharedApproach.items:[]};
         if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
         if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
         state.showing = !!s.showing;
@@ -400,7 +411,7 @@ function load(){
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
@@ -540,7 +551,7 @@ function render(){
   renderThemeButton();
   $("#main").classList.toggle("showing-proc",!!a&&state.showing);
   $("#main").classList.toggle("picker",!a);
-  const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
+  const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
   if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); renderVoiceBar(); return; }
   renderSide();renderView();renderVoiceBar();renderWakeDot();
 }
@@ -597,6 +608,7 @@ function renderSide(){
   const s=$("#side");s.innerHTML="";
   const fp=favPrompt(); if(fp) s.append(fp);
   if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"))));return}
+  if(state.mode==="charts"){s.append(h("div",{class:"group-title"},"Charts"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Charts and documents"))));return}
   const list=h("div",{class:"list"});
   const gt=h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures");
   if(voice.reply&&SR) gt.append(h("button",{class:"mic"+(recallState.on?" on":""),title:"Say a procedure name",onclick:voiceRecall},recallState.on?"● Listening":"🎤 Say procedure"));
@@ -629,6 +641,7 @@ function renderVspeeds(v){
 function renderView(){
   const v=$("#view");v.innerHTML="";
   if(state.mode==="status"){renderStatus(v);return}
+  if(state.mode==="charts"){renderCharts(v);return}
   if(state.mode==="normal"&&state.sel==="__vs"){renderVspeeds(v);return}
   const p=proc(state.mode,state.sel);
   if(!p){v.append(h("div",{class:"status"},h("div",{class:"empty"},"Select a checklist."))); return}
@@ -673,6 +686,30 @@ function renderView(){
   }
 }
 
+const CHARTS_KEY="ga-ecl-charts";
+let chartsPrefs={icao:""}; try{ const c=JSON.parse(localStorage.getItem(CHARTS_KEY)||"null"); if(c&&typeof c==="object"&&typeof c.icao==="string") chartsPrefs.icao=c.icao; }catch(e){}
+function renderCharts(v){
+  const a=AC();
+  const w=h("div",{class:"charts"});
+  w.append(h("div",{class:"proc-head",style:"margin:0 -16px 8px"},h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),h("h1",{},"Charts and documents",h("span",{class:"cond"},"Opens in your chart app or browser"))));
+  w.append(h("div",{class:"tip"},"Charts cannot be shown inside this app: Jeppesen FD Pro is a separate app and the Airservices site does not allow embedding. On an iPad, use Split View: drag FD Pro or Safari in from the Dock beside AeroE so checklists and charts stay on screen together through departure and approach."));
+  const icao=h("input",{id:"charts-icao",value:chartsPrefs.icao,placeholder:"YSSY",maxlength:"4","aria-label":"Aerodrome ICAO code"});
+  icao.oninput=ev=>{ chartsPrefs.icao=ev.target.value.toUpperCase().replace(/[^A-Z]/g,"").slice(0,4); try{ localStorage.setItem(CHARTS_KEY,JSON.stringify(chartsPrefs)); }catch(e){} };
+  w.append(h("div",{class:"row"},h("span",{},"Aerodrome",h("small",{},"ICAO code used by the search links below")),icao));
+  const link=(label,href,hint)=>h("div",{class:"row"},h("span",{},h("a",{href,target:"_blank",rel:"noopener"},label+" ›"),h("small",{},hint)));
+  const code=()=>(chartsPrefs.icao||"").toUpperCase();
+  w.append(h("h2",{style:"font-size:13px;color:var(--ink-dim);margin:22px 0 4px;text-transform:uppercase;letter-spacing:.06em"},"Airservices Australia (AIP)"));
+  w.append(link("DAP – Departure and Approach Procedures","https://www.airservicesaustralia.com/aip/current/dap/AeroProcChartsTOC.htm","Current DAP index. Accept the terms once, then find the aerodrome."));
+  w.append(link("ERSA – En Route Supplement","https://www.airservicesaustralia.com/aip/current/ersa/","Facilities, frequencies and aerodrome details."));
+  w.append(link("NAIPS – briefing and flight plans","https://www.airservicesaustralia.com/naips/","Weather, NOTAM and plan submission."));
+  if(code().length===4) w.append(link("Search DAP and ERSA for "+code(),"https://www.google.com/search?q=site%3Aairservicesaustralia.com%2Faip%2Fcurrent+"+code(),"Web search limited to the current AIP."));
+  w.append(h("h2",{style:"font-size:13px;color:var(--ink-dim);margin:22px 0 4px;text-transform:uppercase;letter-spacing:.06em"},"Chart apps"));
+  w.append(link("Open Jeppesen FD Pro","jeppfdpro://","Switches to the FD Pro app if it is installed. Nothing happens if it is not."));
+  w.append(link("Open OzRunways","ozrunways://","Switches to OzRunways if it is installed."));
+  w.append(link("Open AvPlan EFB","avplan://","Switches to AvPlan if it is installed."));
+  w.append(h("div",{class:"saved"},"App links depend on each app registering a link name; if one does nothing on your device, switch apps with the App Switcher or Split View instead. Links open outside this app and need signal. Nothing on this page is stored offline."));
+  v.append(w);
+}
 function renderStatus(v){
   const a=AC();
   const w=h("div",{class:"status"});
@@ -727,7 +764,11 @@ function renderStatus(v){
   w.append(efb);
   w.append(h("h2",{},"Customised checklists"));
   const cust=customApproach(a.id); const cfS=customFor(a.id);
-  w.append(h("div",{class:"row"},h("span",{},cust?cust.name+" · "+cust.items.length+" lines":"Approach checklist: none yet"),h("button",{class:"link",onclick:()=>openEditor(CUSTOM_ID)},cust?"Edit":"Create")));
+  w.append(h("div",{class:"row"},h("span",{},cust?cust.name+" · "+cust.items.length+" lines"+(cust.shared?" · shared by favourites":""):"Approach checklist: none yet"),h("button",{class:"link",onclick:()=>openEditor(CUSTOM_ID)},cust?"Edit":"Create")));
+  w.append(h("div",{class:"row"},h("span",{},"One approach checklist for all favourites",h("div",{class:"saved",style:"margin-top:2px"},"When on, every aircraft marked ★ uses the same approach checklist"+(isFav(a.id)?"":" (the "+a.short+" is not a favourite, so it keeps its own)")+".")),h("button",{class:"tog"+(state.sharedApproach.on?" on":""),onclick:()=>go(()=>{
+    state.sharedApproach.on=!state.sharedApproach.on;
+    if(state.sharedApproach.on && !state.sharedApproach.items.length){ const own=customFor(a.id).approach; if(own&&own.items&&own.items.length){ state.sharedApproach.items=JSON.parse(JSON.stringify(own.items)); state.sharedApproach.name=own.name||"Approach (shared)"; } }
+  })},state.sharedApproach.on?"On":"Off")));
   const edited=a.normal.filter(p=>cfS.overrides[p.id]);
   if(edited.length) edited.forEach(p=>w.append(h("div",{class:"row"},h("span",{},p.name+" ✎ · "+cfS.overrides[p.id].items.filter(it=>!it.note).length+" lines"),h("button",{class:"link",onclick:()=>openEditor(p.id)},"Edit"))));
   else w.append(h("div",{class:"saved"},"No built-in normal checklist has been edited for the "+a.short+" on this device. Open any normal checklist and tap Edit to add, remove or reorder lines."));
@@ -855,10 +896,11 @@ function openEditor(pid){
   const isApproach=pid===CUSTOM_ID;
   const cf=customFor(a.id);
   const original=isApproach?null:a.normal.find(p=>p.id===pid);
-  const current=isApproach?customApproach(a.id):(cf.overrides[pid]||null);
+  const sharedMode=isApproach && state.sharedApproach.on && isFav(a.id);
+  const current=isApproach?(sharedMode?(state.sharedApproach.items.length?{name:state.sharedApproach.name||"Approach (shared)",items:state.sharedApproach.items}:null):(cf.approach&&cf.approach.items&&cf.approach.items.length?cf.approach:null)):(cf.overrides[pid]||null);
   const startItems=isApproach?(current?current.items:CUSTOM_TEMPLATE):(current?current.items:original.items);
   const clone=x=>JSON.parse(JSON.stringify(x));
-  let draft={name:isApproach?((current&&current.name)||"Approach (custom)"):original.name, items:clone(startItems)};
+  let draft={name:isApproach?((current&&current.name)||(sharedMode?"Approach (shared)":"Approach (custom)")):original.name, items:clone(startItems)};
   const old=document.getElementById("sheet"); if(old) old.remove();
   const card=h("div",{class:"card2 editor"});
   const sheet=h("div",{class:"sheet",id:"sheet"},card);
@@ -866,7 +908,7 @@ function openEditor(pid){
   const draw=()=>{
     card.innerHTML="";
     card.append(h("h2",{},(isApproach?(current?"Edit ":"Create "):"Edit ")+draft.name+" – "+a.short));
-    card.append(h("div",{class:"hint"},"Changes are kept on this device for the "+a.short+" only. Write the action in CAPITALS so the voice reads it in short form. Use Export on the Status page to share a set of edits with other pilots."));
+    card.append(h("div",{class:"hint"},sharedMode?"This approach checklist is shared by all your favourite aircraft (★). Changes here apply to every favourite on this device.":"Changes are kept on this device for the "+a.short+" only. Write the action in CAPITALS so the voice reads it in short form. Use Export on the Status page to share a set of edits with other pilots."));
     if(isApproach){ const nameIn=h("input",{id:"cust-name",value:draft.name,placeholder:"Checklist name"}); nameIn.oninput=ev=>{draft.name=ev.target.value}; card.append(h("div",{class:"line",style:"grid-template-columns:1fr"},nameIn)); }
     draft.items.forEach((it,i)=>{
       const ops=h("div",{class:"ops"},
@@ -896,7 +938,8 @@ function openEditor(pid){
       const items=draft.items.map(it=>{ if(it.branch) return it; if(it.note!==undefined){ it.note=String(it.note).trim(); return it.note?it:null; } if(it.defer!==undefined){ it.defer=String(it.defer).trim(); return it.defer?it:null; } it.c=String(it.c||"").trim(); it.r=String(it.r||"").trim(); return (it.c&&it.r)?it:null; }).filter(Boolean);
       if(!items.filter(it=>!it.note).length){ msg("Add at least one line with a challenge and a response."); return; }
       const cfx=customFor(a.id);
-      if(isApproach) cfx.approach={name:(draft.name||"Approach (custom)").trim()||"Approach (custom)",items};
+      if(isApproach&&sharedMode){ state.sharedApproach.name=(draft.name||"Approach (shared)").trim()||"Approach (shared)"; state.sharedApproach.items=items; }
+      else if(isApproach) cfx.approach={name:(draft.name||"Approach (custom)").trim()||"Approach (custom)",items};
       else cfx.overrides[pid]={items,savedAt:Date.now()};
       state.custom[a.id]=cfx;
       Object.keys(PER().ticks).forEach(k=>{if(k.startsWith(pid+"/"))delete PER().ticks[k]});
@@ -905,7 +948,7 @@ function openEditor(pid){
     }},"Save"));
     if(current) actions.append(h("button",{style:"color:var(--red);border-color:var(--red)",onclick:()=>{
       if(card.dataset.confirm!=="1"){ card.dataset.confirm="1"; msg(isApproach?"Tap again to delete this checklist from this device.":"Tap again to remove all edits and go back to the built-in checklist."); return; }
-      const cfx=customFor(a.id); if(isApproach) cfx.approach=null; else delete cfx.overrides[pid]; state.custom[a.id]=cfx;
+      const cfx=customFor(a.id); if(isApproach&&sharedMode){ state.sharedApproach.items=[]; } else if(isApproach) cfx.approach=null; else delete cfx.overrides[pid]; state.custom[a.id]=cfx;
       Object.keys(PER().ticks).forEach(k=>{if(k.startsWith(pid+"/"))delete PER().ticks[k]});
       save(); sheet.remove(); if(isApproach&&state.sel===CUSTOM_ID) state.sel=null; render();
     }},isApproach?"Remove checklist":"Restore original"));
@@ -920,7 +963,7 @@ function openEditor(pid){
 function exportCustom(){
   const a=AC(); if(!a) return;
   const cf=customFor(a.id);
-  const payload={aeroe:"custom-checklists",version:1,aircraft:a.id,exported:new Date().toISOString(),approach:cf.approach||null,overrides:cf.overrides||{}};
+  const payload={aeroe:"custom-checklists",version:1,aircraft:a.id,exported:new Date().toISOString(),approach:(sharedApproachActive(a.id)?{name:state.sharedApproach.name||"Approach (shared)",items:state.sharedApproach.items}:(cf.approach||null)),overrides:cf.overrides||{}};
   const text=JSON.stringify(payload,null,1);
   const old=document.getElementById("sheet"); if(old) old.remove();
   const ta=h("textarea",{id:"cust-export",readonly:"readonly",style:"width:100%;height:180px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);padding:8px"},text);
@@ -1316,7 +1359,7 @@ function renderVoiceBar(){
   const old=document.getElementById("vbar"); if(old) old.remove();
   const main=$("#main");
   const c=currentRows();
-  const show=voice.read && c && state.mode!=="status" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
+  const show=voice.read && c && state.mode!=="status" && state.mode!=="charts" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
   main.classList.toggle("voice-on",!!show);
   if(!show){ if(vs.active) voiceStop(true); return; }
   if(vs.pid!==c.p.id){ vs.pid=c.p.id; vs.active=false; vs.pending=null; vs.readNotes={}; vs.skipped={}; vs.status=""; vs.heard=""; }

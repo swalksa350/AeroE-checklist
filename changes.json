@@ -6,7 +6,10 @@
     "notes": [
       "Every normal checklist can be customised per aircraft: open it and tap Edit to add, change, remove or reorder lines, add notes, or restore the original. Edited checklists show ✎ in the list and “Customised on this device” under the title.",
       "Export / Import on the Status page turns a device's customisations into text an operator can send to pilots, who paste it in.",
-      "Abnormal and emergency procedures are not editable."
+      "Abnormal and emergency procedures are not editable.",
+      "Charts tab: one-tap links to the Airservices DAP, ERSA and NAIPS pages and to FD Pro, OzRunways or AvPlan if installed, with an aerodrome code for AIP searches. Charts cannot be embedded in the app; use iPad Split View alongside it.",
+      "Status → Customised checklists has a switch to use one approach checklist for every favourite (★) aircraft.",
+      "User guide brought fully up to date."
     ]
   },
   {

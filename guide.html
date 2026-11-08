@@ -53,6 +53,7 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <li><a href="#offline">Offline use and saved progress</a></li>
 <li><a href="#efb">EFB files for OzRunways and AvPlan</a></li>
 <li><a href="#links">Direct links to an aircraft</a></li>
+<li><a href="#charts">Charts tab</a></li>
 <li><a href="#voice">Voice: read aloud, spoken replies and recall</a></li>
 <li><a href="#trouble">If something looks wrong</a></li>
 </ol></div>
@@ -81,7 +82,8 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <b class="g">Normal</b><span>The flight sequence: Before Start, Engine Start, Before Taxi, Before Takeoff, After Takeoff / Climb, Cruise, Descent, Before Landing, After Landing, Shutdown. The first entry, V-speeds &amp; limits, is a reference page, not a checklist.</span>
 <b class="a">Abnormal</b><span>Caution-level problems: alternator failure, low oil pressure, gear unsafe, icing and so on. Action is needed but not immediately.</span>
 <b class="r">Emergency</b><span>Warning-level procedures: engine failure, fire, emergency descent, decompression. Immediate action.</span>
-<b>Status</b><span>Where you are across the whole flight: procedures in progress, items deferred to landing, normal checklist completion, favourites, EFB files, version and updates. A number on the tab means an abnormal or emergency procedure is still open.</span>
+<b>Charts</b><span>Links that open the Airservices DAP, ERSA and NAIPS pages, or your chart app, outside AeroE. See section 12.</span>
+<b>Status</b><span>Where you are across the whole flight: procedures in progress, items deferred to landing, normal checklist completion, favourites, customised checklists, EFB files, voice settings, version and updates. A number on the tab means an abnormal or emergency procedure is still open.</span>
 </div>
 <p>The colours follow cockpit convention: green for normal, amber for caution, red for warning. A dot beside each checklist in the list shows its state: grey not started, amber part done, green complete, red for an abnormal or emergency procedure still in progress.</p>
 
@@ -111,7 +113,9 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <li><strong>Normal checklists</strong> shows completion of the flight sequence at a glance.</li>
 <li><strong>Flight</strong> holds "Reset all … for a new flight", which asks you to confirm before clearing that aircraft only, plus the favourite toggle and Change aircraft.</li>
 <li><strong>EFB files for this aircraft</strong> is covered in section 10.</li>
-<li><strong>App</strong> shows the version, a What's new row, when updates were last checked and a manual check button.</li>
+<li><strong>Customised checklists</strong> lists the approach checklist and any edited normal checklists, the shared-approach switch, and Export / Import. See section 11.</li>
+<li><strong>Voice</strong> holds every voice setting, the microphone test and the voice log. See section 13.</li>
+<li><strong>App</strong> shows the version number, a What's new row, the user guide link, when updates were last checked and a manual check button. The build code is in small print below.</li>
 </ul>
 
 <h2 id="theme">7. Day and night display</h2>
@@ -151,7 +155,10 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <h2 id="links">11. Direct links to an aircraft</h2>
 <p>Adding <code>#</code> and the aircraft's id to the app address opens that aircraft straight away, for example <code>…/AeroE-checklist/#c172s</code>. The id is shown in the address bar when an aircraft is open. Useful for a club or school that flies one type.</p>
 
-<h2 id="voice">12. Voice: read aloud, spoken replies and recall</h2>
+<h2 id="charts">12. Charts tab</h2>
+<p>Charts cannot be displayed inside AeroE: Jeppesen FD Pro is a separate app, and the Airservices AIP site does not allow its pages to be shown inside another site. The Charts tab instead gives one-tap links that open outside the app: the DAP index, ERSA, NAIPS, an AIP search for the aerodrome code you enter, and buttons that switch to FD Pro, OzRunways or AvPlan when they are installed. The practical arrangement on an iPad is <strong>Split View</strong>: with AeroE open, swipe up slightly to show the Dock and drag your chart app or Safari to the side of the screen. Both stay visible through departure and approach. The Charts page needs signal and is not stored offline.</p>
+
+<h2 id="voice">13. Voice: read aloud, spoken replies and recall</h2>
 <p>Voice is off until you turn it on under <strong>Status → Voice</strong>. It has three parts.</p>
 <h3>Read aloud</h3>
 <p>With Read aloud on, opening any checklist shows a voice bar at the bottom with a Start button. The app speaks each line, challenge then response, highlights it, and waits. Tap <strong>✓ Checked</strong> (or the line itself) to tick it and hear the next. <strong>Repeat</strong> says it again, <strong>Skip</strong> moves on without ticking, <strong>Stop</strong> pauses. Notes are read and passed over; at a branch the app reads the question and the options and waits for you to choose. In normal checklists it reads the short form by default: the challenge and the capitalised action, for example “Fuel shutoff, ON”, leaving bracketed detail on the screen; abnormal and emergency procedures are always read in full, and the short form can be switched off under Status → Voice. At the end it says the checklist is complete. Speaking rate and voice are set on the Status page, and Test the voice lets you hear them. Read aloud works offline and plays through a paired Bluetooth headset.</p>
@@ -166,11 +173,23 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <p>Edits are kept on this device, per aircraft. To give a fleet the same checklists, make the edits on one device, use <strong>Export customisations</strong> on the Status page and send the text to each pilot, who opens the same aircraft and uses <strong>Import</strong> to paste it. Importing replaces that device's edits for that aircraft.</p>
 <h3>Custom approach checklist</h3>
 <p>Each aircraft can also have one checklist of your own. On the Status page, under <strong>Customised checklists</strong>, tap Create next to the approach entry to start from a template or a blank list. Save, and it appears under Normal between Descent and Before Landing. It is included in Export and Import.</p>
+<p><strong>One approach checklist for all favourites.</strong> Turn this switch on, in the same section, and every aircraft you have marked ★ uses a single shared approach checklist; editing it from any favourite changes it for all of them. Aircraft that are not favourites keep their own. If the aircraft you are on already had its own approach checklist when you turn the switch on, that list becomes the shared one.</p>
+<h3>Voice settings on the Status page</h3>
+<ul>
+<li><strong>Read aloud</strong>, <strong>Short responses in normal checklists</strong> (challenge plus the capitalised action only; abnormal and emergency are always read in full), <strong>“Hey Aero” wake word</strong>, <strong>Cue tones</strong> (one tone when listening starts, two when a word is accepted), and <strong>Voice replies</strong>.</li>
+<li><strong>Open microphone early</strong> appears on Android only. On iPad, iPhone and Mac speech and listening cannot overlap, so the microphone opens as soon as a line has been read: wait for the single tone, then reply.</li>
+<li><strong>Speaking rate</strong> in five steps, each played as a sample when tapped, and a choice of <strong>Voice</strong> from those on the device.</li>
+<li><strong>Test the voice</strong> speaks a sample line. <strong>Test the microphone</strong> listens once and prints exactly what the device reported, including any error code.</li>
+<li>Under the wake word switch a status line shows whether the wake listener is running and the last words it heard. The <strong>Voice log</strong> at the end records recent voice events with times, for troubleshooting.</li>
+<li>Replies are accepted as “checked” or the written response itself (“both on”, “idle cutoff”), plus “repeat”, “skip” and “stop”. A phrase containing “hey Aero” is never treated as a reply.</li>
+</ul>
 <div class="note">Voice is an aid to the displayed checklist, not a replacement for it. Read the screen, and treat a spoken tick like any other tick.</div>
 
-<h2 id="trouble">13. If something looks wrong</h2>
+<h2 id="trouble">14. If something looks wrong</h2>
 <ul>
-<li><strong>A change you were told about is not showing.</strong> Check the Version row in the App section of the Status page. If it is older than expected, wait ten minutes from publication, tap "Check for updates now", close the app fully and reopen it.</li>
+<li><strong>A change you were told about is not showing.</strong> Check the Version row in the App section of the Status page. If it is older than expected, wait ten minutes from publication, tap "Check for updates now", close the app fully and reopen it. The green bar on the first launch after an update names the version and has a What's new button.</li>
+<li><strong>A voice-opened checklist is not read aloud.</strong> Tap anywhere in the app once after launching it; Apple requires a tap before the app may speak. Then check the Voice log for “speech started” after each “speak:” line.</li>
+<li><strong>The wake word opens the wrong checklist.</strong> Say the full name and pause briefly after it. The voice log shows what was heard and what was opened.</li>
 <li><strong>There is no Version row.</strong> The copy on the device is from before updates were tracked, usually one installed from the old address. Delete the icon and install again from the address in section 1. Progress and favourites carry over.</li>
 <li><strong>Progress disappeared.</strong> Browser site data was cleared, or the app was opened in a private window. Saved data lives only in the device's browser storage.</li>
 <li><strong>Voice replies do nothing.</strong> Check that the microphone was allowed for the app (Settings → the browser or the installed app → Microphone), that the device has signal on iPad or iPhone, and that Voice replies is on under Status → Voice. If the device still cannot hear you, Read aloud with a tap to confirm continues to work.</li>
