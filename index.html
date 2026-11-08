@@ -353,7 +353,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "b763c1e3";
+const BUILD = "648cd5df";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -791,12 +791,12 @@ function renderStatus(v){
     w.append(tog("Short responses in normal checklists",()=>voice.brief,v=>{voice.brief=v;},"Reads only the capitalised action, e.g. “Fuel shutoff, ON”, and leaves the bracketed detail for the screen. Abnormal and emergency procedures are always read in full."));
     w.append(tog("“Hey Aero” wake word",()=>voice.wake,v=>{voice.wake=v; if(!v&&wake.on){stopListening();wake.on=false;}},SRX()?"Keeps the microphone open while the app is on screen. Say “hey Aero, landing checklist” or “hey Aero, engine failure in flight”. Also “hey Aero, status” and “hey Aero, stop”. Uses battery and, on iPad and iPhone, signal. A red dot by the aircraft name shows it is listening.":"Not available in this browser."));
     if(SRX()) w.append(h("div",{class:"saved",id:"wakestate"},wakeStatusText()));
-    w.append(tog("Offline recognition (experimental)",()=>voice.offline,v=>{ if(v) offlineEnable(); else { voice.offline=false; offlineTeardown(); } },"Recognises your words on the device, with no signal, from a "+OFF.sizeMB+" MB download kept with the app. Limited to the words the app expects, which also makes it more accurate in noise. Used for replies, Say procedure and the wake word while on."));
+    w.append(tog("Offline recognition (experimental)",()=>voice.offline,v=>{ if(v) offlineEnable(); else { voice.offline=false; offlineTeardown(); } },NATIVE?"Recognises your words on the device with no signal; the engine is built into the app. Limited to the words the app expects, which also makes it more accurate in noise. Used for replies, Say procedure and the wake word while on.":"Recognises your words on the device, with no signal, from a "+OFF.sizeMB+" MB download kept with the app. Limited to the words the app expects, which also makes it more accurate in noise. Used for replies, Say procedure and the wake word while on."));
     w.append(h("div",{class:"saved",id:"offstate"},offlineStatusText()));
     if(vosk.state==="downloading") w.append(h("div",{style:"height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0"},h("div",{id:"offbar",style:"height:100%;width:"+Math.round(vosk.progress*100)+"%;background:var(--cyan)"})));
     if(voice.offline&&(vosk.state==="off"||vosk.state==="error")) w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>offlineEnable()},vosk.state==="error"?"Try again":"Download now")));
     if(voice.offline&&vosk.state==="ready") w.append(tog("Release microphone while speaking",()=>!!voice.micRelease,v=>{voice.micRelease=v;},"Off: the microphone stays open between lines, so replies are heard immediately and there is no switching click. Turn on only if the voice is muted or quiet while the offline engine is on."));
-    if(voice.offline||vosk.state!=="off") w.append(h("div",{class:"row"},h("button",{class:"link",onclick:offlineRemove},"Remove the offline download")));
+    if(!NATIVE&&(voice.offline||vosk.state!=="off")) w.append(h("div",{class:"row"},h("button",{class:"link",onclick:offlineRemove},"Remove the offline download")));
     if(!APPLE) w.append(tog("Open microphone early",()=>voice.early,v=>{voice.early=v;},"Starts listening while the line is still being read so your reply is caught the instant the voice stops. Anything heard before then is ignored. Best with a headset; turn off if the voice cuts out or lines tick themselves when using the device speaker."));
     else w.append(h("div",{class:"saved"},"On iPad, iPhone and Mac the microphone opens as soon as a line has been read (speech and listening cannot overlap on Apple devices). Wait for the single tone, then reply."));
     w.append(tog("Cue tones",()=>voice.tones,v=>{voice.tones=v;},"One short tone when the app starts listening, two when it accepts your word."));
@@ -817,8 +817,10 @@ function renderStatus(v){
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>showWhatsNew(null,"What's new")},"What's new in this version")));
   w.append(h("div",{class:"row efb"},h("a",{href:"guide.html"},"User guide ›"),h("span",{class:"num"},"how everything works")));
   w.append(h("div",{class:"row"},h("span",{},"Updates"),h("span",{id:"updstate",class:"num"+(updInfo.waiting?" ready":"")},updateState())));
-  w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>checkForUpdate(true)},"Check for updates now")));
-  w.append(h("div",{class:"saved"},"If a newer version was published in the last few minutes it can take up to 10 minutes to reach every phone. Checking again after that will pick it up. Build "+BUILD+"."));
+  if(!NATIVE){
+    w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>checkForUpdate(true)},"Check for updates now")));
+    w.append(h("div",{class:"saved"},"If a newer version was published in the last few minutes it can take up to 10 minutes to reach every phone. Checking again after that will pick it up. Build "+BUILD+"."));
+  } else w.append(h("div",{class:"saved"},"Build "+BUILD+"."));
   w.append(h("div",{class:"saved"},state.savedAt?"Progress is saved on this device. Last change "+new Date(state.savedAt).toLocaleString()+".":"Progress is saved on this device as you tick items."));
   v.append(w);
 }
@@ -848,6 +850,7 @@ function fetchLatestChanges(){
 const UPD_KEY = "ga-ecl-build";
 let updInfo = {lastCheck:null, waiting:false};
 function updateState(){
+  if(NATIVE) return "Updates arrive through the App Store / Google Play";
   if(updInfo.waiting) return "New version ready – refresh";
   return updInfo.lastCheck ? "Up to date · checked "+new Date(updInfo.lastCheck).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}) : "Not checked yet";
 }
@@ -1030,6 +1033,7 @@ function SRX(){ return (voice.offline && typeof vosk!=="undefined" && vosk.state
 /* On Apple devices speech output and speech recognition share one audio channel and cannot overlap,
    so listening must stop before speaking and the early-microphone mode is unavailable. */
 const APPLE = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) || /Mac|iP/.test(navigator.platform||"");
+const NATIVE = !!window.AEROE_NATIVE;   // running inside the iOS/Android app shell (everything bundled, updates via the stores)
 const earlyActive = () => voice.early && !APPLE;
 let voicesCache=[]; function loadVoices(){ try{ voicesCache=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)); }catch(e){} }
 if(TTS){ loadVoices(); try{ speechSynthesis.onvoiceschanged=()=>{ loadVoices(); }; }catch(e){} }
@@ -1277,7 +1281,7 @@ const OFF={lib:"offline/vosk.js", model:"offline/vosk-model-small-en-us-0.15.tar
 const vosk={state:"off", progress:0, msg:"", model:null, rec:null, grammarKey:"", stream:null, ctx:null, src:null, proc:null, sink:null, session:null, ignoreNext:false, lastRate:16000};
 function offlineStatusText(){
   switch(vosk.state){
-    case "off": return voice.offline?"Not downloaded – tap Download ("+OFF.sizeMB+" MB, once)":"Off";
+    case "off": return voice.offline?(NATIVE?"Loading…":"Not downloaded – tap Download ("+OFF.sizeMB+" MB, once)"):"Off";
     case "downloading": return "Downloading "+Math.round(vosk.progress*100)+"% of "+OFF.sizeMB+" MB…";
     case "downloaded": return "Downloaded – loading…";
     case "loading": return "Loading the model into memory…";
@@ -1286,7 +1290,7 @@ function offlineStatusText(){
   } return vosk.state;
 }
 function renderOfflineStatus(){ const el=document.getElementById("offstate"); if(el) el.textContent=offlineStatusText(); const bar=document.getElementById("offbar"); if(bar) bar.style.width=Math.round(vosk.progress*100)+"%"; }
-async function offlineIsDownloaded(){ try{ const c=await caches.open(OFF.cacheName); return !!(await c.match(OFF.lib,{ignoreSearch:true})) && !!(await c.match(OFF.model,{ignoreSearch:true})); }catch(e){ return false; } }
+async function offlineIsDownloaded(){ if(NATIVE) return true; try{ const c=await caches.open(OFF.cacheName); return !!(await c.match(OFF.lib,{ignoreSearch:true})) && !!(await c.match(OFF.model,{ignoreSearch:true})); }catch(e){ return false; } }
 async function offlineDownload(){
   vosk.state="downloading"; vosk.progress=0; vosk.msg=""; renderOfflineStatus(); vlogAdd("offline download started");
   try{

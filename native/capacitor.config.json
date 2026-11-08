@@ -1,0 +1,25 @@
+{
+  "appId": "au.com.aeroe.checklist",
+  "appName": "AeroE Checklist",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor"
+  },
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#1b2329",
+    "preferredContentMode": "mobile",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true
+  },
+  "android": {
+    "backgroundColor": "#1b2329",
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 600, "launchAutoHide": true, "backgroundColor": "#1b2329", "showSpinner": false },
+    "StatusBar": { "style": "DARK", "backgroundColor": "#1b2329" }
+  }
+}

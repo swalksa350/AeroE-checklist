@@ -1,0 +1,24 @@
+{
+  "name": "aeroe-checklist-native",
+  "version": "2.1.0",
+  "private": true,
+  "description": "Native (iOS/Android) wrapper for AeroE Checklist, built with Capacitor from the web app in the parent folder.",
+  "scripts": {
+    "build:web": "node build-web.js",
+    "sync": "node build-web.js && npx cap sync",
+    "ios": "node build-web.js && npx cap sync ios && npx cap open ios",
+    "android": "node build-web.js && npx cap sync android && npx cap open android",
+    "assets": "npx @capacitor/assets generate --iconBackgroundColor '#1b2329' --iconBackgroundColorDark '#1b2329' --splashBackgroundColor '#1b2329' --splashBackgroundColorDark '#1b2329'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/ios": "^6.1.2",
+    "@capacitor/splash-screen": "^6.0.2",
+    "@capacitor/status-bar": "^6.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
