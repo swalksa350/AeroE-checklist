@@ -353,7 +353,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "3bba067f";
+const BUILD = "20ea7d46";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -1042,7 +1042,7 @@ function sayable(t){
     .replace(/\bGPH\b/g,"gallons per hour").replace(/\bft\b/g,"feet").replace(/\bAGL\b/g,"A G L").replace(/\bMSL\b/g,"M S L").replace(/\bMP\b/g,"manifold pressure")
     .replace(/\bPFD\b/g,"P F D").replace(/\bMFD\b/g,"M F D").replace(/\bECU\b/g,"E C U").replace(/\bCBs\b/g,"circuit breakers").replace(/\bCB\b/g,"circuit breaker")
     .replace(/\bVmca?\b/g,"V M C").replace(/\bVyse\b/g,"V Y S E").replace(/\bVxse\b/g,"V X S E").replace(/\bVref\b/g,"V ref").replace(/\bVfe\b/g,"V F E").replace(/\bVle\b/g,"V L E").replace(/\bVlo\b/g,"V L O")
-    .replace(/&/g," and ").replace(/[–—]/g,", ").replace(/\s*\/\s*/g,", ").replace(/\(([^)]*)\)/g,", $1,").replace(/\s+,/g,",").replace(/,\s*,/g,",");
+    .replace(/&/g," and ").replace(/[–—]/g,", ").replace(/\s*\/\s*/g,", ").replace(/\(([^)]*)\)/g,", $1,").replace(/\s+,/g,",").replace(/,\s*,/g,",").replace(/,\s*\./g,".").replace(/\.\s*\./g,".").replace(/\s+\./g,".").replace(/^[,\s]+|[,\s]+$/g,"");
 }
 /* Short form of a response for normal checklists: drop bracketed detail and read only the
    capitalised action, e.g. "CHECK visually (53 gal usable)" -> "CHECK", "RESET then ON" -> "RESET then ON".
@@ -1080,11 +1080,13 @@ function speak(text, onend){
   vlogAdd("speak: "+text.slice(0,40)+(speechSynthesis.speaking?" (engine busy)":"")+(speechSynthesis.paused?" (engine paused)":""));
   const make=()=>{ const u=new SpeechSynthesisUtterance(text); u.rate=voice.rate; const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang; } u.onstart=()=>{ started=true; vlogAdd("speech started"); }; u.onend=()=>{ vlogAdd("speech ended"); fin(); }; u.onerror=e=>{ vlogAdd("speech error: "+((e&&e.error)||"?")); if(e&&e.error==="interrupted"&&id!==utterSeq) return; fin(); }; return u; };
   t=setTimeout(()=>{ if(!done) vlogAdd("speech end not reported – continuing"); fin(); }, 2000 + text.length*95/voice.rate);
-  const wd=setTimeout(()=>{                                      // watchdog: nothing started within 1.2 s – try once more
+  const wd=setTimeout(()=>{                                      // watchdog: nothing started within 2 s – try once more, but only if the engine is idle
     if(done||started||id!==utterSeq) return;
+    let busy=false; try{ busy=speechSynthesis.speaking||speechSynthesis.pending; }catch(e){}
+    if(busy){ started=true; vlogAdd("speech running (no start event)"); return; }   // it is speaking; the engine just did not report it
     vlogAdd("speech did not start – retrying once");
     try{ speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(make()); }catch(e){ vlogAdd("retry threw: "+e); }
-  }, 1200);
+  }, 2000);
   try{ speechSynthesis.speak(make()); }catch(e){ vlogAdd("speak threw: "+e); fin(); }
 }
 function stopSpeaking(){ utterSeq++; try{ speechSynthesis.cancel(); }catch(e){} }
@@ -1138,7 +1140,7 @@ function voiceNext(){
       if(earlyActive()&&voice.reply&&SRX()) listenFor(r,true);
       return; }
     if(actionable(r)){ if(isDone(p,r)||vs.skipped[k]) continue; vs.pending=r; vs.retries=0; vs.status="Reading"; renderVoiceBar();
-      const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+".");
+      const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+". "+sayable(responseForSpeech(r.it.r))+".");
       vs.gate=Infinity;
       speak(text, ()=>{ vs.gate=Date.now()+120; vs.status=voice.reply&&SRX()?"Listening":"Waiting for Checked"; if(voice.reply&&SRX()&&earlyActive()) beep(880,70,1); renderVoiceBar(); if(!(earlyActive()&&voice.reply&&SRX()&&vs.listening)) listenFor(r); });
       if(earlyActive()&&voice.reply&&SRX()) listenFor(r,true);
@@ -1155,7 +1157,7 @@ function voiceRepeat(){ const r=vs.pending; if(!r){ voiceNext(); return; } stopL
   vs.gate=Infinity;
   const after=()=>{ vs.gate=Date.now()+120; if(voice.reply&&SRX()&&earlyActive()) beep(880,70,1); if(!(earlyActive()&&voice.reply&&SRX()&&vs.listening)) listenFor(r); };
   if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", after);
-  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+"."), after);
+  else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+". "+sayable(responseForSpeech(r.it.r))+"."), after);
   if(earlyActive()&&voice.reply&&SRX()) listenFor(r,true); }
 function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; vs.pending=null; voiceNext(); save(); render(); }
 
