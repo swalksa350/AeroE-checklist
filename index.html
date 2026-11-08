@@ -343,7 +343,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "02d71f60";
+const BUILD = "6c0e65c5";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
@@ -931,6 +931,14 @@ function speak(text, onend){
   try{ speechSynthesis.speak(u); }catch(e){ fin(); }
 }
 function stopSpeaking(){ utterSeq++; try{ speechSynthesis.cancel(); }catch(e){} }
+let ttsPrimed=false;
+function primeTTS(){
+  if(ttsPrimed||!TTS) return; ttsPrimed=true;
+  try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; u.rate=2; speechSynthesis.speak(u); }catch(e){}
+  unlockAudio();
+}
+document.addEventListener("pointerdown", primeTTS, {capture:true});
+document.addEventListener("keydown", primeTTS, {capture:true});
 
 /* --- cue tones (short beeps in the headset: one when listening starts, two when a word is accepted) --- */
 let actx=null;
@@ -952,7 +960,7 @@ function beep(freq,ms,times){
 /* --- read-aloud session for the open procedure --- */
 const vs={active:false, pid:null, pending:null, readNotes:{}, skipped:{}, status:"", heard:"", listening:false, rec:null, retries:0};
 function currentRows(){ const p=proc(state.mode,state.sel); return p?{p,rs:rows(p)}:null; }
-function voiceStart(){ const c=currentRows(); if(!c||!voice.read) return; unlockAudio(); vs.active=true; vs.pid=c.p.id; vs.pending=null; vs.retries=0; vs.heard=""; vs.status="Reading"; renderVoiceBar(); voiceNext(); }
+function voiceStart(announce){ const c=currentRows(); if(!c||!voice.read) return; unlockAudio(); vs.active=true; vs.pid=c.p.id; vs.pending=null; vs.retries=0; vs.heard=""; vs.status="Reading"; renderVoiceBar(); if(announce){ const nm=c.p.name; speak(sayable(nm)+(/checklist|procedure/i.test(nm)?".":" checklist."), voiceNext); } else voiceNext(); }
 function voiceStop(silent){ vs.active=false; vs.pending=null; vs.status="Paused"; stopListening(); stopSpeaking(); if(!silent) renderVoiceBar(); }
 function voiceNext(){
   if(!vs.active) return;
@@ -1043,7 +1051,10 @@ function listenFor(r, early){
     }else{
       for(const a of alts){
         const wm=voice.wake?WAKE_RE.exec(a):null;
-        if(wm&&(wm[1]||"").trim()){ acted=true; stopListening(); beep(1320,55,2); vs.active=false; vs.pending=null; handleSpokenCommand(wm[1].trim()); return true; }
+        if(wm){
+          if((wm[1]||"").trim()){ acted=true; stopListening(); beep(1320,55,2); vs.active=false; vs.pending=null; handleSpokenCommand(wm[1].trim()); return true; }
+          continue;                                   // "hey Aero" on its own: wait for the rest, never treat it as a reply
+        }
         const c=CMDS.find(([re])=>re.test(a));
         const cmd=c?c[1]:(r.type==="item"&&saidResponse(a,r.it.r)?"confirm":(r.type==="defer"&&/\bnoted\b/.test(a)?"confirm":null));
         if(cmd){ acted=true; vs.heard=a; beep(cmd==="confirm"?1320:660,55,cmd==="confirm"?2:1); if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; }
@@ -1143,7 +1154,7 @@ function handleSpokenCommand(text){
   }
   if(!target){ recallState.msg="Heard “"+text+"” – no matching checklist."; render(); speak("No matching checklist."); return false; }
   recallState.msg=""; state.mode=target.m; state.sel=target.p.id; state.showing=true; save(); render();
-  speak("Opening "+sayable(target.p.name)+".", ()=>{ if(voice.read) voiceStart(); });
+  if(voice.read) voiceStart(true); else speak("Opening "+sayable(target.p.name)+".");
   return true;
 }
 

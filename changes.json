@@ -7,7 +7,8 @@
       "Wake word (Status → Voice, off by default): with the app on screen, say “hey Aero, landing checklist”, “hey Aero, engine failure in flight”, “hey Aero, status” or “hey Aero, stop”. A red dot by the aircraft name shows it is listening. Uses battery and needs signal on Apple devices.",
       "Custom approach checklist: create or edit your own approach checklist per aircraft from the Status page. It sits under Normal between Descent and Before Landing, is kept on this device, is read aloud like any other and opens with “hey Aero, approach checklist”.",
       "Say procedure and the wake word understand plain names: landing, takeoff, start, shutdown, cruise, descent, taxi, climb, approach, and any procedure title.",
-      "Status → Voice shows the wake listener's state and the last words it heard, and more mis-hearings of “Aero” (euro, zero, hero, arrow…) are accepted."
+      "Status → Voice shows the wake listener's state and the last words it heard, and more mis-hearings of “Aero” (euro, zero, hero, arrow…) are accepted.",
+      "Checklists opened by voice are now read aloud (the speech engine is primed by your first tap) and start by naming the checklist. Saying the wake word on its own can no longer tick a line."
     ]
   },
   {
