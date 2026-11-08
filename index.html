@@ -343,7 +343,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "c3382717";
+const BUILD = "d0948356";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
@@ -1135,7 +1135,7 @@ const ALIASES=[   // most specific first
   [/\bengine start\b|\bstart(ing)? (the )?engine\b|\bstart\b/,"start"],
   [/\bshut ?down\b|\bsecure\b|\bsecuring\b/,"shut"],
   [/\bcruise\b|\bcrews\b/,"cruise"],
-  [/\bdescent\b|\bdescend\b|\bdecent\b|\bdissent\b|\bdescending\b|\bthe scent\b|\bdissent\b/,"desc"],
+  [/\bdescent\b|\bdescend\b|\bdecent\b|\bdissent\b|\bdescending\b|\bthe scent\b|\bthe sent\b|\bto sent\b|\bdessert\b|\bdesert\b|\bdescents?\b|\bdesent\b|\bdeescent\b|\bdesend\b|\bdecend\b|\bdissent\b|\bdescet\b/,"desc"],
   [/\btaxi\b|\btaxes\b|\btaxing\b/,"taxi"]];
 let wake={on:false, busy:false, last:0, timer:null, heard:"", err:"", sessions:0, since:0};
 function wakeShouldRun(){ return voice.wake && voice.reply && SR && !!AC() && document.visibilityState==="visible" && !vs.active && !recallState.on && !vs.listening && !wake.busy && !primePending && !(TTS&&speechSynthesis.speaking); }
@@ -1200,9 +1200,11 @@ function handleSpokenCommand(text){
     const norm=x=>x.toLowerCase().replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(w=>w&&!["the","a","an","in","of","and","or","to"].includes(w));
     const words=norm(t); let best=null,bestScore=0;
     const said=" "+words.join(" ")+" ";
+    const lev=(a,b)=>{ if(a===b) return 0; const m=a.length,n=b.length; if(!m||!n) return m+n; let prev=Array.from({length:n+1},(_,j)=>j); for(let i=1;i<=m;i++){ const cur=[i]; for(let j=1;j<=n;j++){ cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1)); } prev=cur; } return prev[n]; };
+    const close=(w,n)=>w.length>=5&&n.length>=5&&lev(w,n)<=(w.length>=8?3:2);
     for(const x of all){
       const nameWords=norm(x.p.name); const nw=nameWords.concat(norm(x.p.cond||""));
-      let sc=0; for(const w of words){ if(nw.includes(w)) sc+=2; else if(nw.some(n=>n.startsWith(w)&&w.length>3)) sc+=1; }
+      let sc=0; for(const w of words){ if(nw.includes(w)) sc+=2; else if(nw.some(n=>n.startsWith(w)&&w.length>3)) sc+=1; else if(nameWords.some(n=>close(w,n))) sc+=2; }
       if(nameWords.length && said.includes(" "+nameWords.join(" ")+" ")) sc+=6;          // the whole name was said
       else if(nameWords.every(n=>words.includes(n))) sc+=3;                                // every word of the name was said
       sc-=Math.max(0,nameWords.length-words.length)*0.5;                                  // longer names that were not fully said lose a little
@@ -1211,7 +1213,7 @@ function handleSpokenCommand(text){
     if(best&&bestScore>=2) target=best;
   }
   if(!target){ vlogAdd("no match for “"+text+"”"); recallState.msg="Heard “"+text+"” – no matching checklist."; render(); speak("No matching checklist."); return false; }
-  vlogAdd("opening "+target.p.name);
+  vlogAdd("opening "+target.p.name+" (heard “"+text+"”)");
   recallState.msg=""; state.mode=target.m; state.sel=target.p.id; state.showing=true; save(); render();
   if(!voice.read){ voice.read=true; saveVoice(); vlogAdd("read aloud turned on by voice command"); render(); }   // a spoken request to open a checklist means: read it
   voiceStart(true);
