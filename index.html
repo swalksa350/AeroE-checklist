@@ -354,7 +354,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "2d496bcf";
+const BUILD = "155fabd2";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -579,7 +579,7 @@ function followNext(ve){
   const room=bottom-top;
   const wantTop=top+Math.min(120, room*0.22);                                              // where the next item should sit
   const hidden = r.bottom>bottom-8 || r.top<top+8;
-  const lowOnScreen = r.top>top+room*0.6;                                                 // visible, but too little left below it
+  const lowOnScreen = r.top>top+room*0.5;                                                 // visible, but too little left below it
   if(hidden||lowOnScreen){ const target=ve.scrollTop+(r.top-wantTop); try{ ve.scrollTo({top:Math.max(0,target),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); }catch(e){ ve.scrollTop=Math.max(0,target); } }
 }
 

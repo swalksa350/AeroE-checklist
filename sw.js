@@ -1,4 +1,4 @@
-const VERSION = "ga-ecl-2d496bcf";
+const VERSION = "ga-ecl-155fabd2";
 const ASSETS = [
   "./",
   "./index.html",
