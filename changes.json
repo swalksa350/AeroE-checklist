@@ -11,7 +11,8 @@
       "Wake-word commands wait for the whole phrase: a phrase the engine cuts short at a pause (“hey Aero, before … start checklist”) is joined with what follows, while an exact checklist name opens at once.",
       "Smoother reading: the audio engine is no longer rebuilt around every line, cue tones release the audio hardware when idle, and the speech engine is only nudged when paused.",
       "Offline engine: the microphone now stays open between lines by default, so replies are heard straight away and the switching click is gone; the accept tone is a soft short tick.",
-      "The checklist list no longer hides its last entries behind the voice bar, and it keeps its scroll position when the app refreshes."
+      "The checklist list no longer hides its last entries behind the voice bar, and it keeps its scroll position when the app refreshes.",
+      "Reset returns a checklist to the top; after each tick the checklist scrolls so the next item and those after it stay in view; a newly opened checklist always starts at the top."
     ]
   },
   {

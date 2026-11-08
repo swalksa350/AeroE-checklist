@@ -354,7 +354,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "cde4a6c5";
+const BUILD = "2d496bcf";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -562,7 +562,25 @@ function render(){
   const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
   if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); renderVoiceBar(); return; }
   renderSide();renderView();renderVoiceBar();renderWakeDot();
-  const k=render._keep; if(k){ const se=document.getElementById("side"), ve=document.getElementById("view"); if(se) se.scrollTop=k.side; if(ve&&k.sel===state.sel&&k.mode===state.mode) ve.scrollTop=k.view; }
+  const k=render._keep; if(k){ const se=document.getElementById("side"), ve=document.getElementById("view"); if(se) se.scrollTop=k.side;
+    if(ve){
+      if(render._top || k.sel!==state.sel || k.mode!==state.mode){ ve.scrollTop=0; }        // new checklist, or a reset: start at the top
+      else { ve.scrollTop=k.view; if(render._follow) followNext(ve); }                     // same checklist: keep place, then follow the next item
+    }
+  }
+  render._top=false; render._follow=false;
+}
+/* After a tick, keep the next item to action in the upper part of the pane with the following items visible. */
+function followNext(ve){
+  const nx=ve.querySelector(".item.next"); if(!nx) return;
+  const vr=ve.getBoundingClientRect(), r=nx.getBoundingClientRect();
+  const head=ve.querySelector(".proc-head"); const top=vr.top+(head?head.getBoundingClientRect().height:0);
+  const bar=document.getElementById("vbar"); const bottom=vr.bottom-(bar?bar.getBoundingClientRect().height:0);
+  const room=bottom-top;
+  const wantTop=top+Math.min(120, room*0.22);                                              // where the next item should sit
+  const hidden = r.bottom>bottom-8 || r.top<top+8;
+  const lowOnScreen = r.top>top+room*0.6;                                                 // visible, but too little left below it
+  if(hidden||lowOnScreen){ const target=ve.scrollTop+(r.top-wantTop); try{ ve.scrollTo({top:Math.max(0,target),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"}); }catch(e){ ve.scrollTop=Math.max(0,target); } }
 }
 
 function renderPicker(v){
@@ -658,7 +676,7 @@ function renderView(){
   const head=h("div",{class:"proc-head"},
     h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),
     h("h1",{class:cls},p.name,p.cond?h("span",{class:"cond"},p.cond):(p.edited?h("span",{class:"cond"},"Customised on this device"):"")),
-    h("div",{class:"tools"},state.mode==="normal"?h("button",{onclick:()=>openEditor(p.id)},"Edit"):"",h("button",{onclick:()=>go(()=>resetProc(p))},"Reset"))
+    h("div",{class:"tools"},state.mode==="normal"?h("button",{onclick:()=>openEditor(p.id)},"Edit"):"",h("button",{onclick:()=>{render._top=true;go(()=>resetProc(p))}},"Reset"))
   );
   v.append(head);
   if(p.land)v.append(h("div",{class:"land"+(p.land.includes("PRACTICAL")?" amber":"")},p.land));
@@ -673,7 +691,7 @@ function renderView(){
         const per=PER();
         Object.keys(per.ticks).forEach(k=>{if(k.startsWith(key(p.id,r.path+".")))delete per.ticks[k]});
         Object.keys(per.branches).forEach(k=>{if(k!==key(p.id,r.path)&&k.startsWith(key(p.id,r.path+".")))delete per.branches[k]});
-        per.branches[key(p.id,r.path)]=o;}); if(vs.active&&vs.pending&&vs.pending.path===r.path){ stopListening(); vs.pending=null; voiceNext(); }}},o)));
+        per.branches[key(p.id,r.path)]=o;}); render._follow=true; render(); if(vs.active&&vs.pending&&vs.pending.path===r.path){ stopListening(); vs.pending=null; voiceNext(); }}},o)));
       items.append(h("div",{class:"branch"},h("div",{class:"q"},r.it.branch),opts));return;
     }
     const done=isDone(p,r);
@@ -681,7 +699,7 @@ function renderView(){
     const cl=["item",done?"done":"",r===next?"next":"",it.mem?"mem":"",it.sub?"sub":"",r.type==="defer"?"defer":""].join(" ");
     const chal=r.type==="defer"?"Deferred: "+it.defer:it.c;
     const resp=r.type==="defer"?"NOTED":it.r;
-    items.append(h("button",{class:cl,"aria-pressed":done?"true":"false",onclick:()=>{const wasPending=vs.active&&vs.pending&&vs.pending.path===r.path&&!done; go(()=>{const per=PER();const k=key(p.id,r.path);if(per.ticks[k])delete per.ticks[k];else per.ticks[k]=1}); if(wasPending){ stopListening(); vs.pending=null; voiceNext(); }}},
+    items.append(h("button",{class:cl,"aria-pressed":done?"true":"false",onclick:()=>{const wasPending=vs.active&&vs.pending&&vs.pending.path===r.path&&!done; if(!done) render._follow=true; go(()=>{const per=PER();const k=key(p.id,r.path);if(per.ticks[k])delete per.ticks[k];else per.ticks[k]=1}); if(wasPending){ stopListening(); vs.pending=null; voiceNext(); }}},
       h("span",{class:"chal"},chal),h("span",{class:"lead"}),h("span",{class:"resp"},resp)));
   });
   v.append(items);
@@ -1164,15 +1182,15 @@ function voiceNext(){
   renderVoiceBar();
   speak(pr.complete?(sayable(p.name)+" checklist complete."):("End of "+sayable(p.name)+". Some items were skipped."));
 }
-function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; const c=currentRows(); if(!c) return; stopListening(); PER().ticks[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); save(); render(); }
-function voiceSkip(){ const r=vs.pending; if(!r) return; const c=currentRows(); if(!c) return; stopListening(); vs.skipped[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); }
+function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; const c=currentRows(); if(!c) return; stopListening(); PER().ticks[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); save(); render._follow=true; render(); }
+function voiceSkip(){ const r=vs.pending; if(!r) return; const c=currentRows(); if(!c) return; stopListening(); vs.skipped[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); render._follow=true; render(); }
 function voiceRepeat(){ const r=vs.pending; if(!r){ voiceNext(); return; } stopListening(); const c=currentRows(); if(!c) return;
   vs.gate=Infinity;
   const after=()=>{ vs.gate=Date.now()+120; if(voice.reply&&SRX()&&earlyActive()) beep(880,70,1); if(!(earlyActive()&&voice.reply&&SRX()&&vs.listening)) listenFor(r); };
   if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", after);
   else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+". "+sayable(responseForSpeech(r.it.r))+"."), after);
   if(earlyActive()&&voice.reply&&SRX()) listenFor(r,true); }
-function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; vs.pending=null; voiceNext(); save(); render(); }
+function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; vs.pending=null; voiceNext(); save(); render._follow=true; render(); }
 
 /* --- speech recognition --- */
 let lastListenStop=0;
