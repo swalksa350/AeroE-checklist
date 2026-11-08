@@ -343,7 +343,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "d0948356";
+const BUILD = "dccac53f";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
@@ -352,12 +352,21 @@ const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
 const CUSTOM_ID="approach-custom";
 const CUSTOM_TEMPLATE=[{c:"ATIS / AWIS",r:"OBTAINED"},{c:"Altimeter",r:"SET"},{c:"Approach",r:"BRIEFED (type, minima, missed approach)"},{c:"Navigation / avionics",r:"SET for approach"},{c:"Fuel",r:"CHECK quantity & selector"},{c:"Mixture",r:"SET / RICH"},{c:"Fuel pump",r:"ON (if applicable)"},{c:"Lights",r:"ON"},{c:"Seat belts / harnesses",r:"SECURE"},{c:"Passengers",r:"BRIEFED"},{c:"Speed",r:"SET for approach"}];
-function customApproach(aid){ const c=state.custom&&state.custom[aid]; return c&&Array.isArray(c.items)&&c.items.length ? c : null; }
-function withCustom(a){
-  const c=customApproach(a.id); if(!c) return a.normal;
-  const proc={id:CUSTOM_ID,name:c.name||"Approach (custom)",items:c.items.map(it=>({c:it.c,r:it.r})),custom:true};
-  const out=a.normal.slice(); let i=out.findIndex(p=>p.id==="land"); if(i<0) i=out.length; out.splice(i,0,proc); return out;
+function customFor(aid){
+  let c=state.custom&&state.custom[aid]; if(!c) return {approach:null,overrides:{}};
+  if(Array.isArray(c.items)){ c={approach:{name:c.name,items:c.items},overrides:{}}; state.custom[aid]=c; }   // older shape
+  if(!c.overrides) c.overrides={};
+  return c;
 }
+function customApproach(aid){ const c=customFor(aid).approach; return c&&Array.isArray(c.items)&&c.items.length ? c : null; }
+function withCustom(a){
+  const cf=customFor(a.id);
+  const out=a.normal.map(p=>{ const o=cf.overrides[p.id]; return (o&&Array.isArray(o.items)&&o.items.length) ? Object.assign({},p,{items:o.items,edited:true}) : p; });
+  const c=customApproach(a.id);
+  if(c){ const proc={id:CUSTOM_ID,name:c.name||"Approach (custom)",items:c.items.map(it=>Object.assign({},it)),custom:true,edited:true}; let i=out.findIndex(p=>p.id==="land"); if(i<0) i=out.length; out.splice(i,0,proc); }
+  return out;
+}
+function editedCount(aid){ const cf=customFor(aid); return Object.keys(cf.overrides).length+(customApproach(aid)?1:0); }
 const DATA = () => { const a=AC(); return a ? {normal:withCustom(a), emergency:a.emergency, abnormal:a.abnormal} : {normal:[],emergency:[],abnormal:[]}; };
 
 function load(){
@@ -600,7 +609,7 @@ function renderSide(){
     const pr=progress(p);
     const dot=pr.complete?"done":pr.done>0?(state.mode==="normal"?"partial":"active"):"";
     list.append(h("button",{class:state.sel===p.id?"sel":"",onclick:()=>go(()=>{state.sel=p.id;state.showing=true})},
-      h("span",{class:"dot "+dot}),h("span",{class:"name"},p.name),h("span",{class:"n"},pr.total?pr.done+"/"+pr.total:"")));
+      h("span",{class:"dot "+dot}),h("span",{class:"name"},p.name+(p.edited?" ✎":"")),h("span",{class:"n"},pr.total?pr.done+"/"+pr.total:"")));
   });
   s.append(list);
 }
@@ -626,8 +635,8 @@ function renderView(){
   const cls=state.mode==="emergency"?"emerg":state.mode==="abnormal"?"abn":"norm";
   const head=h("div",{class:"proc-head"},
     h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),
-    h("h1",{class:cls},p.name,p.cond?h("span",{class:"cond"},p.cond):""),
-    h("div",{class:"tools"},p.custom?h("button",{onclick:()=>openEditor()},"Edit"):"",h("button",{onclick:()=>go(()=>resetProc(p))},"Reset"))
+    h("h1",{class:cls},p.name,p.cond?h("span",{class:"cond"},p.cond):(p.edited?h("span",{class:"cond"},"Customised on this device"):"")),
+    h("div",{class:"tools"},state.mode==="normal"?h("button",{onclick:()=>openEditor(p.id)},"Edit"):"",h("button",{onclick:()=>go(()=>resetProc(p))},"Reset"))
   );
   v.append(head);
   if(p.land)v.append(h("div",{class:"land"+(p.land.includes("PRACTICAL")?" amber":"")},p.land));
@@ -716,10 +725,14 @@ function renderStatus(v){
     :"On this device the file opens in the browser; save it from there (File → Save, or Share) and put it in your EFB's Documents or Dropbox folder."));
   efb.append(h("div",{class:"saved"},"The file works offline inside the EFB and carries this version's content; send it again after an app update."));
   w.append(efb);
-  w.append(h("h2",{},"Custom approach checklist"));
-  const cust=customApproach(a.id);
-  w.append(h("div",{class:"row"},h("span",{},cust?cust.name+" · "+cust.items.length+" lines":"None for the "+a.short+" yet"),h("button",{class:"link",onclick:openEditor},cust?"Edit":"Create")));
-  w.append(h("div",{class:"saved"},"Your own approach checklist for this aircraft, kept on this device. It appears under Normal between Descent and Before Landing, is read aloud like any other, and “hey Aero, approach checklist” opens it."));
+  w.append(h("h2",{},"Customised checklists"));
+  const cust=customApproach(a.id); const cfS=customFor(a.id);
+  w.append(h("div",{class:"row"},h("span",{},cust?cust.name+" · "+cust.items.length+" lines":"Approach checklist: none yet"),h("button",{class:"link",onclick:()=>openEditor(CUSTOM_ID)},cust?"Edit":"Create")));
+  const edited=a.normal.filter(p=>cfS.overrides[p.id]);
+  if(edited.length) edited.forEach(p=>w.append(h("div",{class:"row"},h("span",{},p.name+" ✎ · "+cfS.overrides[p.id].items.filter(it=>!it.note).length+" lines"),h("button",{class:"link",onclick:()=>openEditor(p.id)},"Edit"))));
+  else w.append(h("div",{class:"saved"},"No built-in normal checklist has been edited for the "+a.short+" on this device. Open any normal checklist and tap Edit to add, remove or reorder lines."));
+  w.append(h("div",{class:"row"},h("button",{class:"link",onclick:exportCustom},"Export customisations…"),h("button",{class:"link",onclick:importCustom},"Import…")));
+  w.append(h("div",{class:"saved"},"Edits apply to normal checklists only and are kept on this device for this aircraft. Abnormal and emergency procedures cannot be edited. Export produces text an operator can send to pilots, who paste it with Import."));
   w.append(h("h2",{},"Voice"));
   const tog=(label,get,set,hint)=>h("div",{class:"row"},h("span",{},label,h("div",{class:"saved",style:"margin-top:2px"},hint)),h("button",{class:"tog"+(get()?" on":""),onclick:()=>{set(!get());saveVoice();render()}},get()?"On":"Off"));
   if(!TTS) w.append(h("div",{class:"empty"},"This browser cannot read text aloud."));
@@ -835,46 +848,111 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   });
 }
 
-/* ---------------- CUSTOM APPROACH CHECKLIST EDITOR ---------------- */
-function openEditor(){
+/* ---------------- CHECKLIST EDITOR (normal checklists and the custom approach) ---------------- */
+function openEditor(pid){
   const a=AC(); if(!a) return;
-  const existing=customApproach(a.id);
-  let draft={name:(existing&&existing.name)||"Approach (custom)", items:(existing?existing.items:CUSTOM_TEMPLATE).map(it=>({c:it.c,r:it.r}))};
+  pid=pid||CUSTOM_ID;
+  const isApproach=pid===CUSTOM_ID;
+  const cf=customFor(a.id);
+  const original=isApproach?null:a.normal.find(p=>p.id===pid);
+  const current=isApproach?customApproach(a.id):(cf.overrides[pid]||null);
+  const startItems=isApproach?(current?current.items:CUSTOM_TEMPLATE):(current?current.items:original.items);
+  const clone=x=>JSON.parse(JSON.stringify(x));
+  let draft={name:isApproach?((current&&current.name)||"Approach (custom)"):original.name, items:clone(startItems)};
   const old=document.getElementById("sheet"); if(old) old.remove();
   const card=h("div",{class:"card2 editor"});
   const sheet=h("div",{class:"sheet",id:"sheet"},card);
+  const msg=t=>{ const el=document.getElementById("cust-msg"); if(el) el.textContent=t; };
   const draw=()=>{
     card.innerHTML="";
-    card.append(h("h2",{},(existing?"Edit":"Create")+" approach checklist – "+a.short));
-    card.append(h("div",{class:"hint"},"Kept on this device for the "+a.short+" only and shown under Normal between Descent and Before Landing. Write the action in CAPITALS so the voice reads it in short form."));
-    const nameIn=h("input",{id:"cust-name",value:draft.name,placeholder:"Checklist name"}); nameIn.oninput=ev=>{draft.name=ev.target.value};
-    card.append(h("div",{class:"line",style:"grid-template-columns:1fr"},nameIn));
+    card.append(h("h2",{},(isApproach?(current?"Edit ":"Create "):"Edit ")+draft.name+" – "+a.short));
+    card.append(h("div",{class:"hint"},"Changes are kept on this device for the "+a.short+" only. Write the action in CAPITALS so the voice reads it in short form. Use Export on the Status page to share a set of edits with other pilots."));
+    if(isApproach){ const nameIn=h("input",{id:"cust-name",value:draft.name,placeholder:"Checklist name"}); nameIn.oninput=ev=>{draft.name=ev.target.value}; card.append(h("div",{class:"line",style:"grid-template-columns:1fr"},nameIn)); }
     draft.items.forEach((it,i)=>{
-      const c=h("input",{id:"cust-c"+i,value:it.c,placeholder:"Challenge"}); c.oninput=ev=>{it.c=ev.target.value};
-      const r=h("input",{id:"cust-r"+i,value:it.r,placeholder:"RESPONSE"}); r.oninput=ev=>{it.r=ev.target.value};
       const ops=h("div",{class:"ops"},
         h("button",{title:"Move up",onclick:()=>{if(i>0){[draft.items[i-1],draft.items[i]]=[draft.items[i],draft.items[i-1]];draw()}}},"▲"),
         h("button",{title:"Move down",onclick:()=>{if(i<draft.items.length-1){[draft.items[i+1],draft.items[i]]=[draft.items[i],draft.items[i+1]];draw()}}},"▼"),
         h("button",{title:"Delete line",onclick:()=>{draft.items.splice(i,1);draw()}},"✕"));
-      card.append(h("div",{class:"line"},c,r,ops));
+      if(it.branch){
+        card.append(h("div",{class:"line",style:"grid-template-columns:1fr auto"},h("div",{style:"color:var(--amber);font-weight:600;padding:8px 0"},"▶ "+it.branch+" ("+Object.keys(it.opts).length+" options – kept as is)"),ops));
+      }else if(it.note!==undefined){
+        const n=h("input",{id:"cust-n"+i,value:it.note,placeholder:"Note text"}); n.oninput=ev=>{it.note=ev.target.value};
+        card.append(h("div",{class:"line",style:"grid-template-columns:auto 1fr auto"},h("span",{style:"font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.06em"},it.kind==="warn"?"Warning":it.kind==="caution"?"Caution":"Note"),n,ops));
+      }else if(it.defer!==undefined){
+        const d=h("input",{id:"cust-d"+i,value:it.defer,placeholder:"Deferred item text"}); d.oninput=ev=>{it.defer=ev.target.value};
+        card.append(h("div",{class:"line",style:"grid-template-columns:auto 1fr auto"},h("span",{style:"font-size:12px;color:var(--amber);text-transform:uppercase;letter-spacing:.06em"},"Deferred"),d,ops));
+      }else{
+        const c=h("input",{id:"cust-c"+i,value:it.c||"",placeholder:"Challenge"}); c.oninput=ev=>{it.c=ev.target.value};
+        const r=h("input",{id:"cust-r"+i,value:it.r||"",placeholder:"RESPONSE"}); r.oninput=ev=>{it.r=ev.target.value};
+        card.append(h("div",{class:"line"},c,r,ops));
+      }
     });
     const actions=h("div",{class:"actions"});
     actions.append(h("button",{onclick:()=>{draft.items.push({c:"",r:""});draw();setTimeout(()=>{const el=document.getElementById("cust-c"+(draft.items.length-1));el&&el.focus()},0)}},"+ Add line"));
-    actions.append(h("button",{onclick:()=>{draft.items=CUSTOM_TEMPLATE.map(it=>({c:it.c,r:it.r}));draw()}},"Use template"));
+    actions.append(h("button",{onclick:()=>{draft.items.push({note:"",kind:"warn"});draw();setTimeout(()=>{const el=document.getElementById("cust-n"+(draft.items.length-1));el&&el.focus()},0)}},"+ Add note"));
+    if(isApproach) actions.append(h("button",{onclick:()=>{draft.items=clone(CUSTOM_TEMPLATE);draw()}},"Use template"));
+    else actions.append(h("button",{onclick:()=>{draft.items=clone(original.items);draw();msg("Original lines restored in the editor – Save to keep, or use Restore original below to remove all edits.")}},"Reload original lines"));
     actions.append(h("button",{class:"primary",onclick:()=>{
-      const items=draft.items.map(it=>({c:String(it.c||"").trim(),r:String(it.r||"").trim()})).filter(it=>it.c&&it.r);
-      if(!items.length){ alertRow("Add at least one line with a challenge and a response."); return; }
-      state.custom[a.id]={name:(draft.name||"Approach (custom)").trim()||"Approach (custom)",items};
-      Object.keys(PER().ticks).forEach(k=>{if(k.startsWith(CUSTOM_ID+"/"))delete PER().ticks[k]});
-      save(); sheet.remove(); state.mode="normal"; state.sel=CUSTOM_ID; state.showing=true; render();
+      const items=draft.items.map(it=>{ if(it.branch) return it; if(it.note!==undefined){ it.note=String(it.note).trim(); return it.note?it:null; } if(it.defer!==undefined){ it.defer=String(it.defer).trim(); return it.defer?it:null; } it.c=String(it.c||"").trim(); it.r=String(it.r||"").trim(); return (it.c&&it.r)?it:null; }).filter(Boolean);
+      if(!items.filter(it=>!it.note).length){ msg("Add at least one line with a challenge and a response."); return; }
+      const cfx=customFor(a.id);
+      if(isApproach) cfx.approach={name:(draft.name||"Approach (custom)").trim()||"Approach (custom)",items};
+      else cfx.overrides[pid]={items,savedAt:Date.now()};
+      state.custom[a.id]=cfx;
+      Object.keys(PER().ticks).forEach(k=>{if(k.startsWith(pid+"/"))delete PER().ticks[k]});
+      Object.keys(PER().branches).forEach(k=>{if(k.startsWith(pid+"/"))delete PER().branches[k]});
+      save(); sheet.remove(); state.mode="normal"; state.sel=pid; state.showing=true; render();
     }},"Save"));
-    if(existing) actions.append(h("button",{style:"color:var(--red);border-color:var(--red)",onclick:()=>{ if(card.dataset.confirm==="1"){ delete state.custom[a.id]; Object.keys(PER().ticks).forEach(k=>{if(k.startsWith(CUSTOM_ID+"/"))delete PER().ticks[k]}); save(); sheet.remove(); if(state.sel===CUSTOM_ID) state.sel=null; render(); } else { card.dataset.confirm="1"; alertRow("Tap Remove again to delete this checklist from this device."); } }},"Remove checklist"));
+    if(current) actions.append(h("button",{style:"color:var(--red);border-color:var(--red)",onclick:()=>{
+      if(card.dataset.confirm!=="1"){ card.dataset.confirm="1"; msg(isApproach?"Tap again to delete this checklist from this device.":"Tap again to remove all edits and go back to the built-in checklist."); return; }
+      const cfx=customFor(a.id); if(isApproach) cfx.approach=null; else delete cfx.overrides[pid]; state.custom[a.id]=cfx;
+      Object.keys(PER().ticks).forEach(k=>{if(k.startsWith(pid+"/"))delete PER().ticks[k]});
+      save(); sheet.remove(); if(isApproach&&state.sel===CUSTOM_ID) state.sel=null; render();
+    }},isApproach?"Remove checklist":"Restore original"));
     actions.append(h("button",{onclick:()=>sheet.remove()},"Cancel"));
     card.append(actions);
     card.append(h("div",{class:"hint",id:"cust-msg"}));
   };
-  const alertRow=t=>{ const el=document.getElementById("cust-msg"); if(el) el.textContent=t; };
   draw(); document.body.append(sheet);
+}
+
+/* Export / import of a device's customisations for one aircraft, so an operator can share a standard set */
+function exportCustom(){
+  const a=AC(); if(!a) return;
+  const cf=customFor(a.id);
+  const payload={aeroe:"custom-checklists",version:1,aircraft:a.id,exported:new Date().toISOString(),approach:cf.approach||null,overrides:cf.overrides||{}};
+  const text=JSON.stringify(payload,null,1);
+  const old=document.getElementById("sheet"); if(old) old.remove();
+  const ta=h("textarea",{id:"cust-export",readonly:"readonly",style:"width:100%;height:180px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);padding:8px"},text);
+  const card=h("div",{class:"card2 editor"},h("h2",{},"Export customisations – "+a.short),h("div",{class:"hint"},"Copy this text and send it to other pilots. On their device: Status → Customised checklists → Import, then paste."),ta);
+  const actions=h("div",{class:"actions"});
+  actions.append(h("button",{class:"primary",onclick:async ev=>{ try{ await navigator.clipboard.writeText(text); ev.currentTarget.textContent="Copied"; }catch(e){ ta.select(); ev.currentTarget.textContent="Select and copy the text above"; } }},"Copy to clipboard"));
+  if(navigator.share) actions.append(h("button",{onclick:()=>{ navigator.share({title:"AeroE customisations – "+a.short,text}).catch(()=>{}); }},"Share…"));
+  actions.append(h("button",{onclick:()=>document.getElementById("sheet").remove()},"Close"));
+  card.append(actions);
+  document.body.append(h("div",{class:"sheet",id:"sheet"},card));
+}
+function importCustom(){
+  const a=AC(); if(!a) return;
+  const old=document.getElementById("sheet"); if(old) old.remove();
+  const ta=h("textarea",{id:"cust-import",placeholder:"Paste the exported text here",style:"width:100%;height:180px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);padding:8px"});
+  const note=h("div",{class:"hint",id:"cust-msg"});
+  const card=h("div",{class:"card2 editor"},h("h2",{},"Import customisations – "+a.short),h("div",{class:"hint"},"Replaces this device's edits for the "+a.short+" with the pasted set."),ta,note);
+  const actions=h("div",{class:"actions"});
+  actions.append(h("button",{class:"primary",onclick:()=>{
+    let j; try{ j=JSON.parse(ta.value); }catch(e){ note.textContent="That is not a valid export."; return; }
+    if(!j||j.aeroe!=="custom-checklists"){ note.textContent="That is not an AeroE export."; return; }
+    if(j.aircraft!==a.id){ note.textContent="This export is for "+j.aircraft+", not the "+a.short+". Open that aircraft and import it there."; return; }
+    const ok=it=>it&&typeof it==="object"&&(it.branch||typeof it.note==="string"||typeof it.defer==="string"||(typeof it.c==="string"&&typeof it.r==="string"));
+    const overrides={}; for(const k of Object.keys(j.overrides||{})){ const o=j.overrides[k]; if(a.normal.some(p=>p.id===k)&&o&&Array.isArray(o.items)&&o.items.every(ok)&&o.items.length) overrides[k]={items:o.items,savedAt:Date.now()}; }
+    const approach=(j.approach&&Array.isArray(j.approach.items)&&j.approach.items.every(ok)&&j.approach.items.length)?{name:String(j.approach.name||"Approach (custom)"),items:j.approach.items}:null;
+    state.custom[a.id]={approach,overrides};
+    state.per[a.id]={ticks:{},branches:{}};
+    save(); document.getElementById("sheet").remove(); render();
+  }},"Import"));
+  actions.append(h("button",{onclick:()=>document.getElementById("sheet").remove()},"Cancel"));
+  card.append(actions);
+  document.body.append(h("div",{class:"sheet",id:"sheet"},card));
 }
 
 /* ---------------- VOICE ----------------

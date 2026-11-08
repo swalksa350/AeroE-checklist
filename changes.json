@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.0",
+    "date": "2026-11-08",
+    "title": "Editable normal checklists",
+    "notes": [
+      "Every normal checklist can be customised per aircraft: open it and tap Edit to add, change, remove or reorder lines, add notes, or restore the original. Edited checklists show ✎ in the list and “Customised on this device” under the title.",
+      "Export / Import on the Status page turns a device's customisations into text an operator can send to pilots, who paste it in.",
+      "Abnormal and emergency procedures are not editable."
+    ]
+  },
+  {
     "version": "1.9",
     "date": "2026-11-07",
     "title": "“Hey Aero” wake word and a custom approach checklist",
