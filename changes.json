@@ -11,7 +11,7 @@
       "Status → Customised checklists has a switch to use one approach checklist for every favourite (★) aircraft.",
       "User guide brought fully up to date.",
       "Charts tab: DAP and ERSA links now follow Airservices' dated amendment cycle, with the AIP index as a fallback; the Jeppesen button uses the FliteDeck Pro X link name.",
-      "Header tabs stay readable in iPad Split View; Charts tab adds a NAIPS app attempt and ERSA guidance."
+      "Header tabs stay readable in iPad Split View. The Charts tab opens the NAIPS app directly, with the website beside it, and explains where ERSA lives."
     ]
   },
   {
