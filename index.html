@@ -353,7 +353,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "20ea7d46";
+const BUILD = "5074173e";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -1408,21 +1408,39 @@ function wakeShouldRun(){ return voice.wake && voice.reply && SRX() && !!AC() &&
 function wakeLoop(){
   if(!wakeShouldRun()){ wake.on=false; return; }
   wake.on=true; wake.sessions++; wake.since=wake.since||Date.now(); renderWakeDot(); renderWakeStatus();
-  let handled=false, pendingRest="", stableTimer=null;
+  let handled=false, pendingRest="", stableTimer=null, fragment="", fragmentAt=0, awaitingAt=0, latest="", graceTimer=null;
   const fire=rest=>{
-    if(handled) return; handled=true; wake.busy=true; clearTimeout(stableTimer); stopListening(); beep(1320,55,2); vlogAdd("wake command: “"+rest+"”");
+    if(handled) return; handled=true; wake.busy=true; clearTimeout(stableTimer); clearTimeout(graceTimer); stopListening(); beep(1320,55,2); vlogAdd("wake command: “"+rest+"”");
     handleSpokenCommand(rest); setTimeout(()=>{ wake.busy=false; wakeLoop(); }, 1500);
   };
+  const unfinished=rest=>/\b(before|after|engine|low|high|emergency|gear|fuel|cabin|electrical|pre|post|manual|single|loss|rapid|smoke|flap|flaps|oil|alternator|generator|and|or|the|of|in|to|a)$/.test(rest);
+  const holdOpen=()=>{ clearTimeout(graceTimer); graceTimer=setTimeout(()=>{ if(!handled&&latest) fire(latest); }, 2500); };
+  const processed=new Set();   // finished phrases already dealt with (the engine keeps reporting them)
   const consider=(alts,isFinal)=>{
-    wake.heard=alts[0]||""; renderWakeStatus();
+    wake.heard=alts[alts.length-1]||""; renderWakeStatus();
+    let lastRest=null;
     for(const a of alts){
-      const m=WAKE_RE.exec(a); if(!m) continue;
-      const rest=(m[1]||"").trim();
-      if(!rest){ if(Date.now()-wake.last>2500){ wake.last=Date.now(); beep(880,60,1); } continue; }   // wake word heard, waiting for the rest
-      if(isFinal){ fire(rest); return true; }
-      // running guess: wait until it stops changing for 800 ms so the whole name is heard
-      if(rest!==pendingRest){ pendingRest=rest; clearTimeout(stableTimer); stableTimer=setTimeout(()=>{ if(!handled&&pendingRest) fire(pendingRest); }, 800); }
-      return false;
+      if(processed.has(a)) continue;
+      const m=WAKE_RE.exec(a);
+      let rest;
+      if(m){
+        rest=(m[1]||"").trim();
+        if(!rest){ // wake word on its own: acknowledge once and wait for the command
+          if(Date.now()-wake.last>2500){ wake.last=Date.now(); beep(880,60,1); }
+          if(isFinal){ processed.add(a); awaitingAt=Date.now(); fragment=""; latest=""; holdOpen(); }
+          continue;
+        }
+      }else if((fragment||awaitingAt) && Date.now()-Math.max(fragmentAt,awaitingAt)<8000){
+        rest=((fragment?fragment+" ":"")+a).trim();          // continuation of a command the engine cut short at a pause
+      }else continue;
+      lastRest=rest; latest=rest; wake.heard=rest; renderWakeStatus();
+      const r=resolveCommand(rest);
+      if(r.exact && !(unfinished(rest)&&!isFinal)){ fire(rest); return true; }   // a complete checklist name: go at once
+      if(isFinal){ processed.add(a); fragment=rest; fragmentAt=Date.now(); holdOpen(); }   // finished but not exact: hold and join what follows
+    }
+    if(lastRest!==null && !isFinal){
+      if(fragment||awaitingAt) holdOpen();                       // running guess of a continuation: keep the hold alive
+      else if(lastRest!==pendingRest){ pendingRest=lastRest; clearTimeout(stableTimer); if(SRX()!==VoskRecognition && !unfinished(lastRest)) stableTimer=setTimeout(()=>{ if(!handled&&pendingRest) fire(pendingRest); }, 1100); }
     }
     return false;
   };
@@ -1447,37 +1465,45 @@ setInterval(()=>{ if(wakeShouldRun()&&!wake.on) wakeLoop(); }, 1000);
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState!=="visible"){ if(wake.on){ stopListening(); wake.on=false; } } });
 
 /* Spoken command after the wake word (or from the Say procedure button): a checklist/procedure name, "status" or "stop". */
-function handleSpokenCommand(text){
-  const t=text.toLowerCase().replace(/\b(the|a|an|please|checklist|check list|procedure|open|go to|show|read|me)\b/g," ").replace(/\s+/g," ").trim();
-  if(/\bstop\b|\bcancel\b|\bquiet\b/.test(t)){ voiceStop(); return true; }
-  if(/\bstatus\b/.test(t)){ state.mode="status"; state.sel=null; state.showing=true; save(); render(); speak("Status."); return true; }
-  const a=AC(); if(!a) return false;
-  let target=null;
+function resolveCommand(text){
+  const t=String(text).toLowerCase().replace(/\b(the|a|an|please|checklist|check list|procedure|open|go to|show|read|me)\b/g," ").replace(/\s+/g," ").trim();
+  if(/\bstop\b|\bcancel\b|\bquiet\b/.test(t)) return {special:"stop",exact:true,target:null,t};
+  if(/\bstatus\b/.test(t)) return {special:"status",exact:true,target:null,t};
+  const a=AC(); if(!a) return {special:null,exact:false,target:null,t};
+  let target=null, exact=false;
   {  // 1. a checklist or procedure whose full name was said wins outright
     const said=" "+t.replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim()+" ";
     const all=["normal","emergency","abnormal"].flatMap(m=>DATA()[m].map(p=>({m,p})));
     const hit=all.filter(x=>said.includes(" "+x.p.name.toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim()+" ")).sort((x,y)=>y.p.name.length-x.p.name.length)[0];
-    if(hit) target=hit;
+    if(hit){ target=hit; exact=true; }
   }
   const shortPhrase = !target && t.split(/\s+/).length<=3 && !/\b(fail|failure|fire|emergency|smoke|loss|unsafe|overspeed|decompression|runaway|gear|flap|flaps|manual|spin|icing|ice|door|alternator|generator|electrical|oil|fuel|vacuum|pressure|caps|parachute|single|engine)\b/.test(t);
-  if(shortPhrase) for(const [re,id] of ALIASES){ if(re.test(t)){ if(id==="approach"){ target=customApproach(a.id)?{m:"normal",p:DATA().normal.find(p=>p.id===CUSTOM_ID)}:null; if(!target) continue; } else { const p=DATA().normal.find(p=>p.id===id); if(p) target={m:"normal",p}; } if(target) break; } }
+  if(shortPhrase) for(const [re,id] of ALIASES){ if(re.test(t)){ if(id==="approach"){ target=customApproach(a.id)?{m:"normal",p:DATA().normal.find(p=>p.id===CUSTOM_ID)}:null; if(!target) continue; } else { const p=DATA().normal.find(p=>p.id===id); if(p) target={m:"normal",p}; } if(target){ exact=true; break; } } }
   if(!target){
     const all=["emergency","abnormal","normal"].flatMap(m=>DATA()[m].map(p=>({m,p})));
     const norm=x=>x.toLowerCase().replace(/[^a-z0-9 ]+/g," ").split(/\s+/).filter(w=>w&&!["the","a","an","in","of","and","or","to"].includes(w));
     const words=norm(t); let best=null,bestScore=0;
     const said=" "+words.join(" ")+" ";
-    const lev=(a,b)=>{ if(a===b) return 0; const m=a.length,n=b.length; if(!m||!n) return m+n; let prev=Array.from({length:n+1},(_,j)=>j); for(let i=1;i<=m;i++){ const cur=[i]; for(let j=1;j<=n;j++){ cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1)); } prev=cur; } return prev[n]; };
+    const lev=(x,y)=>{ if(x===y) return 0; const m=x.length,n=y.length; if(!m||!n) return m+n; let prev=Array.from({length:n+1},(_,j)=>j); for(let i=1;i<=m;i++){ const cur=[i]; for(let j=1;j<=n;j++){ cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(x[i-1]===y[j-1]?0:1)); } prev=cur; } return prev[n]; };
     const close=(w,n)=>w.length>=5&&n.length>=5&&lev(w,n)<=(w.length>=8?3:2);
     for(const x of all){
       const nameWords=norm(x.p.name); const nw=nameWords.concat(norm(x.p.cond||""));
       let sc=0; for(const w of words){ if(nw.includes(w)) sc+=2; else if(nw.some(n=>n.startsWith(w)&&w.length>3)) sc+=1; else if(nameWords.some(n=>close(w,n))) sc+=2; }
-      if(nameWords.length && said.includes(" "+nameWords.join(" ")+" ")) sc+=6;          // the whole name was said
-      else if(nameWords.every(n=>words.includes(n))) sc+=3;                                // every word of the name was said
-      sc-=Math.max(0,nameWords.length-words.length)*0.5;                                  // longer names that were not fully said lose a little
+      if(nameWords.length && said.includes(" "+nameWords.join(" ")+" ")) sc+=6;
+      else if(nameWords.every(n=>words.includes(n))) sc+=3;
+      sc-=Math.max(0,nameWords.length-words.length)*0.5;
       if(sc>bestScore){bestScore=sc;best=x;}
     }
     if(best&&bestScore>=2) target=best;
   }
+  return {special:null,exact,target,t};
+}
+/* Spoken command after the wake word (or from the Say procedure button): a checklist/procedure name, "status" or "stop". */
+function handleSpokenCommand(text){
+  const r=resolveCommand(text);
+  if(r.special==="stop"){ voiceStop(); return true; }
+  if(r.special==="status"){ state.mode="status"; state.sel=null; state.showing=true; save(); render(); speak("Status."); return true; }
+  const target=r.target;
   if(!target){ vlogAdd("no match for “"+text+"”"); recallState.msg="Heard “"+text+"” – no matching checklist."; render(); speak("No matching checklist."); return false; }
   vlogAdd("opening "+target.p.name+" (heard “"+text+"”)");
   recallState.msg=""; state.mode=target.m; state.sel=target.p.id; state.showing=true; save(); render();
