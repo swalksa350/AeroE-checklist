@@ -351,7 +351,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "9806a79f";
+const BUILD = "bc916940";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -700,16 +700,20 @@ function renderCharts(v){
   w.append(h("div",{class:"row"},h("span",{},"Aerodrome",h("small",{},"ICAO code used by the search links below")),icao));
   const link=(label,href,hint)=>h("div",{class:"row"},h("span",{},h("a",{href,target:"_blank",rel:"noopener"},label+" ›"),h("small",{},hint)));
   const code=()=>(chartsPrefs.icao||"").toUpperCase();
+  /* Airservices publishes DAP and ERSA under date-stamped file names that change each 84-day amendment cycle
+     (e.g. dap_03SEP2026.htm). Work out the current cycle date from a known effective date. */
+  const cycle=(()=>{ const base=Date.UTC(2026,8,3); const step=84*86400000; const now=Date.now(); let k=Math.floor((now-base)/step); if(k<0)k=0; const d=new Date(base+k*step); const M=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"]; const tag=String(d.getUTCDate()).padStart(2,"0")+M[d.getUTCMonth()]+d.getUTCFullYear(); const next=new Date(base+(k+1)*step); return {tag, pretty:d.getUTCDate()+" "+M[d.getUTCMonth()].charAt(0)+M[d.getUTCMonth()].slice(1).toLowerCase()+" "+d.getUTCFullYear(), next:next.getUTCDate()+" "+M[next.getUTCMonth()].charAt(0)+M[next.getUTCMonth()].slice(1).toLowerCase()+" "+next.getUTCFullYear()}; })();
   w.append(h("h2",{style:"font-size:13px;color:var(--ink-dim);margin:22px 0 4px;text-transform:uppercase;letter-spacing:.06em"},"Airservices Australia (AIP)"));
-  w.append(link("DAP – Departure and Approach Procedures","https://www.airservicesaustralia.com/aip/current/dap/AeroProcChartsTOC.htm","Current DAP index. Accept the terms once, then find the aerodrome."));
-  w.append(link("ERSA – En Route Supplement","https://www.airservicesaustralia.com/aip/current/ersa/","Facilities, frequencies and aerodrome details."));
+  w.append(link("AIP online – DAP, ERSA, charts and supplements","https://www.airservicesaustralia.com/aip/aip.asp?pg=10","The official index. Always works; accept the terms once, then choose DAP or ERSA."));
+  w.append(link("DAP index – amendment effective "+cycle.pretty,"https://www.airservicesaustralia.com/aip/current/dap/dap_"+cycle.tag+".htm","Direct link to the current DAP chart list. If it shows an error the cycle has changed early; use the AIP index above. Next amendment "+cycle.next+"."));
+  w.append(link("ERSA contents – effective "+cycle.pretty,"https://www.airservicesaustralia.com/aip/current/ersa/ersa_rds_index_"+cycle.tag+".pdf","ERSA table of contents (PDF) for the current cycle; aerodrome entries are listed in the AIP index."));
   w.append(link("NAIPS – briefing and flight plans","https://www.airservicesaustralia.com/naips/","Weather, NOTAM and plan submission."));
   if(code().length===4) w.append(link("Search DAP and ERSA for "+code(),"https://www.google.com/search?q=site%3Aairservicesaustralia.com%2Faip%2Fcurrent+"+code(),"Web search limited to the current AIP."));
   w.append(h("h2",{style:"font-size:13px;color:var(--ink-dim);margin:22px 0 4px;text-transform:uppercase;letter-spacing:.06em"},"Chart apps"));
-  w.append(link("Open Jeppesen FD Pro","jeppfdpro://","Switches to the FD Pro app if it is installed. Nothing happens if it is not."));
+  w.append(link("Open Jeppesen FliteDeck Pro X","flitedeckx.jeppesen://","Switches to FliteDeck Pro X if it is installed (the link name Jeppesen uses for flight-plan loading). Nothing happens if it is not installed."));
   w.append(link("Open OzRunways","ozrunways://","Switches to OzRunways if it is installed."));
   w.append(link("Open AvPlan EFB","avplan://","Switches to AvPlan if it is installed."));
-  w.append(h("div",{class:"saved"},"App links depend on each app registering a link name; if one does nothing on your device, switch apps with the App Switcher or Split View instead. Links open outside this app and need signal. Nothing on this page is stored offline."));
+  w.append(h("div",{class:"saved"},"App links depend on each app registering a link name; if one does nothing on your device, or Safari says the address is invalid, switch apps with the App Switcher or Split View instead. Links open outside this app and need signal. Nothing on this page is stored offline."));
   v.append(w);
 }
 function renderStatus(v){
