@@ -9,7 +9,8 @@
       "Say procedure and the wake word understand plain names: landing, takeoff, start, shutdown, cruise, descent, taxi, climb, approach, and any procedure title.",
       "Status → Voice shows the wake listener's state and the last words it heard, and more mis-hearings of “Aero” (euro, zero, hero, arrow…) are accepted.",
       "Checklists opened by voice are now read aloud (the speech engine is primed by your first tap) and start by naming the checklist. Saying the wake word on its own can no longer tick a line.",
-      "Wake-word commands wait until you have finished speaking and prefer the checklist whose full name you said. Speech after a voice command is more reliable on Apple devices."
+      "Wake-word commands wait until you have finished speaking and prefer the checklist whose full name you said. Speech after a voice command is more reliable on Apple devices.",
+      "A spoken request to open a checklist always reads it, even if Read aloud was off. Status → Voice has a voice log for troubleshooting."
     ]
   },
   {

@@ -343,7 +343,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "03eb70f2";
+const BUILD = "154ff93b";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
@@ -738,6 +738,8 @@ function renderStatus(v){
     w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>speak("Fuel selectors. Both on. Airspeed. "+sayable("85 KIAS")+".")},"Test the voice")));
     w.append(h("div",{class:"row"},h("button",{class:"link",onclick:runMicTest},micTest.state==="listening"?"● Listening…":"Test the microphone"),h("span",{class:"num"},SR?"":"not available")));
     if(micTest.text) w.append(h("div",{class:"saved",style:micTest.state==="fail"?"color:var(--red)":micTest.state==="ok"?"color:var(--green)":""},micTest.text));
+    w.append(h("div",{class:"row"},h("span",{},"Voice log",h("div",{class:"saved",style:"margin-top:2px"},"The last few voice events, for troubleshooting.")),h("button",{class:"tog",onclick:()=>{vlog.length=0;render()}},"Clear")));
+    w.append(h("pre",{id:"vlog",style:"font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;white-space:pre-wrap;color:var(--ink-dim);margin:4px 0 0;max-height:220px;overflow:auto"},vlog.join("\n")||"(nothing yet)"));
     w.append(h("div",{class:"saved"},"With a Bluetooth headset paired to the device, speech plays in the headset and the headset microphone is used for replies, which keeps engine noise out. Every spoken reply is shown on screen before it is applied, and a tap always works."));
   }
   w.append(h("h2",{},"App"));
@@ -884,6 +886,7 @@ const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true, tones:t
 try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; if(typeof v.tones==="boolean") voice.tones=v.tones; if(typeof v.early==="boolean") voice.early=v.early; if(typeof v.wake==="boolean") voice.wake=v.wake; } }catch(e){}
 function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)); }catch(e){} }
 const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
+const vlog=[]; function vlogAdd(m){ const d=new Date(); vlog.push(d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"})+" "+m); if(vlog.length>14) vlog.shift(); const el=document.getElementById("vlog"); if(el){ el.textContent=vlog.join("\n"); } }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
 let voicesCache=[]; function loadVoices(){ try{ voicesCache=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)); }catch(e){} }
 if(TTS){ loadVoices(); try{ speechSynthesis.onvoiceschanged=()=>{ loadVoices(); }; }catch(e){} }
@@ -927,19 +930,21 @@ function speak(text, onend){
   try{ speechSynthesis.resume(); }catch(e){}
   let done=false, started=false, t=null;
   const fin=()=>{ if(done||id!==utterSeq) return; done=true; clearTimeout(t); clearTimeout(wd); onend&&onend(); };
-  const make=()=>{ const u=new SpeechSynthesisUtterance(text); u.rate=voice.rate; const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang; } u.onstart=()=>{ started=true; }; u.onend=fin; u.onerror=e=>{ if(e&&e.error==="interrupted"&&id!==utterSeq) return; fin(); }; return u; };
-  t=setTimeout(fin, 2000 + text.length*95/voice.rate);          // fallback if the engine never reports the end
+  vlogAdd("speak: "+text.slice(0,40)+(speechSynthesis.speaking?" (engine busy)":"")+(speechSynthesis.paused?" (engine paused)":""));
+  const make=()=>{ const u=new SpeechSynthesisUtterance(text); u.rate=voice.rate; const v=pickVoice(); if(v){ u.voice=v; u.lang=v.lang; } u.onstart=()=>{ started=true; vlogAdd("speech started"); }; u.onend=()=>{ vlogAdd("speech ended"); fin(); }; u.onerror=e=>{ vlogAdd("speech error: "+((e&&e.error)||"?")); if(e&&e.error==="interrupted"&&id!==utterSeq) return; fin(); }; return u; };
+  t=setTimeout(()=>{ if(!done) vlogAdd("speech end not reported – continuing"); fin(); }, 2000 + text.length*95/voice.rate);
   const wd=setTimeout(()=>{                                      // watchdog: nothing started within 1.2 s – try once more
     if(done||started||id!==utterSeq) return;
-    try{ speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(make()); }catch(e){}
+    vlogAdd("speech did not start – retrying once");
+    try{ speechSynthesis.cancel(); speechSynthesis.resume(); speechSynthesis.speak(make()); }catch(e){ vlogAdd("retry threw: "+e); }
   }, 1200);
-  try{ speechSynthesis.speak(make()); }catch(e){ fin(); }
+  try{ speechSynthesis.speak(make()); }catch(e){ vlogAdd("speak threw: "+e); fin(); }
 }
 function stopSpeaking(){ utterSeq++; try{ speechSynthesis.cancel(); }catch(e){} }
 let ttsPrimed=false;
 function primeTTS(){
   if(ttsPrimed||!TTS) return; ttsPrimed=true;
-  try{ const u=new SpeechSynthesisUtterance(" "); u.volume=0; u.rate=2; speechSynthesis.speak(u); }catch(e){}
+  try{ speechSynthesis.resume(); const u=new SpeechSynthesisUtterance("ready"); u.volume=0; u.rate=1.5; u.onstart=()=>vlogAdd("primed (silent utterance played)"); u.onerror=e=>vlogAdd("prime error: "+((e&&e.error)||"?")); speechSynthesis.speak(u); vlogAdd("prime requested"); }catch(e){ vlogAdd("prime threw: "+e); }
   unlockAudio();
 }
 document.addEventListener("pointerdown", primeTTS, {capture:true});
@@ -965,7 +970,7 @@ function beep(freq,ms,times){
 /* --- read-aloud session for the open procedure --- */
 const vs={active:false, pid:null, pending:null, readNotes:{}, skipped:{}, status:"", heard:"", listening:false, rec:null, retries:0};
 function currentRows(){ const p=proc(state.mode,state.sel); return p?{p,rs:rows(p)}:null; }
-function voiceStart(announce){ const c=currentRows(); if(!c||!voice.read) return; unlockAudio(); vs.active=true; vs.pid=c.p.id; vs.pending=null; vs.retries=0; vs.heard=""; vs.status="Reading"; renderVoiceBar(); if(announce){ const nm=c.p.name; speak(sayable(nm)+(/checklist|procedure/i.test(nm)?".":" checklist."), voiceNext); } else voiceNext(); }
+function voiceStart(announce){ const c=currentRows(); if(!c||!voice.read){ vlogAdd("voiceStart skipped: "+(!c?"no checklist open":"read aloud off")); return; } vlogAdd("reading "+c.p.name); unlockAudio(); vs.active=true; vs.pid=c.p.id; vs.pending=null; vs.retries=0; vs.heard=""; vs.status="Reading"; renderVoiceBar(); if(announce){ const nm=c.p.name; speak(sayable(nm)+(/checklist|procedure/i.test(nm)?".":" checklist."), voiceNext); } else voiceNext(); }
 function voiceStop(silent){ vs.active=false; vs.pending=null; vs.status="Paused"; stopListening(); stopSpeaking(); if(!silent) renderVoiceBar(); }
 function voiceNext(){
   if(!vs.active) return;
@@ -1111,7 +1116,7 @@ function wakeLoop(){
   wake.on=true; wake.sessions++; wake.since=wake.since||Date.now(); renderWakeDot(); renderWakeStatus();
   let handled=false, pendingRest="", stableTimer=null;
   const fire=rest=>{
-    if(handled) return; handled=true; wake.busy=true; clearTimeout(stableTimer); stopListening(); beep(1320,55,2);
+    if(handled) return; handled=true; wake.busy=true; clearTimeout(stableTimer); stopListening(); beep(1320,55,2); vlogAdd("wake command: “"+rest+"”");
     handleSpokenCommand(rest); setTimeout(()=>{ wake.busy=false; wakeLoop(); }, 1500);
   };
   const consider=(alts,isFinal)=>{
@@ -1171,9 +1176,11 @@ function handleSpokenCommand(text){
     }
     if(best&&bestScore>=2) target=best;
   }
-  if(!target){ recallState.msg="Heard “"+text+"” – no matching checklist."; render(); speak("No matching checklist."); return false; }
+  if(!target){ vlogAdd("no match for “"+text+"”"); recallState.msg="Heard “"+text+"” – no matching checklist."; render(); speak("No matching checklist."); return false; }
+  vlogAdd("opening "+target.p.name);
   recallState.msg=""; state.mode=target.m; state.sel=target.p.id; state.showing=true; save(); render();
-  if(voice.read) voiceStart(true); else speak("Opening "+sayable(target.p.name)+".");
+  if(!voice.read){ voice.read=true; saveVoice(); vlogAdd("read aloud turned on by voice command"); render(); }   // a spoken request to open a checklist means: read it
+  voiceStart(true);
   return true;
 }
 
