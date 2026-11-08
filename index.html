@@ -353,7 +353,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "5074173e";
+const BUILD = "e9306605";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -1074,7 +1074,7 @@ function speak(text, onend){
   if(wait>0){ const id0=++utterSeq; setTimeout(()=>{ if(id0===utterSeq){ utterSeq--; speak(text,onend); } }, wait); return; }
   const id=++utterSeq;
   try{ if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}   // cancelling an idle engine can swallow the next utterance on Apple devices
-  try{ speechSynthesis.resume(); }catch(e){}
+  try{ if(speechSynthesis.paused) speechSynthesis.resume(); }catch(e){}
   let done=false, started=false, t=null;
   const fin=()=>{ if(done||id!==utterSeq) return; done=true; clearTimeout(t); clearTimeout(wd); onend&&onend(); };
   vlogAdd("speak: "+text.slice(0,40)+(speechSynthesis.speaking?" (engine busy)":"")+(speechSynthesis.paused?" (engine paused)":""));
@@ -1119,6 +1119,7 @@ function beep(freq,ms,times){
       g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.2,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+ms/1000);
       o.connect(g).connect(actx.destination); o.start(t); o.stop(t+ms/1000+0.02); t+=ms/1000+0.07;
     }
+    clearTimeout(beep._idle); beep._idle=setTimeout(()=>{ try{ if(actx&&actx.state==="running") actx.suspend(); }catch(e){} }, Math.ceil((t-actx.currentTime)*1000)+150);
   }catch(e){}
 }
 
@@ -1318,7 +1319,7 @@ async function offlineEnable(){
   if(!(await offlineIsDownloaded())){ if(!(await offlineDownload())) return; }
   await offlineLoad();
 }
-function offlineTeardown(){ offlineStopMic(); if(vosk.rec){ try{ vosk.rec.remove(); }catch(e){} vosk.rec=null; vosk.grammarKey=""; } if(vosk.model){ try{ vosk.model.terminate(); }catch(e){} vosk.model=null; } vosk.state="off"; }
+function offlineTeardown(){ offlineCloseAudio(); if(vosk.rec){ try{ vosk.rec.remove(); }catch(e){} vosk.rec=null; vosk.grammarKey=""; } if(vosk.model){ try{ vosk.model.terminate(); }catch(e){} vosk.model=null; } vosk.state="off"; }
 async function offlineRemove(){ voice.offline=false; saveVoice(); offlineTeardown(); try{ await caches.delete(OFF.cacheName); }catch(e){} vosk.state="off"; vosk.msg=""; vlogAdd("offline model removed"); render(); }
 
 /* The phrases the recogniser may return. Built for the current aircraft and rebuilt when it changes. */
@@ -1341,15 +1342,19 @@ function offlineGrammar(){
   return JSON.stringify([...phrases]);
 }
 async function offlineStartMic(){
-  if(vosk.stream&&vosk.ctx){ if(vosk.ctx.state==="suspended") await vosk.ctx.resume(); return true; }
+  if(vosk.stream&&vosk.ctx&&vosk.stream.getTracks().some(t=>t.readyState==="live")){ if(vosk.ctx.state==="suspended") await vosk.ctx.resume(); return true; }
   const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},video:false});
-  const AC_=window.AudioContext||window.webkitAudioContext; const ctx=new AC_(); if(ctx.state==="suspended") await ctx.resume();
-  const src=ctx.createMediaStreamSource(stream); const proc=ctx.createScriptProcessor(4096,1,1); const sink=ctx.createGain(); sink.gain.value=0;
-  proc.onaudioprocess=ev=>{ if(!vosk.session||!vosk.rec) return; try{ vosk.rec.acceptWaveformFloat(ev.inputBuffer.getChannelData(0), ctx.sampleRate); }catch(e){} };
-  src.connect(proc); proc.connect(sink); sink.connect(ctx.destination);
-  Object.assign(vosk,{stream,ctx,src,proc,sink,lastRate:ctx.sampleRate}); vlogAdd("offline microphone open ("+ctx.sampleRate+" Hz)"); return true;
+  const AC_=window.AudioContext||window.webkitAudioContext;
+  if(!vosk.ctx||vosk.ctx.state==="closed"){ vosk.ctx=new AC_(); vosk.proc=vosk.ctx.createScriptProcessor(4096,1,1); vosk.sink=vosk.ctx.createGain(); vosk.sink.gain.value=0; vosk.proc.connect(vosk.sink); vosk.sink.connect(vosk.ctx.destination);
+    vosk.proc.onaudioprocess=ev=>{ if(!vosk.session||!vosk.rec) return; try{ vosk.rec.acceptWaveformFloat(ev.inputBuffer.getChannelData(0), vosk.ctx.sampleRate); }catch(e){} }; }
+  if(vosk.ctx.state==="suspended") await vosk.ctx.resume();
+  try{ vosk.src&&vosk.src.disconnect(); }catch(e){}
+  vosk.src=vosk.ctx.createMediaStreamSource(stream); vosk.src.connect(vosk.proc);
+  vosk.stream=stream; vosk.lastRate=vosk.ctx.sampleRate; vlogAdd("offline microphone open ("+vosk.ctx.sampleRate+" Hz)"); return true;
 }
-function offlineStopMic(){ if(!vosk.stream&&!vosk.ctx) return; try{ vosk.stream&&vosk.stream.getTracks().forEach(t=>t.stop()); }catch(e){} try{ vosk.proc&&vosk.proc.disconnect(); vosk.src&&vosk.src.disconnect(); vosk.sink&&vosk.sink.disconnect(); }catch(e){} try{ vosk.ctx&&vosk.ctx.close(); }catch(e){} vosk.stream=vosk.ctx=vosk.src=vosk.proc=vosk.sink=null; }
+/* Release the microphone (stop the track, suspend the engine) without rebuilding the audio engine each time */
+function offlineStopMic(){ if(!vosk.stream&&!vosk.ctx) return; try{ vosk.stream&&vosk.stream.getTracks().forEach(t=>t.stop()); }catch(e){} try{ vosk.src&&vosk.src.disconnect(); }catch(e){} vosk.src=null; vosk.stream=null; try{ vosk.ctx&&vosk.ctx.state==="running"&&vosk.ctx.suspend(); }catch(e){} }
+function offlineCloseAudio(){ offlineStopMic(); try{ vosk.ctx&&vosk.ctx.close(); }catch(e){} vosk.ctx=vosk.proc=vosk.sink=null; }
 function offlineEnsureRec(){
   const a=AC(); const key=(a?a.id:"-")+":"+vosk.lastRate+":"+(a?editedCount(a.id):0)+":"+(state.sharedApproach.on?1:0)+":"+(a?withCustom(a).length:0);
   if(vosk.rec&&vosk.grammarKey===key) return vosk.rec;
