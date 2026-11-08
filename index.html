@@ -343,7 +343,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "154ff93b";
+const BUILD = "095bea29";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}};
@@ -728,7 +728,8 @@ function renderStatus(v){
     w.append(tog("Short responses in normal checklists",()=>voice.brief,v=>{voice.brief=v;},"Reads only the capitalised action, e.g. “Fuel shutoff, ON”, and leaves the bracketed detail for the screen. Abnormal and emergency procedures are always read in full."));
     w.append(tog("“Hey Aero” wake word",()=>voice.wake,v=>{voice.wake=v; if(!v&&wake.on){stopListening();wake.on=false;}},SR?"Keeps the microphone open while the app is on screen. Say “hey Aero, landing checklist” or “hey Aero, engine failure in flight”. Also “hey Aero, status” and “hey Aero, stop”. Uses battery and, on iPad and iPhone, signal. A red dot by the aircraft name shows it is listening.":"Not available in this browser."));
     if(SR) w.append(h("div",{class:"saved",id:"wakestate"},wakeStatusText()));
-    w.append(tog("Open microphone early",()=>voice.early,v=>{voice.early=v;},"Starts listening while the line is still being read so your reply is caught the instant the voice stops. Anything heard before then is ignored. Best with a headset; turn off if the voice cuts out or lines tick themselves when using the device speaker."));
+    if(!APPLE) w.append(tog("Open microphone early",()=>voice.early,v=>{voice.early=v;},"Starts listening while the line is still being read so your reply is caught the instant the voice stops. Anything heard before then is ignored. Best with a headset; turn off if the voice cuts out or lines tick themselves when using the device speaker."));
+    else w.append(h("div",{class:"saved"},"On iPad, iPhone and Mac the microphone opens as soon as a line has been read (speech and listening cannot overlap on Apple devices). Wait for the single tone, then reply."));
     w.append(tog("Cue tones",()=>voice.tones,v=>{voice.tones=v;},"One short tone when the app starts listening, two when it accepts your word."));
     w.append(tog("Voice replies (experimental)",()=>voice.reply,v=>{voice.reply=v;},SR?"After each line, listens for “checked” or the written response (for example “both on”), plus “repeat”, “skip” or “stop”, and adds a Say procedure button for spoken recall. Needs microphone permission; on iPad and iPhone it needs signal.":"Speech recognition is not available in this browser, so replies stay off; read aloud still works."));
     const seg=h("div",{class:"seg"});RATES.forEach(([rt,label])=>seg.append(h("button",{class:voice.rate===rt?"on":"",onclick:()=>{voice.rate=rt;saveVoice();render();speak("Fuel selectors. Both on.")}},label)));
@@ -888,6 +889,10 @@ function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)
 const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
 const vlog=[]; function vlogAdd(m){ const d=new Date(); vlog.push(d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"})+" "+m); if(vlog.length>14) vlog.shift(); const el=document.getElementById("vlog"); if(el){ el.textContent=vlog.join("\n"); } }
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+/* On Apple devices speech output and speech recognition share one audio channel and cannot overlap,
+   so listening must stop before speaking and the early-microphone mode is unavailable. */
+const APPLE = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent) || /Mac|iP/.test(navigator.platform||"");
+const earlyActive = () => voice.early && !APPLE;
 let voicesCache=[]; function loadVoices(){ try{ voicesCache=speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)); }catch(e){} }
 if(TTS){ loadVoices(); try{ speechSynthesis.onvoiceschanged=()=>{ loadVoices(); }; }catch(e){} }
 function pickVoice(){ if(!voicesCache.length) loadVoices(); return voicesCache.find(v=>v.voiceURI===voice.voiceURI) || voicesCache.find(v=>/en-AU/i.test(v.lang)) || voicesCache.find(v=>v.default) || voicesCache[0] || null; }
@@ -925,6 +930,9 @@ function responseForSpeech(r){ return (voice.brief&&state.mode==="normal") ? bri
 let utterSeq=0;
 function speak(text, onend){
   if(!TTS){ onend&&onend(); return; }
+  if(vs.listening||(typeof wake!=="undefined"&&wake.on)){ stopListening(); if(typeof wake!=="undefined") wake.on=false; }
+  const wait = APPLE ? Math.max(0, 300-(Date.now()-lastListenStop)) : 0;   // let the audio channel switch from recording to playback
+  if(wait>0){ const id0=++utterSeq; setTimeout(()=>{ if(id0===utterSeq){ utterSeq--; speak(text,onend); } }, wait); return; }
   const id=++utterSeq;
   try{ if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}   // cancelling an idle engine can swallow the next utterance on Apple devices
   try{ speechSynthesis.resume(); }catch(e){}
@@ -941,13 +949,19 @@ function speak(text, onend){
   try{ speechSynthesis.speak(make()); }catch(e){ vlogAdd("speak threw: "+e); fin(); }
 }
 function stopSpeaking(){ utterSeq++; try{ speechSynthesis.cancel(); }catch(e){} }
-let ttsPrimed=false;
+let ttsPrimed=false, primePending=false;
 function primeTTS(){
-  if(ttsPrimed||!TTS) return; ttsPrimed=true;
-  try{ speechSynthesis.resume(); const u=new SpeechSynthesisUtterance("ready"); u.volume=0; u.rate=1.5; u.onstart=()=>vlogAdd("primed (silent utterance played)"); u.onerror=e=>vlogAdd("prime error: "+((e&&e.error)||"?")); speechSynthesis.speak(u); vlogAdd("prime requested"); }catch(e){ vlogAdd("prime threw: "+e); }
+  if(ttsPrimed||!TTS) return;
+  if(vs.listening||(typeof wake!=="undefined"&&wake.on)){ stopListening(); if(typeof wake!=="undefined") wake.on=false; }
+  const since=Date.now()-lastListenStop;
+  if(APPLE && since<320){ primePending=true; setTimeout(()=>{ primePending=false; primeTTS(); }, 320-since); return; }   // short timers keep the tap's permission in WebKit
+  primePending=false;
+  try{ speechSynthesis.resume(); const u=new SpeechSynthesisUtterance("ready"); u.volume=0; u.rate=1.5; u.onstart=()=>{ ttsPrimed=true; vlogAdd("primed (silent utterance played)"); }; u.onerror=e=>vlogAdd("prime error: "+((e&&e.error)||"?")); speechSynthesis.speak(u); vlogAdd("prime requested"); }catch(e){ vlogAdd("prime threw: "+e); }
   unlockAudio();
 }
-document.addEventListener("pointerdown", primeTTS, {capture:true});
+document.addEventListener("pointerdown", ()=>{ if(!ttsPrimed&&TTS&&(vs.listening||(typeof wake!=="undefined"&&wake.on))){ stopListening(); if(typeof wake!=="undefined") wake.on=false; } }, {capture:true});
+document.addEventListener("pointerup", primeTTS, {capture:true});
+document.addEventListener("click", primeTTS, {capture:true});
 document.addEventListener("keydown", primeTTS, {capture:true});
 
 /* --- cue tones (short beeps in the headset: one when listening starts, two when a word is accepted) --- */
@@ -981,14 +995,14 @@ function voiceNext(){
     if(r.type==="note"){ if(vs.readNotes[k]) continue; vs.readNotes[k]=1; vs.pending=null; vs.status="Reading"; renderVoiceBar(); speak(sayable(r.it.note), voiceNext); return; }
     if(r.type==="branch"){ if(r.chosen) continue; vs.pending=r; vs.retries=0; vs.status="Choose an option"; renderVoiceBar();
       vs.gate=Infinity;
-      speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>{ vs.gate=Date.now()+120; if(voice.reply&&SR) beep(880,70,1); if(!(voice.early&&voice.reply&&SR&&vs.listening)) listenFor(r); });
-      if(voice.early&&voice.reply&&SR) listenFor(r,true);
+      speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", ()=>{ vs.gate=Date.now()+120; if(voice.reply&&SR&&earlyActive()) beep(880,70,1); if(!(earlyActive()&&voice.reply&&SR&&vs.listening)) listenFor(r); });
+      if(earlyActive()&&voice.reply&&SR) listenFor(r,true);
       return; }
     if(actionable(r)){ if(isDone(p,r)||vs.skipped[k]) continue; vs.pending=r; vs.retries=0; vs.status="Reading"; renderVoiceBar();
       const text=r.type==="defer"?("Deferred: "+sayable(r.it.defer)+". Noted."):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+".");
       vs.gate=Infinity;
-      speak(text, ()=>{ vs.gate=Date.now()+120; vs.status=voice.reply&&SR?"Listening":"Waiting for Checked"; if(voice.reply&&SR) beep(880,70,1); renderVoiceBar(); if(!(voice.early&&voice.reply&&SR&&vs.listening)) listenFor(r); });
-      if(voice.early&&voice.reply&&SR) listenFor(r,true);
+      speak(text, ()=>{ vs.gate=Date.now()+120; vs.status=voice.reply&&SR?"Listening":"Waiting for Checked"; if(voice.reply&&SR&&earlyActive()) beep(880,70,1); renderVoiceBar(); if(!(earlyActive()&&voice.reply&&SR&&vs.listening)) listenFor(r); });
+      if(earlyActive()&&voice.reply&&SR) listenFor(r,true);
       return; }
   }
   const pr=progress(p);
@@ -1000,20 +1014,23 @@ function voiceConfirm(){ const r=vs.pending; if(!r||r.type==="branch") return; c
 function voiceSkip(){ const r=vs.pending; if(!r) return; const c=currentRows(); if(!c) return; stopListening(); vs.skipped[key(c.p.id,r.path)]=1; vs.pending=null; voiceNext(); }
 function voiceRepeat(){ const r=vs.pending; if(!r){ voiceNext(); return; } stopListening(); const c=currentRows(); if(!c) return;
   vs.gate=Infinity;
-  const after=()=>{ vs.gate=Date.now()+120; if(voice.reply&&SR) beep(880,70,1); if(!(voice.early&&voice.reply&&SR&&vs.listening)) listenFor(r); };
+  const after=()=>{ vs.gate=Date.now()+120; if(voice.reply&&SR&&earlyActive()) beep(880,70,1); if(!(earlyActive()&&voice.reply&&SR&&vs.listening)) listenFor(r); };
   if(r.type==="branch") speak(sayable(r.it.branch)+". Options: "+Object.keys(r.it.opts).map(sayable).join(", or ")+".", after);
   else speak(r.type==="defer"?("Deferred: "+sayable(r.it.defer)):(sayable(r.it.c)+", . "+sayable(responseForSpeech(r.it.r))+"."), after);
-  if(voice.early&&voice.reply&&SR) listenFor(r,true); }
+  if(earlyActive()&&voice.reply&&SR) listenFor(r,true); }
 function voiceChoose(r,o){ const c=currentRows(); if(!c) return; stopListening(); const per=PER(); per.branches[key(c.p.id,r.path)]=o; vs.pending=null; voiceNext(); save(); render(); }
 
 /* --- speech recognition --- */
-function stopListening(){ if(vs.rec){ try{ vs.rec.onend=null; vs.rec.abort(); }catch(e){} vs.rec=null; } vs.listening=false; }
+let lastListenStop=0;
+function stopListening(){ if(vs.rec){ try{ vs.rec.onend=null; vs.rec.abort(); }catch(e){} vs.rec=null; lastListenStop=Date.now(); } vs.listening=false; }
 function listenOnce(onAlts, onFail, onInterim, gate){
   if(!SR) { onFail&&onFail("unsupported"); return; }
   stopListening();
   let r; try{ r=new SR(); }catch(e){ onFail&&onFail("unsupported"); return; }
   r.lang=navigator.language||"en-AU"; r.interimResults=!!onInterim; r.maxAlternatives=4; r.continuous=!!onInterim;
   let got=false; const snap={};
+  r.onstart=()=>{ vs.listening=true; if(!earlyActive() && vs.active && vs.pending) beep(880,70,1); renderVoiceBar(); };
+  r.onaudiostart=()=>{ renderVoiceBar(); };
   r.onresult=e=>{
     const alts=[]; let anyFinal=false; const open = !gate || Date.now()>=gate();
     for(let i=0;i<e.results.length;i++){
@@ -1088,7 +1105,7 @@ function listenFor(r, early){
   };
   vs.netFails=0;
   if(early){ open(); }                     // microphone opens while the line is still being read; results before the gate are ignored
-  else setTimeout(open, 180);              // otherwise let the speech engine release the audio channel first
+  else setTimeout(open, 60);
 }
 function srErrorText(err){
   return ({"not-allowed":"Microphone not allowed for this app","service-not-allowed":"Speech recognition not allowed here","audio-capture":"No microphone found","network":"No connection for speech recognition","no-speech":"Nothing heard","aborted":"Listening stopped","unsupported":"Speech recognition not available in this app","language-not-supported":"Language not supported"})[err] || ("Speech recognition error: "+err);
@@ -1110,7 +1127,7 @@ function runMicTest(){
 const WAKE_RE=/\b(?:hey|hi|ok|okay|a|hay|hate|he|hei|hair|hay)?\s*(?:aero|arrow|arrows|arrow's|aro|airo|air o|air oh|era|aerial|arial|ariel|errol|euro|euros|zero|hero|eero|ero|erro|aero's|arrowhead|heyarrow|heyaero|hiro|nero|aeroe|aerie|airy|oreo)\b[,.!]?\s*(.*)$/i;
 const ALIASES=[[/\b(before )?landing\b/,"land"],[/\bapproach\b/,"approach"],[/\b(pre[- ]?)?take ?off\b|\brun ?up\b|\bbefore takeoff\b/,"runup"],[/\bengine start\b|\bstart(ing)? (the )?engine\b|\bstart\b/,"start"],[/\bbefore start\b|\bpre[- ]?start\b|\bpreflight\b/,"pre"],[/\bafter landing\b/,"after"],[/\bshut ?down\b|\bsecure\b/,"shut"],[/\bclimb\b|\bafter take ?off\b/,"climb"],[/\bcruise\b/,"cruise"],[/\bdescent\b|\bdescend\b/,"desc"],[/\btaxi\b/,"taxi"]];
 let wake={on:false, busy:false, last:0, timer:null, heard:"", err:"", sessions:0, since:0};
-function wakeShouldRun(){ return voice.wake && voice.reply && SR && !!AC() && document.visibilityState==="visible" && !vs.active && !recallState.on && !vs.listening && !wake.busy; }
+function wakeShouldRun(){ return voice.wake && voice.reply && SR && !!AC() && document.visibilityState==="visible" && !vs.active && !recallState.on && !vs.listening && !wake.busy && !primePending && !(TTS&&speechSynthesis.speaking); }
 function wakeLoop(){
   if(!wakeShouldRun()){ wake.on=false; return; }
   wake.on=true; wake.sessions++; wake.since=wake.since||Date.now(); renderWakeDot(); renderWakeStatus();
