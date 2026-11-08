@@ -353,7 +353,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "e9306605";
+const BUILD = "b763c1e3";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
@@ -795,7 +795,7 @@ function renderStatus(v){
     w.append(h("div",{class:"saved",id:"offstate"},offlineStatusText()));
     if(vosk.state==="downloading") w.append(h("div",{style:"height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0"},h("div",{id:"offbar",style:"height:100%;width:"+Math.round(vosk.progress*100)+"%;background:var(--cyan)"})));
     if(voice.offline&&(vosk.state==="off"||vosk.state==="error")) w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>offlineEnable()},vosk.state==="error"?"Try again":"Download now")));
-    if(voice.offline&&vosk.state==="ready"&&APPLE) w.append(tog("Release microphone while speaking",()=>!!voice.releaseMic,v=>{voice.releaseMic=v;},"On Apple devices the voice may be muted while the microphone is open. Leave this on unless replies feel slow; turn it off to keep the microphone open between lines."));
+    if(voice.offline&&vosk.state==="ready") w.append(tog("Release microphone while speaking",()=>!!voice.micRelease,v=>{voice.micRelease=v;},"Off: the microphone stays open between lines, so replies are heard immediately and there is no switching click. Turn on only if the voice is muted or quiet while the offline engine is on."));
     if(voice.offline||vosk.state!=="off") w.append(h("div",{class:"row"},h("button",{class:"link",onclick:offlineRemove},"Remove the offline download")));
     if(!APPLE) w.append(tog("Open microphone early",()=>voice.early,v=>{voice.early=v;},"Starts listening while the line is still being read so your reply is caught the instant the voice stops. Anything heard before then is ignored. Best with a headset; turn off if the voice cuts out or lines tick themselves when using the device speaker."));
     else w.append(h("div",{class:"saved"},"On iPad, iPhone and Mac the microphone opens as soon as a line has been read (speech and listening cannot overlap on Apple devices). Wait for the single tone, then reply."));
@@ -1019,8 +1019,8 @@ function importCustom(){
    tap-then-speak procedure recall button. Everything here degrades to the normal tap behaviour. */
 const VOICE_KEY="ga-ecl-voice";
 const RATES=[[0.7,"Slow"],[0.8,"Slower"],[0.9,"Normal"],[1,"Brisk"],[1.15,"Fast"]];
-const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true, tones:true, early:true, wake:false, offline:false, releaseMic:null};
-try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; if(typeof v.tones==="boolean") voice.tones=v.tones; if(typeof v.early==="boolean") voice.early=v.early; if(typeof v.wake==="boolean") voice.wake=v.wake; if(typeof v.offline==="boolean") voice.offline=v.offline; if(typeof v.releaseMic==="boolean") voice.releaseMic=v.releaseMic; } }catch(e){}
+const voice={read:false, reply:false, rate:0.9, voiceURI:"", brief:true, tones:true, early:true, wake:false, offline:false, micRelease:false};
+try{ const v=JSON.parse(localStorage.getItem(VOICE_KEY)||"null"); if(v&&typeof v==="object"){ voice.read=!!v.read; voice.reply=!!v.reply; if(RATES.some(x=>x[0]===v.rate)) voice.rate=v.rate; else if(v.rate===1.2) voice.rate=1.15; if(typeof v.voiceURI==="string") voice.voiceURI=v.voiceURI; if(typeof v.brief==="boolean") voice.brief=v.brief; if(typeof v.tones==="boolean") voice.tones=v.tones; if(typeof v.early==="boolean") voice.early=v.early; if(typeof v.wake==="boolean") voice.wake=v.wake; if(typeof v.offline==="boolean") voice.offline=v.offline; if(typeof v.micRelease==="boolean") voice.micRelease=v.micRelease; } }catch(e){}
 function saveVoice(){ try{ localStorage.setItem(VOICE_KEY, JSON.stringify(voice)); }catch(e){} }
 const TTS = ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
 const vlog=[]; function vlogAdd(m){ const d=new Date(); vlog.push(d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"})+" "+m); if(vlog.length>14) vlog.shift(); const el=document.getElementById("vlog"); if(el){ el.textContent=vlog.join("\n"); } }
@@ -1069,8 +1069,11 @@ let utterSeq=0;
 function speak(text, onend){
   if(!TTS){ onend&&onend(); return; }
   if(vs.listening||(typeof wake!=="undefined"&&wake.on)){ stopListening(); if(typeof wake!=="undefined") wake.on=false; }
-  if(typeof vosk!=="undefined" && vosk.stream && voice.releaseMic){ offlineStopMic(); lastListenStop=Date.now(); }
-  const wait = APPLE ? Math.max(0, 300-(Date.now()-lastListenStop)) : 0;   // let the audio channel switch from recording to playback
+  const offlineLive = typeof vosk!=="undefined" && voice.offline && vosk.state==="ready";
+  if(offlineLive && vosk.stream && voice.micRelease){ offlineStopMic(); lastListenStop=Date.now(); }
+  // Apple devices need a moment for the audio channel to switch from recording to playback; with the on-device engine
+  // and the microphone kept open there is no switch, so no wait.
+  const wait = APPLE ? (offlineLive ? (voice.micRelease ? Math.max(0, 200-(Date.now()-lastListenStop)) : 0) : Math.max(0, 300-(Date.now()-lastListenStop))) : 0;
   if(wait>0){ const id0=++utterSeq; setTimeout(()=>{ if(id0===utterSeq){ utterSeq--; speak(text,onend); } }, wait); return; }
   const id=++utterSeq;
   try{ if(speechSynthesis.speaking||speechSynthesis.pending) speechSynthesis.cancel(); }catch(e){}   // cancelling an idle engine can swallow the next utterance on Apple devices
@@ -1108,7 +1111,7 @@ document.addEventListener("keydown", primeTTS, {capture:true});
 /* --- cue tones (short beeps in the headset: one when listening starts, two when a word is accepted) --- */
 let actx=null;
 function unlockAudio(){ try{ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; actx=actx||new AC(); if(actx.state==="suspended") actx.resume(); }catch(e){} }
-function beep(freq,ms,times){
+function beep(freq,ms,times,level){
   if(!voice.tones) return;
   try{
     unlockAudio(); if(!actx) return;
@@ -1116,7 +1119,7 @@ function beep(freq,ms,times){
     for(let i=0;i<(times||1);i++){
       const o=actx.createOscillator(), g=actx.createGain();
       o.type="sine"; o.frequency.value=freq;
-      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.2,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+ms/1000);
+      g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(level||0.2,t+0.01); g.gain.exponentialRampToValueAtTime(0.0001,t+ms/1000);
       o.connect(g).connect(actx.destination); o.start(t); o.stop(t+ms/1000+0.02); t+=ms/1000+0.07;
     }
     clearTimeout(beep._idle); beep._idle=setTimeout(()=>{ try{ if(actx&&actx.state==="running") actx.suspend(); }catch(e){} }, Math.ceil((t-actx.currentTime)*1000)+150);
@@ -1216,17 +1219,17 @@ function listenFor(r, early){
     if(acted) return true;
     if(r.type==="branch"){
       const opts=Object.keys(r.it.opts);
-      for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ acted=true; vs.heard=a; beep(1320,55,2); voiceChoose(r,hit); return true; } }
+      for(const a of alts){ const hit=opts.find(o=>{ const w=o.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); return w.length&&a.includes(w[0]); }); if(hit){ acted=true; vs.heard=a; beep(1500,30,1,0.07); voiceChoose(r,hit); return true; } }
     }else{
       for(const a of alts){
         const wm=voice.wake?WAKE_RE.exec(a):null;
         if(wm){
-          if((wm[1]||"").trim()){ acted=true; stopListening(); beep(1320,55,2); vs.active=false; vs.pending=null; handleSpokenCommand(wm[1].trim()); return true; }
+          if((wm[1]||"").trim()){ acted=true; stopListening(); beep(1500,30,1,0.07); vs.active=false; vs.pending=null; handleSpokenCommand(wm[1].trim()); return true; }
           continue;                                   // "hey Aero" on its own: wait for the rest, never treat it as a reply
         }
         const c=CMDS.find(([re])=>re.test(a));
         const cmd=c?c[1]:(r.type==="item"&&saidResponse(a,r.it.r)?"confirm":(r.type==="defer"&&/\bnoted\b/.test(a)?"confirm":null));
-        if(cmd){ acted=true; vs.heard=a; beep(cmd==="confirm"?1320:660,55,cmd==="confirm"?2:1); if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; }
+        if(cmd){ acted=true; vs.heard=a; beep(cmd==="confirm"?1500:660,cmd==="confirm"?30:55,1,cmd==="confirm"?0.07:0.2); if(cmd==="confirm") voiceConfirm(); else if(cmd==="repeat") voiceRepeat(); else if(cmd==="skip") voiceSkip(); else voiceStop(); return true; }
       }
     }
     return false;
@@ -1247,7 +1250,7 @@ function listenFor(r, early){
   };
   vs.netFails=0;
   if(early){ open(); }                     // microphone opens while the line is still being read; results before the gate are ignored
-  else setTimeout(open, 60);
+  else setTimeout(open, 20);
 }
 function srErrorText(err){
   return ({"not-allowed":"Microphone not allowed for this app","service-not-allowed":"Speech recognition not allowed here","audio-capture":"No microphone found","network":"No connection for speech recognition","no-speech":"Nothing heard","aborted":"Listening stopped","unsupported":"Speech recognition not available in this app","language-not-supported":"Language not supported","offline-not-ready":"Offline recogniser not loaded yet"})[err] || ("Speech recognition error: "+err);
@@ -1315,7 +1318,7 @@ async function offlineLoad(){
   }catch(e){ vosk.state="error"; vosk.msg="could not load the model: "+String(e&&e.message||e); vlogAdd("offline load failed: "+vosk.msg); renderOfflineStatus(); return false; }
 }
 async function offlineEnable(){
-  voice.offline=true; if(voice.releaseMic===null) voice.releaseMic=APPLE; saveVoice(); render();
+  voice.offline=true; saveVoice(); render();
   if(!(await offlineIsDownloaded())){ if(!(await offlineDownload())) return; }
   await offlineLoad();
 }
@@ -1415,7 +1418,7 @@ function wakeLoop(){
   wake.on=true; wake.sessions++; wake.since=wake.since||Date.now(); renderWakeDot(); renderWakeStatus();
   let handled=false, pendingRest="", stableTimer=null, fragment="", fragmentAt=0, awaitingAt=0, latest="", graceTimer=null;
   const fire=rest=>{
-    if(handled) return; handled=true; wake.busy=true; clearTimeout(stableTimer); clearTimeout(graceTimer); stopListening(); beep(1320,55,2); vlogAdd("wake command: “"+rest+"”");
+    if(handled) return; handled=true; wake.busy=true; clearTimeout(stableTimer); clearTimeout(graceTimer); stopListening(); beep(1500,30,1,0.07); vlogAdd("wake command: “"+rest+"”");
     handleSpokenCommand(rest); setTimeout(()=>{ wake.busy=false; wakeLoop(); }, 1500);
   };
   const unfinished=rest=>/\b(before|after|engine|low|high|emergency|gear|fuel|cabin|electrical|pre|post|manual|single|loss|rapid|smoke|flap|flaps|oil|alternator|generator|and|or|the|of|in|to|a)$/.test(rest);

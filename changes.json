@@ -9,7 +9,8 @@
       "On Apple devices the microphone is released while the app speaks (switchable) so speech is never muted.",
       "Smoother reading: the speech watchdog no longer restarts an utterance that has already begun, and the pause between challenge and response is a clean sentence break.",
       "Wake-word commands wait for the whole phrase: a phrase the engine cuts short at a pause (“hey Aero, before … start checklist”) is joined with what follows, while an exact checklist name opens at once.",
-      "Smoother reading: the audio engine is no longer rebuilt around every line, cue tones release the audio hardware when idle, and the speech engine is only nudged when paused."
+      "Smoother reading: the audio engine is no longer rebuilt around every line, cue tones release the audio hardware when idle, and the speech engine is only nudged when paused.",
+      "Offline engine: the microphone now stays open between lines by default, so replies are heard straight away and the switching click is gone; the accept tone is a soft short tick."
     ]
   },
   {
