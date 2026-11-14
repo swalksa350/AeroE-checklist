@@ -9,7 +9,7 @@ const root = path.join(__dirname, ".."), out = path.join(__dirname, "www");
 fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive: true });
 const copyDir = (from, to) => { fs.mkdirSync(to, { recursive: true }); for (const f of fs.readdirSync(from)) { const s = path.join(from, f), d = path.join(to, f); if (fs.statSync(s).isDirectory()) copyDir(s, d); else fs.copyFileSync(s, d); } };
 for (const f of ["changes.json", "guide.html", "manifest.webmanifest"]) fs.copyFileSync(path.join(root, f), path.join(out, f));
-for (const d of ["aircraft", "wb", "icons", "offline", "efb"]) copyDir(path.join(root, d), path.join(out, d));
+for (const d of ["aircraft", "wb", "perf", "icons", "offline", "efb"]) copyDir(path.join(root, d), path.join(out, d));
 let html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 // flag + no service worker registration
 html = html.replace("<script>\n/* ---------------- DATA ----------------", "<script>window.AEROE_NATIVE = true;</script>\n<script>\n/* ---------------- DATA ----------------");

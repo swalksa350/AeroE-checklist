@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.4",
+    "date": "2026-11-14",
+    "title": "Performance tab: take-off and landing distances",
+    "notes": [
+      "New Perf tab. Enter the aerodrome elevation, QNH, temperature, runway heading and the wind as broadcast on ATIS, AWIS or a METAR, the slope, surface and weight (or take the weight from the W&B tab) and the app reads the POH chart for you: pressure height, head and crosswind components, the take-off safety speed or reference approach speed for that weight, the distance to or from 50 ft and the ground roll, unfactored and with your safety factor, plus a sufficient / insufficient verdict against the runway length you enter.",
+      "GA8 charts from GA-FM-04 Section 5: take-off 14° flap, 3° powered-approach landing and power-off landing (with its rate of descent), digitised from the manual's drawing and followed exactly as on paper. The AFM's limits are enforced: no extrapolation above the chart, the lowest scheduled figure below it, 5 kt tailwind to 20 kt headwind, slopes to 2 %, 15 kt demonstrated crosswind warning.",
+      "A Load AFM example button fills each chart's worked example so the result can be compared with the manual. The take-off and power-off examples agree within 2 %; the 3° approach chart's printed example is about 10 % shorter than its own guide lines, which the app follows (the conservative reading) – see the note on that page.",
+      "Other types show the tab with a note that their charts have not been entered yet. All performance figures are marked unverified until checked against the POH."
+    ]
+  },
+  {
     "version": "2.3",
     "date": "2026-11-14",
     "title": "GA8 weight and balance from the AFM",

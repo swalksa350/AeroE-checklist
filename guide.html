@@ -55,6 +55,7 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <li><a href="#links">Direct links to an aircraft</a></li>
 <li><a href="#charts">Charts tab</a></li>
 <li><a href="#wb">Weight and balance</a></li>
+<li><a href="#perf">Performance</a></li>
 <li><a href="#voice">Voice: read aloud, spoken replies and recall</a></li>
 <li><a href="#trouble">If something looks wrong</a></li>
 </ol></div>
@@ -84,6 +85,7 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <b class="a">Abnormal</b><span>Caution-level problems: alternator failure, low oil pressure, gear unsafe, icing and so on. Action is needed but not immediately.</span>
 <b class="r">Emergency</b><span>Warning-level procedures: engine failure, fire, emergency descent, decompression. Immediate action.</span>
 <b>W&amp;B</b><span>Weight and balance for a specific registration of the current type. See section 12a.</span>
+<b>Perf</b><span>Take-off and landing distances and speeds from the POH charts. See section 12b.</span>
 <b>Charts</b><span>Links that open the Airservices DAP, ERSA and NAIPS pages, or your chart app, outside AeroE. See section 12.</span>
 <b>Status</b><span>Where you are across the whole flight: procedures in progress, items deferred to landing, normal checklist completion, favourites, customised checklists, EFB files, voice settings, version and updates. A number on the tab means an abnormal or emergency procedure is still open.</span>
 </div>
@@ -171,6 +173,16 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 </ol>
 <div class="note warn">The calculation is only as good as the profile. Enter the empty weight and arm from the aircraft's own report, confirm template figures against the POH, and treat the result as an aid: the pilot in command remains responsible for the aircraft's weight and balance.</div>
 
+<h2 id="perf">12b. Performance: take-off and landing distances</h2>
+<p>The Perf tab reads the POH take-off and landing charts for the conditions you enter. It has two pages, Take-off distance and Landing distance. Enter the aerodrome elevation and QNH (the app works out pressure height at 30 ft per hectopascal), the temperature, the runway heading and the wind as broadcast (ATIS and AWIS give magnetic directions, a METAR gives true), the runway slope and surface, and the weight. From W&amp;B copies the take-off or landing weight of the registration currently selected in the W&amp;B tab. Leave the runway heading blank to enter the wind directly as a headwind component (negative for a tailwind).</p>
+<ul>
+<li><strong>Results.</strong> Pressure height; head or tail and crosswind components; the take-off safety speed or reference approach speed for the weight (and, for a power-off approach, the rate of descent); the distance to or from 50 ft and the ground roll, both unfactored as the POH prints them and multiplied by your safety factor; and, if you enter the runway length available, a RUNWAY SUFFICIENT or INSUFFICIENT verdict on the factored distance. The chart path line lists the distance after each panel so you can check the reading on the paper chart.</li>
+<li><strong>Wind rule.</strong> By default the app uses half the headwind and one and a half times the tailwind, the usual allowance when a chart has none. Switch it off to read the chart exactly as printed.</li>
+<li><strong>Limits.</strong> The app refuses to extrapolate: above the chart's highest temperature or pressure height, with more than the chart's tailwind, outside its slope range or over its maximum weight it gives no result and says why. Below the lowest scheduled temperature or pressure height it uses the lowest scheduled figure, as the AFM directs. A crosswind above the maximum demonstrated is flagged.</li>
+<li><strong>Checking.</strong> Load AFM example fills the chart's own worked example so you can compare the app with the manual. Charts are digitised from the POH drawing and remain marked unverified until a pilot has worked several cases on the printed chart and compared them.</li>
+</ul>
+<p>Charts are entered per type. The GA8 has its three GA-FM-04 charts (take-off 14° flap, 3° approach landing, power-off landing); other types show the tab with a note until their POH data is added.</p>
+<div class="note warn">Performance output is an aid. The pilot in command must confirm take-off and landing performance against the AFM, apply the factors their operation requires, and allow for conditions the charts do not cover such as soft, wet or long-grass surfaces.</div>
 <h2 id="voice">13. Voice: read aloud, spoken replies and recall</h2>
 <p>Voice is off until you turn it on under <strong>Status → Voice</strong>. It has three parts.</p>
 <h3>Read aloud</h3>

@@ -99,6 +99,13 @@ nav.modes button .short{display:none}
 .wb .verdict{margin:10px 0;padding:12px 14px;border-radius:var(--radius);font-weight:700;text-align:center}
 .wb .verdict.ok{background:var(--green);color:var(--on-green)} .wb .verdict.bad{background:var(--red);color:var(--on-red)} .wb .verdict.na{background:var(--panel-2);color:var(--ink-dim)}
 .wb svg{width:100%;height:auto;max-height:420px;display:block;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.perf select{font:inherit;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);max-width:100%}
+.perf input[type=checkbox]{width:22px;height:22px}
+.perf td.num{width:1%;white-space:nowrap}
+.perf button.mini{display:block;margin:6px 0 0 auto}
+.perf button.mini{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;font-weight:600}
+.perf td .dim{font-size:12px}
+.perf .res .cell .v{font-size:19px}
 .wb .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .wb .btns button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
 .wb .btns button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
@@ -319,11 +326,11 @@ header .brand{cursor:default}
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.3 (build c672131e)</footer>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.4 (build 4b4aaf8c)</footer>
 </div>
 <script>
-window.AEROE_BUILD = "c672131e";
-window.AEROE_VERSION = "2.3";
+window.AEROE_BUILD = "4b4aaf8c";
+window.AEROE_VERSION = "2.4";
 /* Piper PA-46R-350T Matrix – checklist data.
    Prototype content. Verify against the operator's approved checklist and the POH/AFM. */
 window.AIRCRAFT = window.AIRCRAFT || [];

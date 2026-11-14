@@ -110,6 +110,13 @@ nav.modes button .short{display:none}
 .wb .verdict{margin:10px 0;padding:12px 14px;border-radius:var(--radius);font-weight:700;text-align:center}
 .wb .verdict.ok{background:var(--green);color:var(--on-green)} .wb .verdict.bad{background:var(--red);color:var(--on-red)} .wb .verdict.na{background:var(--panel-2);color:var(--ink-dim)}
 .wb svg{width:100%;height:auto;max-height:420px;display:block;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.perf select{font:inherit;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);max-width:100%}
+.perf input[type=checkbox]{width:22px;height:22px}
+.perf td.num{width:1%;white-space:nowrap}
+.perf button.mini{display:block;margin:6px 0 0 auto}
+.perf button.mini{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;font-weight:600}
+.perf td .dim{font-size:12px}
+.perf .res .cell .v{font-size:19px}
 .wb .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .wb .btns button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
 .wb .btns button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
@@ -358,6 +365,7 @@ main.picker section.view{display:block}
 <script src="aircraft/sr22.js"></script>
 <script src="wb/c208b.js"></script>
 <script src="wb/ga8.js"></script>
+<script src="perf/ga8.js"></script>
 <!-- aircraft:end -->
 
 <script>
@@ -380,11 +388,11 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "c672131e";
+const BUILD = "4b4aaf8c";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
-const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}};
-const MODES = [["normal","Normal","Normal"],["abnormal","Abnormal","Abnorm"],["emergency","Emergency","Emerg"],["wb","W&B","W&B"],["charts","Charts","Charts"],["status","Status","Status"]];
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}};
+const MODES = [["normal","Normal","Norm"],["abnormal","Abnormal","Abn"],["emergency","Emergency","Emerg"],["wb","W&B","W&B"],["perf","Perf","Perf"],["charts","Charts","Charts"],["status","Status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
 const CUSTOM_ID="approach-custom";
@@ -424,6 +432,7 @@ function load(){
         if(s.favAsked && typeof s.favAsked==="object") state.favAsked = s.favAsked;
         if(s.custom && typeof s.custom==="object") state.custom = s.custom;
         if(s.wb && typeof s.wb==="object") state.wb = s.wb;
+        if(s.perf && typeof s.perf==="object") state.perf = s.perf;
         if(s.sharedApproach && typeof s.sharedApproach==="object") state.sharedApproach = {on:!!s.sharedApproach.on, name:String(s.sharedApproach.name||""), items:Array.isArray(s.sharedApproach.items)?s.sharedApproach.items:[]};
         if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
         if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
@@ -443,7 +452,7 @@ function load(){
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, perf:state.perf, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
@@ -586,7 +595,7 @@ function render(){
   renderThemeButton();
   $("#main").classList.toggle("showing-proc",!!a&&state.showing);
   $("#main").classList.toggle("picker",!a);
-  const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts"&&state.mode!=="wb") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
+  const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts"&&state.mode!=="wb"&&state.mode!=="perf") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
   if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); renderVoiceBar(); return; }
   renderSide();renderView();renderVoiceBar();renderWakeDot();
   const k=render._keep; if(k){ const se=document.getElementById("side"), ve=document.getElementById("view"); if(se) se.scrollTop=k.side;
@@ -664,6 +673,7 @@ function renderSide(){
   if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"))));return}
   if(state.mode==="charts"){s.append(h("div",{class:"group-title"},"Charts"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Charts and documents"))));return}
   if(state.mode==="wb"){ renderWbSide(s); return; }
+  if(state.mode==="perf"){ renderPerfSide(s); return; }
   const list=h("div",{class:"list"});
   const gt=h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures");
   if(voice.reply&&SRX()) gt.append(h("button",{class:"mic"+(recallState.on?" on":""),title:"Say a procedure name",onclick:voiceRecall},recallState.on?"● Listening":"🎤 Say procedure"));
@@ -698,6 +708,7 @@ function renderView(){
   if(state.mode==="status"){renderStatus(v);return}
   if(state.mode==="charts"){renderCharts(v);return}
   if(state.mode==="wb"){renderWb(v);return}
+  if(state.mode==="perf"){renderPerf(v);return}
   if(state.mode==="normal"&&state.sel==="__vs"){renderVspeeds(v);return}
   const p=proc(state.mode,state.sel);
   if(!p){v.append(h("div",{class:"status"},h("div",{class:"empty"},"Select a checklist."))); return}
@@ -963,6 +974,135 @@ function renderWb(v){
   const box=h("div",{id:"wb-results"}); box.append(...wbResultNodes(p,wbCompute(p))); w.append(box);
   w.append(h("div",{class:"saved"},"Empty weight "+fmt(p.emptyWeight,0)+" "+u.weight+" at "+fmt(p.emptyArm,1)+" "+u.arm+(p.reportDate?" (report "+p.reportDate+")":"")+". "+(p.notes||"")));
   w.append(h("div",{class:"saved"},"This calculation is an aid. The pilot in command remains responsible for the weight and balance of the aircraft and must confirm the figures against the POH and the aircraft's weight and balance report."));
+  v.append(w);
+}
+/* ---------------- PERFORMANCE (take-off and landing distances from POH charts) ---------------- */
+/* Each type's perf/<id>.js carries the POH nomograms as guide-line polylines. The engine follows them as a pilot
+   does on paper: read the OAT / pressure-height panel, then carry the distance through the weight, wind, slope,
+   surface and obstacle panels along the guide lines, interpolating between neighbouring guides. */
+/* perf-engine:start */
+function pfAt(g,x){ let lo=Infinity,hi=-Infinity; for(const p of g){ if(p[0]<lo)lo=p[0]; if(p[0]>hi)hi=p[0]; } const tol=Math.max(0.05,0.01*(hi-lo)); if(x<lo-tol||x>hi+tol) return null; x=Math.min(Math.max(x,lo),hi); for(let i=1;i<g.length;i++){ const x0=g[i-1][0],y0=g[i-1][1],x1=g[i][0],y1=g[i][1]; if((x0-1e-6<=x&&x<=x1+1e-6)||(x1-1e-6<=x&&x<=x0+1e-6)) return Math.abs(x1-x0)<1e-9?y0:y0+(y1-y0)*(x-x0)/(x1-x0); } return null; }
+function pfFollow(guides,xref,xtgt,y){ const pairs=[]; for(const g of guides){ const a=pfAt(g,xref), b=pfAt(g,xtgt); if(a!==null&&b!==null) pairs.push([a,b]); } pairs.sort((p,q)=>p[0]-q[0]); if(pairs.length<2) return null; let i=0; if(y>=pairs[pairs.length-1][0]) i=pairs.length-2; else if(y>pairs[0][0]){ while(i<pairs.length-2&&pairs[i+1][0]<y) i++; } const a0=pairs[i][0],b0=pairs[i][1],a1=pairs[i+1][0],b1=pairs[i+1][1]; return a1===a0?b0:b0+(b1-b0)*(y-a0)/(a1-a0); }
+function pfBase(ph,oat,phft){ const n=ph.length; if(phft<ph[0].ft-1||phft>ph[n-1].ft+1) return null; let i=0; while(i<n-2&&ph[i+1].ft<=phft) i++; const f=Math.max(0,(phft-ph[i].ft)/(ph[i+1].ft-ph[i].ft)); const val=c=>{ let lo=Infinity; for(const p of c.pts) if(p[0]<lo) lo=p[0]; return {v:pfAt(c.pts,Math.max(oat,lo)),clamped:oat<lo}; }; const a=val(ph[i]), b=val(ph[i+1]); if(a.v===null||b.v===null) return null; return {v:a.v+(b.v-a.v)*f, clamped:a.clamped||b.clamped}; }
+function pfSpeed(table,w){ const t=table.slice().sort((a,b)=>a[0]-b[0]); if(w<=t[0][0]) return t[0].slice(1); if(w>=t[t.length-1][0]) return t[t.length-1].slice(1); for(let i=1;i<t.length;i++) if(w<=t[i][0]){ const f=(w-t[i-1][0])/(t[i][0]-t[i-1][0]); return t[i].slice(1).map((v,k)=>t[i-1][k+1]+(v-t[i-1][k+1])*f); } return t[t.length-1].slice(1); }
+const pfPH=(elev,qnh)=>elev+(1013.25-qnh)*30;                       // ft; 30 ft per hPa
+function pfWind(rwy,dir,spd){ const d=(dir-rwy)*Math.PI/180; return {head:spd*Math.cos(d), cross:Math.abs(spd*Math.sin(d))}; }
+function pfSolve(T,chart,inp){   // inp: {oat, ph, weight, wind (+head/−tail kt), slope (%), gravel}
+  const L=T.limits, notes=[], max=T.chartMax||Infinity, u=T.units;
+  if(inp.ph>L.ph[1]) return {ok:false,why:"Pressure height "+fmt(inp.ph,0)+" ft is above the chart's "+fmt(L.ph[1],0)+" ft. The AFM gives no performance data there."};
+  if(inp.oat>L.oat[1]) return {ok:false,why:"Temperature is above the chart's maximum of "+L.oat[1]+" °C. The AFM gives no performance data there."};
+  let ph=inp.ph; if(ph<L.ph[0]){ ph=L.ph[0]; notes.push("Pressure height below the chart's lowest: the lowest scheduled figure is used (AFM 5.2)."); }
+  let w=inp.weight; if(w>L.maxWeight) return {ok:false,why:"Weight "+fmt(w,0)+" "+u.weight+" exceeds the maximum of "+fmt(L.maxWeight,0)+" "+u.weight+"."};
+  if(w<L.minWeight){ w=L.minWeight; notes.push("Weight below the chart's lowest "+fmt(L.minWeight,0)+" "+u.weight+": that weight is used."); }
+  let wind=inp.wind; if(wind<L.wind[0]) return {ok:false,why:"Tailwind component of "+fmt(-wind,0)+" kt exceeds the chart's "+(-L.wind[0])+" kt."};
+  if(wind>L.wind[1]){ wind=L.wind[1]; notes.push("Headwind component above "+L.wind[1]+" kt: "+L.wind[1]+" kt used."); }
+  if(inp.slope<L.slope[0]||inp.slope>L.slope[1]) return {ok:false,why:"Slope outside the chart's range of "+L.slope[0]+" % to +"+L.slope[1]+" %."};
+  const base=pfBase(chart.ph,inp.oat,ph); if(!base) return {ok:false,why:"Outside the chart: this temperature and pressure height combination is not scheduled."};
+  if(base.clamped) notes.push("Temperature below the lowest scheduled on the chart: the lowest scheduled figure is used (AFM 5.2).");
+  const trail=[["Chart entry",base.v]]; let d=base.v;
+  const step=(name,guides,ref,x)=>{ if(d===null) return; d=pfFollow(guides,ref,x,d); trail.push([name,d]); };
+  step("Weight",chart.weight.guides,chart.weight.ref,w);
+  step("Wind",chart.wind.guides,chart.wind.ref,wind);
+  step("Slope",chart.slope.guides,chart.slope.ref,inp.slope);
+  if(inp.gravel) step("Surface",chart.surface.guides,chart.surface.ref,chart.surface.target);
+  if(d===null) return {ok:false,why:"The chart cannot be read for these inputs."};
+  if(trail.some(t=>t[1]>max)) return {ok:false,why:"Off the top of the chart (more than "+fmt(max,0)+" "+u.dist+" at one of the steps). The AFM does not permit extrapolation."};
+  const roll=pfFollow(chart.obstacle.guides,chart.obstacle.ref,0,d);
+  return {ok:true,dist:d,roll,trail,notes,used:{oat:inp.oat,ph,weight:w,wind,slope:inp.slope,gravel:!!inp.gravel}};
+}
+/* perf-engine:end */
+const PT = () => { const a=AC(); return a && window.PERF ? (window.PERF[a.id]||null) : null; };
+function pfStore(){ const a=AC(); if(!a) return null; if(!state.perf[a.id]) state.perf[a.id]={elev:null,qnh:1013,oat:null,rwy:null,wdir:null,wspd:null,windRule:true,slope:0,surface:"sealed",wTo:null,wLd:null,factor:1.15,approach:null,tora:null,lda:null}; return state.perf[a.id]; }
+function pfInputs(st,isLanding){
+  const T=PT(); const u=T.units; const warn=[], info=[];
+  const elev=num(st.elev), qnh=num(st.qnh), oat=num(st.oat), rwy=num(st.rwy), wdir=num(st.wdir), wspd=num(st.wspd), slope=num(st.slope)||0, weight=num(isLanding?st.wLd:st.wTo);
+  const missing=[]; if(elev===null) missing.push("elevation"); if(qnh===null) missing.push("QNH"); if(oat===null) missing.push("temperature"); if(weight===null) missing.push("weight");
+  const ph=(elev!==null&&qnh!==null)?Math.round(pfPH(elev,qnh)/10)*10:null;
+  let head=0, cross=null, windText="nil wind", windSub="";
+  if(wspd!==null&&wspd!==0){
+    if(rwy!==null&&wdir!==null){ const c=pfWind(rwy,wdir,wspd); head=c.head; cross=c.cross; windText=fmt(Math.abs(head),0)+" kt "+(head>=0?"head":"tail")+" · "+fmt(cross,0)+" kt cross"; windSub="from "+fmt(wdir,0)+"° at "+fmt(wspd,0)+" kt on runway "+fmt(rwy,0)+"°"; }
+    else { head=wspd; windText=fmt(Math.abs(head),0)+" kt "+(head>=0?"headwind":"tailwind"); windSub="entered as a component (no runway heading)"; }
+  }
+  let windUsed=head;
+  if(st.windRule&&head!==0){ windUsed=head>0?head*0.5:head*1.5; info.push("Wind rule applied: "+(head>0?"50 % of the headwind":"150 % of the tailwind")+" → "+fmt(Math.abs(windUsed),0)+" kt "+(windUsed>=0?"headwind":"tailwind")+" used."); }
+  if(cross!==null&&T.limits.demoCrosswind&&cross>T.limits.demoCrosswind) warn.push("Crosswind "+fmt(cross,0)+" kt exceeds the maximum demonstrated "+T.limits.demoCrosswind+" kt.");
+  return {missing,ph,oat,weight,head,cross,windText,windSub,windUsed,slope,gravel:st.surface!=="sealed",warn,info,u};
+}
+function pfResultNodes(st,isLanding){
+  const T=PT(); const out=[]; const u=T.units; const spec=isLanding?(T.landing.find(l=>l.id===st.approach)||T.landing[0]):T.takeoff;
+  const inp=pfInputs(st,isLanding);
+  const altD=m=>u.dist==="m"?fmt(m*3.28084,0)+" ft":fmt(m/3.28084,0)+" m";
+  const cell=(k,v,s,cls)=>h("div",{class:"cell "+(cls||"")},h("div",{class:"k"},k),h("div",{class:"v"},v),s?h("div",{class:"s"},s):"");
+  const grid=h("div",{class:"res"});
+  grid.append(cell("Pressure height",inp.ph===null?"–":fmt(inp.ph,0)+" ft",inp.ph===null?"needs elevation and QNH":"elevation "+fmt(num(st.elev),0)+" ft, QNH "+fmt(num(st.qnh),0)));
+  grid.append(cell("Wind",inp.windText,inp.windSub+(inp.cross!==null&&T.limits.demoCrosswind?" · max demonstrated crosswind "+T.limits.demoCrosswind+" kt":""),inp.warn.length?"bad":""));
+  if(inp.weight!==null){ const sp=pfSpeed(spec.speeds,Math.min(Math.max(inp.weight,T.limits.minWeight),T.limits.maxWeight)); grid.append(cell(spec.speedLabel,fmt(Math.round(sp[0]),0)+" KIAS",(spec.rodLabel&&sp[1]!==undefined?spec.rodLabel+" "+fmt(Math.round(sp[1]/10)*10,0)+" · ":"")+"at "+fmt(inp.weight,0)+" "+u.weight)); }
+  out.push(grid);
+  if(inp.missing.length){ out.push(h("div",{class:"verdict na"},"Enter "+inp.missing.join(", ")+" to compute the distance.")); inp.warn.forEach(t=>out.push(h("div",{class:"warn red"},t))); return out; }
+  const r=pfSolve(T,spec.chart,{oat:inp.oat,ph:inp.ph,weight:inp.weight,wind:inp.windUsed,slope:inp.slope,gravel:inp.gravel});
+  const factor=Math.max(1,num(st.factor)||1); const avail=num(isLanding?st.lda:st.tora);
+  if(!r.ok){ out.push(h("div",{class:"verdict bad"},"NO RESULT – "+r.why)); }
+  else {
+    const dist=r.dist, roll=r.roll, fd=dist*factor, fr=roll*factor;
+    const g2=h("div",{class:"res"});
+    g2.append(cell(isLanding?"Landing distance from 50 ft":"Take-off distance to 50 ft",fmt(Math.round(dist),0)+" "+u.dist,"unfactored · "+altD(dist)));
+    g2.append(cell("Factored × "+fmt(factor,2),fmt(Math.ceil(fd),0)+" "+u.dist,altD(fd),avail!==null?(fd<=avail?"ok":"bad"):""));
+    g2.append(cell("Ground roll",fmt(Math.round(roll),0)+" "+u.dist,"factored "+fmt(Math.ceil(fr),0)+" "+u.dist+" · "+altD(roll)));
+    out.push(g2);
+    if(avail!==null) out.push(h("div",{class:"verdict "+(fd<=avail?"ok":"bad")},(fd<=avail?"RUNWAY SUFFICIENT":"RUNWAY INSUFFICIENT")+" – factored "+fmt(Math.ceil(fd),0)+" "+u.dist+" against "+fmt(avail,0)+" "+u.dist+" available"));
+    out.push(h("div",{class:"saved"},"Chart path: "+r.trail.map(t=>t[0]+" "+fmt(Math.round(t[1]),0)).join(" → ")+" "+u.dist+". Inputs used: "+fmt(r.used.oat,0)+" °C, "+fmt(r.used.ph,0)+" ft, "+fmt(r.used.weight,0)+" "+u.weight+", "+fmt(Math.abs(r.used.wind),0)+" kt "+(r.used.wind>=0?"headwind":"tailwind")+", slope "+(r.used.slope>0?"+":"")+fmt(r.used.slope,1)+" %, "+(r.used.gravel?"short dry grass or gravel":"hard sealed")+"."));
+    r.notes.forEach(t=>out.push(h("div",{class:"warn"},t)));
+  }
+  inp.warn.forEach(t=>out.push(h("div",{class:"warn red"},t)));
+  inp.info.forEach(t=>out.push(h("div",{class:"saved"},t)));
+  return out;
+}
+function pfRecalc(){ const box=document.getElementById("pf-results"); if(!box) return; const st=pfStore(); box.innerHTML=""; box.append(...pfResultNodes(st,state.sel==="ld")); save(); }
+function renderPerfSide(sEl){
+  const T=PT(); const a=AC();
+  sEl.append(h("div",{class:"group-title"},"Performance"));
+  const list=h("div",{class:"list"});
+  [["to","Take-off distance"],["ld","Landing distance"]].forEach(([id,name])=>list.append(h("button",{class:(state.sel===id?"sel":""),onclick:()=>go(()=>{state.sel=id;state.showing=true})},h("span",{class:"dot"}),h("span",{class:"name"},name))));
+  sEl.append(list);
+  if(!T) sEl.append(h("div",{class:"saved",style:"padding:8px 16px"},"No performance charts for the "+(a?a.short:"")+" yet."));
+  else if(!T.verified) sEl.append(h("div",{class:"saved",style:"padding:8px 16px"},"Chart data for this type is unverified – check results against the POH charts."));
+}
+function renderPerf(v){
+  const a=AC(); const T=PT(); const st=pfStore(); if(state.sel!=="ld") state.sel="to"; const isLanding=state.sel==="ld";
+  const w=h("div",{class:"wb perf"});
+  w.append(h("div",{class:"proc-head",style:"margin:0 -16px 8px"},h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),h("h1",{},isLanding?"Landing distance":"Take-off distance",h("span",{class:"cond"},a.maker+" "+a.model))));
+  if(!T){ w.append(h("div",{class:"warn"},"No performance charts have been entered for the "+a.short+" yet. Performance data is added per type from its POH, as the GA8's was from GA-FM-04.")); v.append(w); return; }
+  const spec=isLanding?(T.landing.find(l=>l.id===st.approach)||T.landing[0]):T.takeoff;
+  if(!T.verified) w.append(h("div",{class:"warn"},"Chart data for this type is UNVERIFIED: it was transcribed from the POH charts and has been checked only against the POH worked examples. Confirm results against the charts before relying on them."));
+  w.append(h("h2",{},"Conditions"));
+  const tbl=h("table",{});
+  const field=(label,key,hint,opts)=>{ opts=opts||{}; const inp=h("input",{id:"pf-"+key,type:"number",step:opts.step||"any",inputmode:"decimal",value:st[key]===null||st[key]===undefined?"":st[key],placeholder:opts.ph||""}); inp.oninput=ev=>{ st[key]=ev.target.value===""?null:ev.target.value; pfRecalc(); }; tbl.append(h("tr",{},h("td",{},label,hint?h("div",{class:"dim"},hint):""),h("td",{class:"num"},inp,opts.extra||""))); return inp; };
+  field("Aerodrome elevation (ft)","elev","from ERSA / the plate");
+  field("QNH (hPa)","qnh","from ATIS, AWIS or METAR; 1013 if you enter a pressure height as the elevation");
+  field("Outside air temperature (°C)","oat","");
+  field("Runway heading (°)","rwy","magnetic, e.g. 270 for runway 27; blank = enter the wind as a headwind component");
+  field("Wind from (°)","wdir","as broadcast (ATIS and AWIS are magnetic; METAR is true)");
+  field("Wind speed (kt)","wspd","steady wind; or the headwind component, negative for tailwind");
+  const rule=h("input",{type:"checkbox",id:"pf-windRule"}); rule.checked=!!st.windRule; rule.onchange=()=>{ st.windRule=rule.checked; pfRecalc(); };
+  tbl.append(h("tr",{},h("td",{},"Use 50 % of headwind, 150 % of tailwind",h("div",{class:"dim"},"the usual allowance when the chart has none; off reproduces the chart exactly")),h("td",{class:"num"},rule)));
+  field("Runway slope (%)","slope","+ for uphill in the direction of travel, − for downhill",{step:"0.1"});
+  const sel=h("select",{id:"pf-surface"}); T.surfaces.forEach(([id,name])=>sel.append(h("option",{value:id},name))); sel.value=st.surface||T.surfaces[0][0]; sel.onchange=()=>{ st.surface=sel.value; pfRecalc(); };
+  tbl.append(h("tr",{},h("td",{},"Surface"),h("td",{class:"num"},sel)));
+  const wkey=isLanding?"wLd":"wTo";
+  const fromWb=h("button",{class:"mini",onclick:()=>{ const p=wbCurrent(); if(!p){ alert("Set up a registration in the W&B tab first."); return; } const r=wbCompute(p); const val=isLanding?r.pts.ld.w:r.pts.to.w; if(!val){ alert("The W&B tab has no "+(isLanding?"landing":"take-off")+" weight yet."); return; } st[wkey]=Math.round(val); document.getElementById("pf-"+wkey).value=st[wkey]; pfRecalc(); }},"From W&B");
+  field((isLanding?"Landing":"Take-off")+" weight ("+T.units.weight+")",wkey,"max "+fmt(T.limits.maxWeight,0)+" "+T.units.weight,{extra:fromWb});
+  if(isLanding&&T.landing.length>1){ const ap=h("select",{id:"pf-approach"}); T.landing.forEach(l=>ap.append(h("option",{value:l.id},l.title.replace(/^Landing – /,"")))); ap.value=spec.id; ap.onchange=()=>{ st.approach=ap.value; save(); render(); }; tbl.append(h("tr",{},h("td",{},"Approach"),h("td",{class:"num"},ap))); }
+  field((isLanding?"Landing distance available":"Take-off run available")+" ("+T.units.dist+")",isLanding?"lda":"tora","optional: from ERSA, for a sufficient / insufficient verdict");
+  field("Safety factor","factor","multiplies the chart distance; 1.15 is the usual minimum",{step:"0.05"});
+  w.append(tbl);
+  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ const e=spec.example; if(!e) return; Object.assign(st,{elev:e.ph,qnh:1013.25,oat:e.oat,rwy:null,wdir:null,wspd:e.wind,windRule:false,slope:e.slope,surface:e.surface}); st[wkey]=e.weight; save(); render(); }},"Load AFM example"),h("button",{onclick:()=>{ Object.assign(st,{elev:null,qnh:1013,oat:null,rwy:null,wdir:null,wspd:null,slope:0,surface:T.surfaces[0][0],tora:null,lda:null}); st[wkey]=null; save(); render(); }},"Clear")));
+  w.append(h("h2",{},spec.title));
+  w.append(h("div",{class:"saved"},spec.conditions));
+  if(spec.caveat) w.append(h("div",{class:"warn"},spec.caveat));
+  const box=h("div",{id:"pf-results"}); box.append(...pfResultNodes(st,isLanding)); w.append(box);
+  if(spec.example) w.append(h("div",{class:"saved"},"AFM worked example: "+spec.example.oat+" °C, "+fmt(spec.example.ph,0)+" ft pressure height, "+fmt(spec.example.weight,0)+" "+T.units.weight+", "+spec.example.wind+" kt headwind, "+(spec.example.slope>0?"+":"")+spec.example.slope+" % slope, "+spec.example.surface+" → "+fmt(spec.example.dist,0)+" "+T.units.dist+" and "+fmt(spec.example.roll,0)+" "+T.units.dist+" ground roll. Load it with the button above to compare."));
+  T.notes.forEach(t=>w.append(h("div",{class:"saved"},t)));
+  w.append(h("div",{class:"saved"},"Source: "+T.basis+" This calculation is an aid. The pilot in command remains responsible for confirming take-off and landing performance against the AFM."));
   v.append(w);
 }
 const CHARTS_KEY="ga-ecl-charts";
@@ -1818,7 +1958,7 @@ function renderVoiceBar(){
   const old=document.getElementById("vbar"); if(old) old.remove();
   const main=$("#main");
   const c=currentRows();
-  const show=voice.read && c && state.mode!=="status" && state.mode!=="charts" && state.mode!=="wb" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
+  const show=voice.read && c && state.mode!=="status" && state.mode!=="charts" && state.mode!=="wb" && state.mode!=="perf" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
   main.classList.toggle("voice-on",!!show);
   if(!show){ if(vs.active) voiceStop(true); return; }
   if(vs.pid!==c.p.id){ vs.pid=c.p.id; vs.active=false; vs.pending=null; vs.readNotes={}; vs.skipped={}; vs.status=""; vs.heard=""; }

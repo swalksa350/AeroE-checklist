@@ -1,4 +1,4 @@
-const VERSION = "ga-ecl-c672131e";
+const VERSION = "ga-ecl-4b4aaf8c";
 const ASSETS = [
   "./",
   "./index.html",
@@ -37,6 +37,7 @@ const ASSETS = [
   "./aircraft/sr22.js",
   "./wb/c208b.js",
   "./wb/ga8.js",
+  "./perf/ga8.js",
   "./icons/apple-touch-icon.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
