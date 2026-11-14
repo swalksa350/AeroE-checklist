@@ -380,7 +380,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "765fde42";
+const BUILD = "c672131e";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}};
@@ -748,7 +748,10 @@ function renderView(){
    weight and balance report; the pilot corrects any template figure there. Loads and fuel for the flight are kept
    per registration. Everything is computed in the template's units (lb/in or kg/mm). */
 const WBT = () => { const a=AC(); return a && window.WB && window.WB[a.id] ? window.WB[a.id] : null; };
-function wbStore(){ const a=AC(); if(!a) return null; if(!state.wb[a.id]) state.wb[a.id]={profiles:{},current:null}; const st=state.wb[a.id]; if(!st.profiles) st.profiles={}; return st; }
+function wbStore(){ const a=AC(); if(!a) return null; if(!state.wb[a.id]) state.wb[a.id]={profiles:{},current:null}; const st=state.wb[a.id]; if(!st.profiles) st.profiles={};
+  /* Seed a template's example registration once per type; deleting it sticks because the seeded flag stays set. */
+  const t=window.WB&&window.WB[a.id]; if(t&&t.testProfile&&!st.seeded){ st.seeded=true; const tp=t.testProfile; if(!st.profiles[tp.rego]){ const prof=wbNewProfile(tp.rego); Object.assign(prof,JSON.parse(JSON.stringify(tp))); st.profiles[tp.rego]=prof; if(!st.current) st.current=tp.rego; } }
+  return st; }
 function wbProfiles(){ const st=wbStore(); return st?Object.values(st.profiles).sort((x,y)=>x.rego.localeCompare(y.rego)):[]; }
 function wbCurrent(){ const st=wbStore(); if(!st) return null; return (st.current && st.profiles[st.current]) || null; }
 function wbNewProfile(rego){
@@ -812,7 +815,7 @@ function renderWbSide(sEl){
   sEl.append(h("div",{class:"group-title"},"Weight & balance"));
   const list=h("div",{class:"list"});
   const st=wbStore();
-  wbProfiles().forEach(p=>list.append(h("button",{class:(state.sel===p.rego?"sel":""),onclick:()=>go(()=>{st.current=p.rego;state.sel=p.rego;state.showing=true})},h("span",{class:"dot "+(num(p.emptyWeight)!==null?"done":"")}),h("span",{class:"name"},p.rego),h("span",{class:"n"},num(p.emptyWeight)!==null?"":"setup"))));
+  wbProfiles().forEach(p=>list.append(h("button",{class:(state.sel===p.rego?"sel":""),onclick:()=>go(()=>{st.current=p.rego;state.sel=p.rego;state.showing=true})},h("span",{class:"dot "+(num(p.emptyWeight)!==null?"done":"")}),h("span",{class:"name"},p.rego),h("span",{class:"n"},p.test?"test":(num(p.emptyWeight)!==null?"":"setup")))));
   list.append(h("button",{onclick:()=>wbAddProfile()},h("span",{class:"dot"}),h("span",{class:"name"},"+ Add registration")));
   sEl.append(list);
   if(!t) sEl.append(h("div",{class:"saved",style:"padding:8px 16px"},"No type template for the "+(a?a.short:"")+" yet: a new registration starts blank and every figure is entered from the POH."));
@@ -941,6 +944,7 @@ function renderWb(v){
   }
   const u=p.units;
   if(t&&!t.verified) w.append(h("div",{class:"warn"},"Template figures for this type are UNVERIFIED. Confirm every arm, limit and envelope point in Edit profile against the POH and this aircraft's weight and balance report before relying on the result."));
+  if(p.test) w.append(h("div",{class:"warn red"},"TEST DATA. "+p.rego+" is an example registration: its empty weight and arm are fictitious and must not be used for a real flight. Delete it from Edit profile when you no longer need it."));
   if(num(p.emptyWeight)===null||num(p.emptyArm)===null) w.append(h("div",{class:"warn red"},"Empty weight and arm have not been entered for "+p.rego+". Tap Edit profile."));
   w.append(h("h2",{},"Loads ("+u.weight+")"));
   const tbl=h("table",{}); tbl.append(h("tr",{},h("th",{},"Station"),h("th",{class:"num"},"Arm "+u.arm),h("th",{class:"num"},"Weight")));

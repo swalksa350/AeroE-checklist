@@ -37,3 +37,7 @@ and fix every ✗ before you finish.
 - Use the real cockpit nomenclature of the type (e.g. "Fuel selector – BOTH" for Cessnas, "Fuel pump – ON" for Pipers, "CAPS handle – PULL" for Cirrus, "ECU test" for Diamond diesels, "Gear handle – DOWN, three green" for retractables).
 - Values are typical published POH figures for the stated variant. Where variants differ, say so in parentheses or in `basis`. Do not invent precision you do not have: a range ("65–75 KIAS") is better than a wrong exact number.
 - Keep the prototype notice at the top of the file (comment) exactly as in c208b.js.
+
+## Weight and balance templates (`wb/<id>.js`)
+Optional. A file sets `window.WB[<aircraft id>]` with: `verified`, `basis` (source text shown in the app), `units` (`weight` kg|lb, `arm` mm|in, `fuel` L|USgal), `fuelDensity`, `fuelArm`, `fuelCapacity` (usable), `limits` (`maxRamp`, `maxTakeoff`, `maxLanding`, `maxZeroFuel`; null when the POH gives none), `stations` (`id`, `name`, `arm`, `max`), `envelope` (`forward` and `aft` arrays of `[weight, arm]` points; limits are held constant beyond the first and last point), `notes`.
+`testProfile` (optional) is a registration seeded once per device as a deletable example; give it `test: true`, a clearly fictitious `notes` line, and loads that reproduce the POH worked example so the result can be checked. Record every figure's source in REVIEW.md.

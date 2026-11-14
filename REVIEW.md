@@ -181,4 +181,5 @@ start there. Tick them off here as they are verified.
 
 ## Weight and balance templates (wb/)
 - [ ] C208B: station arms (135.5 / 173 / 208 / 243 / 278 / 313 in seats; cargo zones 172.8 / 215 / 264 / 310 / 338; pod 132.4 / 182 / 233 / 287), zone maxima, fuel arm 203.4 in, density 6.7 lb/USgal, usable 332 USgal, max ramp 8,785 / take-off 8,750 / landing 8,500 lb, forward limit 179.6 in to 4,500 lb then linear to 186.0 in at 8,750 lb, aft 204.35 in – all from memory of POH Section 6; verify every figure
-- [ ] GA8: template deliberately omits arms and envelope; confirm MTOW/MLW 1,814 kg for the airframe variant, usable fuel 332 L, Avgas density 0.72 kg/L
+- [ ] GA8: figures transcribed from GA-FM-04 (Section 2.6/2.7 limits, Section 6 figures 6-3a–6-3d trim sheets): row arms 965 / 1,772 / 2,523 / 3,247 mm, freighter zones 1A 1,524 / 1B 1,968 / 1C 2,861 mm, baggage shelf 3,768 mm (113 kg), aft bin 4,623 mm (22 kg), fuel arm 1,715 mm, usable 332 L, MTOW/MLW 1,814 kg, forward limit 1,219 mm to 1,089 kg then linear to 1,422 mm at 1,814 kg, aft 1,626 mm. Check the transcription against the manual; the main cargo area combined limit of 680 kg is a note only. Confirm the figures apply to the airframe variant (GA8 vs GA8-TC320)
+- [ ] GA8 seeded registration VH-WSM is test data only: empty weight 980 kg / arm 1,150 mm are the AFM worked example, not a real aircraft

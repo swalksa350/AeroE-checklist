@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.3",
+    "date": "2026-11-14",
+    "title": "GA8 weight and balance from the AFM",
+    "notes": [
+      "GA8 W&B template now carries the station arms, fuel arm, cargo-zone limits and CG envelope from the GA8 manual GA-FM-04 (Section 2 limits and Section 6 trim sheets), in kilograms and millimetres from the firewall datum. Seat rows and freighter cargo zones are both listed.",
+      "An example GA8 registration, VH-WSM, is seeded once so the tab can be tried straight away. Its empty weight and arm are fictitious (the AFM worked example) and it is marked TEST DATA; delete it from Edit profile when you no longer need it and it stays deleted.",
+      "The template figures were transcribed by hand and remain marked unverified: confirm them against the AFM and the aircraft's own weight and balance report."
+    ]
+  },
+  {
     "version": "2.2",
     "date": "2026-11-14",
     "title": "Weight and balance for the C208B and GA8",
