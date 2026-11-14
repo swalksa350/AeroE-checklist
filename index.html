@@ -87,9 +87,33 @@ header .theme.on{color:var(--ink)}
 }
 nav.modes button .short{display:none}
 @media (max-width:640px){ nav.modes button .full{display:none} nav.modes button .short{display:inline} nav.modes button{font-size:13px;padding:14px 2px} header .brand{min-width:0;padding:10px 12px} header .theme span:not(.g){display:none} header .theme{width:40px} }
-@media (max-width:430px){ nav.modes button{font-size:12px} }
+@media (max-width:430px){ nav.modes button{font-size:11px;padding:14px 1px} }
 /* an installed iPad/Mac window keeps 96px clear for the window controls, so compact a little earlier */
 @media (max-width:760px){ html.win-controls nav.modes button .full{display:none} html.win-controls nav.modes button .short{display:inline} html.win-controls header .brand{min-width:0;padding:10px 10px} html.win-controls header .brand small{display:none} html.win-controls header .theme span:not(.g){display:none} html.win-controls header .theme{width:40px} }
+.wb{padding:0 16px 60px}
+.wb .warn{border-left:4px solid var(--amber);padding:8px 12px;background:var(--panel-2);margin:12px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14px}
+.wb .warn.red{border-left-color:var(--red)}
+.wb h2{font-size:13px;color:var(--ink-dim);margin:18px 0 6px;text-transform:uppercase;letter-spacing:.06em}
+.wb table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.wb td,.wb th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.wb th{font-size:12px;color:var(--ink-dim);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.wb td.num,.wb th.num{text-align:right;white-space:nowrap}
+.wb td.dim{color:var(--ink-dim);font-size:13px}
+.wb input[type=number],.wb input[type=text],.wb input[type=date]{font:inherit;font-size:17px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);width:7.5em;max-width:100%;text-align:right}
+.wb input[type=text],.wb input[type=date]{text-align:left;width:12em}
+.wb .res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
+.wb .res .cell{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.wb .res .cell .k{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em}
+.wb .res .cell .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.wb .res .cell .s{font-size:12px;color:var(--ink-dim)}
+.wb .res .cell.ok{border-color:var(--green)} .wb .res .cell.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 10%,var(--panel))}
+.wb .verdict{margin:10px 0;padding:12px 14px;border-radius:var(--radius);font-weight:700;text-align:center}
+.wb .verdict.ok{background:var(--green);color:var(--on-green)} .wb .verdict.bad{background:var(--red);color:var(--on-red)} .wb .verdict.na{background:var(--panel-2);color:var(--ink-dim)}
+.wb svg{width:100%;height:auto;max-height:420px;display:block;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.wb .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.wb .btns button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
+.wb .btns button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
+.wb .btns button.danger{color:var(--red);border-color:var(--red)}
 .charts{padding:0 16px 40px}
 .charts .row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
 .charts .row a{color:var(--cyan);text-decoration:none;font-weight:600}
@@ -332,6 +356,8 @@ main.picker section.view{display:block}
 <script src="aircraft/pc12-45.js"></script>
 <script src="aircraft/sr20.js"></script>
 <script src="aircraft/sr22.js"></script>
+<script src="wb/c208b.js"></script>
+<script src="wb/ga8.js"></script>
 <!-- aircraft:end -->
 
 <script>
@@ -354,11 +380,11 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "155fabd2";
+const BUILD = "765fde42";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
-const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}};
-const MODES = [["normal","Normal","Normal"],["abnormal","Abnormal","Abnorm"],["emergency","Emergency","Emerg"],["charts","Charts","Charts"],["status","Status","Status"]];
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}};
+const MODES = [["normal","Normal","Normal"],["abnormal","Abnormal","Abnorm"],["emergency","Emergency","Emerg"],["wb","W&B","W&B"],["charts","Charts","Charts"],["status","Status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
 const CUSTOM_ID="approach-custom";
@@ -397,6 +423,7 @@ function load(){
         if(s.uses && typeof s.uses==="object") state.uses = s.uses;
         if(s.favAsked && typeof s.favAsked==="object") state.favAsked = s.favAsked;
         if(s.custom && typeof s.custom==="object") state.custom = s.custom;
+        if(s.wb && typeof s.wb==="object") state.wb = s.wb;
         if(s.sharedApproach && typeof s.sharedApproach==="object") state.sharedApproach = {on:!!s.sharedApproach.on, name:String(s.sharedApproach.name||""), items:Array.isArray(s.sharedApproach.items)?s.sharedApproach.items:[]};
         if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
         if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
@@ -416,7 +443,7 @@ function load(){
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
@@ -559,7 +586,7 @@ function render(){
   renderThemeButton();
   $("#main").classList.toggle("showing-proc",!!a&&state.showing);
   $("#main").classList.toggle("picker",!a);
-  const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
+  const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts"&&state.mode!=="wb") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
   if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); renderVoiceBar(); return; }
   renderSide();renderView();renderVoiceBar();renderWakeDot();
   const k=render._keep; if(k){ const se=document.getElementById("side"), ve=document.getElementById("view"); if(se) se.scrollTop=k.side;
@@ -636,6 +663,7 @@ function renderSide(){
   const fp=favPrompt(); if(fp) s.append(fp);
   if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"))));return}
   if(state.mode==="charts"){s.append(h("div",{class:"group-title"},"Charts"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Charts and documents"))));return}
+  if(state.mode==="wb"){ renderWbSide(s); return; }
   const list=h("div",{class:"list"});
   const gt=h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures");
   if(voice.reply&&SRX()) gt.append(h("button",{class:"mic"+(recallState.on?" on":""),title:"Say a procedure name",onclick:voiceRecall},recallState.on?"● Listening":"🎤 Say procedure"));
@@ -669,6 +697,7 @@ function renderView(){
   const v=$("#view");v.innerHTML="";
   if(state.mode==="status"){renderStatus(v);return}
   if(state.mode==="charts"){renderCharts(v);return}
+  if(state.mode==="wb"){renderWb(v);return}
   if(state.mode==="normal"&&state.sel==="__vs"){renderVspeeds(v);return}
   const p=proc(state.mode,state.sel);
   if(!p){v.append(h("div",{class:"status"},h("div",{class:"empty"},"Select a checklist."))); return}
@@ -713,6 +742,225 @@ function renderView(){
   }
 }
 
+/* ---------------- WEIGHT AND BALANCE ----------------
+   Type templates live in wb/<id>.js (window.WB[id]): units, stations, fuel data, limits, envelope. A registration
+   profile (state.wb[aircraft][rego]) copies the template and adds the airframe's empty weight and arm from its
+   weight and balance report; the pilot corrects any template figure there. Loads and fuel for the flight are kept
+   per registration. Everything is computed in the template's units (lb/in or kg/mm). */
+const WBT = () => { const a=AC(); return a && window.WB && window.WB[a.id] ? window.WB[a.id] : null; };
+function wbStore(){ const a=AC(); if(!a) return null; if(!state.wb[a.id]) state.wb[a.id]={profiles:{},current:null}; const st=state.wb[a.id]; if(!st.profiles) st.profiles={}; return st; }
+function wbProfiles(){ const st=wbStore(); return st?Object.values(st.profiles).sort((x,y)=>x.rego.localeCompare(y.rego)):[]; }
+function wbCurrent(){ const st=wbStore(); if(!st) return null; return (st.current && st.profiles[st.current]) || null; }
+function wbNewProfile(rego){
+  const t=WBT(); const clone=x=>JSON.parse(JSON.stringify(x));
+  return { rego, emptyWeight:null, emptyArm:null, reportDate:"", notes:"",
+    units:t?clone(t.units):{weight:"kg",arm:"mm",fuel:"L"}, fuelDensity:t?t.fuelDensity:0.72, fuelArm:t?t.fuelArm:null, fuelCapacity:t?t.fuelCapacity:null,
+    limits:t?clone(t.limits):{maxRamp:null,maxTakeoff:null,maxLanding:null,maxZeroFuel:null},
+    stations:t?t.stations.map(s=>({id:s.id,name:s.name,arm:s.arm,max:s.max})):[{id:"row1",name:"Pilot and front passenger",arm:null,max:null}],
+    envelope:t?clone(t.envelope):{forward:[],aft:[]},
+    loads:{}, fuel:null, burn:null, taxi:null };
+}
+const num=v=>{ if(v===null||v===undefined||v==="") return null; const n=Number(v); return isFinite(n)?n:null; };
+function wbLimitAt(points, w){   // interpolate an arm limit at weight w from [weight, arm] pairs
+  if(!points||points.length<1) return null;
+  const pts=points.map(p=>[num(p[0]),num(p[1])]).filter(p=>p[0]!==null&&p[1]!==null).sort((a,b)=>a[0]-b[0]);
+  if(!pts.length) return null;
+  if(w<=pts[0][0]) return pts[0][1];
+  if(w>=pts[pts.length-1][0]) return pts[pts.length-1][1];
+  for(let i=1;i<pts.length;i++){ if(w<=pts[i][0]){ const [w0,a0]=pts[i-1],[w1,a1]=pts[i]; return w1===w0?a1:a0+(a1-a0)*(w-w0)/(w1-w0); } }
+  return pts[pts.length-1][1];
+}
+function wbCompute(p){
+  const problems=[], exceed=[];
+  const ew=num(p.emptyWeight), ea=num(p.emptyArm);
+  if(ew===null||ea===null) problems.push("Enter the empty weight and arm from the aircraft's weight and balance report (Edit profile).");
+  let w=ew||0, m=(ew||0)*(ea||0);
+  const rows=[];
+  p.stations.forEach(st=>{ const l=num(p.loads[st.id]); if(l){ const arm=num(st.arm); if(arm===null) problems.push("No arm for “"+st.name+"” – enter it in Edit profile."); else { w+=l; m+=l*arm; } if(st.max!==null&&st.max!==undefined&&l>num(st.max)) exceed.push("“"+st.name+"” exceeds its limit of "+st.max+" "+p.units.weight+"."); rows.push({name:st.name,load:l,arm}); } });
+  const zfw=w, zfwArm=w?m/w:null;
+  const dens=num(p.fuelDensity)||0, fuelQty=num(p.fuel)||0, burnQty=num(p.burn)||0, taxiQty=num(p.taxi)||0;
+  const fArm=num(p.fuelArm);
+  if(fuelQty&&fArm===null) problems.push("No fuel arm – enter it in Edit profile.");
+  if(num(p.fuelCapacity)&&fuelQty>num(p.fuelCapacity)) exceed.push("Fuel exceeds the usable capacity of "+p.fuelCapacity+" "+p.units.fuel+".");
+  const fuelW=fuelQty*dens, taxiW=taxiQty*dens, burnW=burnQty*dens;
+  const rampW=zfw+fuelW, rampArm=rampW?(m+fuelW*(fArm||0))/rampW:null;
+  const toW=rampW-taxiW, toArm=toW?(m+(fuelW-taxiW)*(fArm||0))/toW:null;
+  const ldW=toW-burnW, ldArm=ldW?(m+(fuelW-taxiW-burnW)*(fArm||0))/ldW:null;
+  if(burnW>fuelW-taxiW) problems.push("Fuel burn exceeds the fuel on board.");
+  const L=p.limits||{};
+  const check=(label,wt,arm)=>{
+    const fwd=wbLimitAt(p.envelope.forward,wt), aft=wbLimitAt(p.envelope.aft,wt);
+    const env = (fwd!==null&&aft!==null) ? (arm>=fwd&&arm<=aft) : null;
+    return {label,w:wt,arm,fwd,aft,env};
+  };
+  const pts={ zfw:check("Zero fuel",zfw,zfwArm), ramp:check("Ramp",rampW,rampArm), to:check("Take-off",toW,toArm), ld:check("Landing",ldW,ldArm) };
+  const over=exceed.slice();
+  if(num(L.maxRamp)!==null&&rampW>L.maxRamp) over.push("Ramp weight over "+L.maxRamp);
+  if(num(L.maxTakeoff)!==null&&toW>L.maxTakeoff) over.push("Take-off weight over "+L.maxTakeoff);
+  if(num(L.maxLanding)!==null&&ldW>L.maxLanding) over.push("Landing weight over "+L.maxLanding);
+  if(num(L.maxZeroFuel)!==null&&zfw>L.maxZeroFuel) over.push("Zero-fuel weight over "+L.maxZeroFuel);
+  const envelopeKnown = pts.to.env!==null;
+  const complete = ew!==null && ea!==null && !problems.length;
+  const inLimits = complete && envelopeKnown && !over.length && pts.to.env && pts.ld.env && pts.zfw.env;
+  return {rows,pts,over,problems,complete,envelopeKnown,inLimits,fuelW,burnW,taxiW,units:p.units};
+}
+const fmt=(n,d)=>n===null||n===undefined||!isFinite(n)?"–":Number(n).toLocaleString(undefined,{maximumFractionDigits:d===undefined?1:d,minimumFractionDigits:0});
+const altW=(w,u)=>u==="lb"?fmt(w*0.45359237,0)+" kg":fmt(w/0.45359237,0)+" lb";
+
+function renderWbSide(sEl){
+  const t=WBT(); const a=AC();
+  sEl.append(h("div",{class:"group-title"},"Weight & balance"));
+  const list=h("div",{class:"list"});
+  const st=wbStore();
+  wbProfiles().forEach(p=>list.append(h("button",{class:(state.sel===p.rego?"sel":""),onclick:()=>go(()=>{st.current=p.rego;state.sel=p.rego;state.showing=true})},h("span",{class:"dot "+(num(p.emptyWeight)!==null?"done":"")}),h("span",{class:"name"},p.rego),h("span",{class:"n"},num(p.emptyWeight)!==null?"":"setup"))));
+  list.append(h("button",{onclick:()=>wbAddProfile()},h("span",{class:"dot"}),h("span",{class:"name"},"+ Add registration")));
+  sEl.append(list);
+  if(!t) sEl.append(h("div",{class:"saved",style:"padding:8px 16px"},"No type template for the "+(a?a.short:"")+" yet: a new registration starts blank and every figure is entered from the POH."));
+  else if(!t.verified) sEl.append(h("div",{class:"saved",style:"padding:8px 16px"},"Template figures for this type are unverified – check them against the POH when setting up a registration."));
+}
+function wbAddProfile(){
+  const st=wbStore(); if(!st) return;
+  const old=document.getElementById("sheet"); if(old) old.remove();
+  const inp=h("input",{id:"wb-rego",type:"text",placeholder:"VH-ABC",style:"font:inherit;font-size:18px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);width:100%;text-transform:uppercase"});
+  const msg=h("div",{class:"hint",id:"cust-msg"});
+  const card=h("div",{class:"card2 editor"},h("h2",{},"Add a registration – "+AC().short),h("div",{class:"hint"},"A profile holds this airframe's empty weight and arm, station arms, limits and envelope. You will enter them from its weight and balance report and the POH on the next screen."),inp,msg);
+  const actions=h("div",{class:"actions"});
+  actions.append(h("button",{class:"primary",onclick:()=>{ const r=inp.value.toUpperCase().replace(/[^A-Z0-9-]/g,"").trim(); if(r.length<3){ msg.textContent="Enter the registration, for example VH-ABC."; return; } if(st.profiles[r]){ msg.textContent="That registration already exists."; return; } st.profiles[r]=wbNewProfile(r); st.current=r; state.sel=r; state.showing=true; save(); document.getElementById("sheet").remove(); render(); wbEditProfile(); }},"Continue"));
+  actions.append(h("button",{onclick:()=>document.getElementById("sheet").remove()},"Cancel"));
+  card.append(actions);
+  document.body.append(h("div",{class:"sheet",id:"sheet"},card));
+  setTimeout(()=>inp.focus(),50);
+}
+function wbEditProfile(){
+  const st=wbStore(); const p=wbCurrent(); if(!p) return; const t=WBT();
+  const d=JSON.parse(JSON.stringify(p));
+  const old=document.getElementById("sheet"); if(old) old.remove();
+  const card=h("div",{class:"card2 editor"}); const sheet=h("div",{class:"sheet",id:"sheet"},card);
+  const field=(label,key,obj,type,hint)=>{ const i=h("input",{id:"wbf-"+key,type:type||"number",step:"any",inputmode:"decimal",value:obj[key]===null||obj[key]===undefined?"":obj[key]}); i.oninput=ev=>{ obj[key]=type==="text"||type==="date"?ev.target.value:(ev.target.value===""?null:ev.target.value); }; return h("div",{class:"line",style:"grid-template-columns:1fr auto"},h("span",{},label,hint?h("div",{class:"hint",style:"margin:0"},hint):""),i); };
+  const draw=()=>{
+    card.innerHTML="";
+    card.append(h("h2",{},"Profile – "+d.rego));
+    card.append(h("div",{class:"hint"},"Units: weight in "+d.units.weight+", arms in "+d.units.arm+", fuel in "+d.units.fuel+". "+(t&&!t.verified?"Figures copied from the type template are UNVERIFIED – check each against the POH.":"")));
+    card.append(h("h3",{style:"font-size:15px;margin:12px 0 4px"},"Aircraft"));
+    card.append(field("Basic empty weight ("+d.units.weight+")","emptyWeight",d,"number","From the current weight and balance report"));
+    card.append(field("Empty weight arm ("+d.units.arm+")","emptyArm",d,"number","Moment ÷ weight if the report gives a moment"));
+    card.append(field("Report date","reportDate",d,"date","Date of the weight and balance report"));
+    card.append(h("h3",{style:"font-size:15px;margin:12px 0 4px"},"Limits ("+d.units.weight+")"));
+    card.append(field("Maximum ramp weight","maxRamp",d.limits,"number","Blank if not published"));
+    card.append(field("Maximum take-off weight","maxTakeoff",d.limits,"number"));
+    card.append(field("Maximum landing weight","maxLanding",d.limits,"number"));
+    card.append(field("Maximum zero-fuel weight","maxZeroFuel",d.limits,"number","Blank if not published"));
+    card.append(h("h3",{style:"font-size:15px;margin:12px 0 4px"},"Fuel"));
+    card.append(field("Fuel arm ("+d.units.arm+")","fuelArm",d,"number"));
+    card.append(field("Fuel density ("+d.units.weight+" per "+d.units.fuel+")","fuelDensity",d,"number","Jet A-1 about 6.7 lb/USgal or 0.80 kg/L; Avgas about 6.0 lb/USgal or 0.72 kg/L"));
+    card.append(field("Usable capacity ("+d.units.fuel+")","fuelCapacity",d,"number"));
+    card.append(h("h3",{style:"font-size:15px;margin:12px 0 4px"},"Stations (arm in "+d.units.arm+", limit in "+d.units.weight+")"));
+    d.stations.forEach((stn,i)=>{
+      const n=h("input",{id:"wbs-n"+i,type:"text",value:stn.name}); n.oninput=ev=>{stn.name=ev.target.value};
+      const ar=h("input",{id:"wbs-a"+i,type:"number",step:"any",inputmode:"decimal",value:stn.arm===null||stn.arm===undefined?"":stn.arm,placeholder:"arm"}); ar.oninput=ev=>{stn.arm=ev.target.value===""?null:ev.target.value};
+      const mx=h("input",{id:"wbs-m"+i,type:"number",step:"any",inputmode:"decimal",value:stn.max===null||stn.max===undefined?"":stn.max,placeholder:"limit"}); mx.oninput=ev=>{stn.max=ev.target.value===""?null:ev.target.value};
+      card.append(h("div",{class:"line",style:"grid-template-columns:2fr 1fr 1fr auto"},n,ar,mx,h("div",{class:"ops"},h("button",{title:"Delete",onclick:()=>{d.stations.splice(i,1);draw()}},"✕"))));
+    });
+    card.append(h("div",{class:"actions"},h("button",{onclick:()=>{d.stations.push({id:"s"+Date.now().toString(36),name:"",arm:null,max:null});draw()}},"+ Add station")));
+    card.append(h("h3",{style:"font-size:15px;margin:12px 0 4px"},"CG envelope (weight in "+d.units.weight+", arm in "+d.units.arm+")"));
+    card.append(h("div",{class:"hint"},"Enter the published limits as points; the app draws straight lines between them. At least two forward and two aft points, lowest weight first."));
+    ["forward","aft"].forEach(side=>{
+      card.append(h("div",{style:"font-weight:600;margin:6px 0 2px"},side==="forward"?"Forward limit":"Aft limit"));
+      d.envelope[side].forEach((pt,i)=>{
+        const w=h("input",{id:"wbe-"+side+"-w"+i,type:"number",step:"any",inputmode:"decimal",value:pt[0]===null?"":pt[0],placeholder:"weight"}); w.oninput=ev=>{pt[0]=ev.target.value===""?null:ev.target.value};
+        const ar=h("input",{id:"wbe-"+side+"-a"+i,type:"number",step:"any",inputmode:"decimal",value:pt[1]===null?"":pt[1],placeholder:"arm"}); ar.oninput=ev=>{pt[1]=ev.target.value===""?null:ev.target.value};
+        card.append(h("div",{class:"line",style:"grid-template-columns:1fr 1fr auto"},w,ar,h("div",{class:"ops"},h("button",{title:"Delete",onclick:()=>{d.envelope[side].splice(i,1);draw()}},"✕"))));
+      });
+      card.append(h("div",{class:"actions"},h("button",{onclick:()=>{d.envelope[side].push([null,null]);draw()}},"+ Add "+side+" point")));
+    });
+    card.append(field("Notes","notes",d,"text","Configuration, source document, anything a pilot should know"));
+    const actions=h("div",{class:"actions"});
+    actions.append(h("button",{class:"primary",onclick:()=>{
+      const bad=[]; if(num(d.emptyWeight)===null) bad.push("empty weight"); if(num(d.emptyArm)===null) bad.push("empty arm");
+      if(bad.length){ msg("Still needed: "+bad.join(", ")+". You can save anyway and finish later; nothing is computed until they are present."); }
+      d.stations=d.stations.filter(x=>String(x.name||"").trim());
+      d.envelope.forward=d.envelope.forward.filter(x=>num(x[0])!==null&&num(x[1])!==null); d.envelope.aft=d.envelope.aft.filter(x=>num(x[0])!==null&&num(x[1])!==null);
+      st.profiles[d.rego]=d; save(); sheet.remove(); render();
+    }},"Save"));
+    actions.append(h("button",{class:"danger",onclick:()=>{ if(card.dataset.confirm!=="1"){ card.dataset.confirm="1"; msg("Tap Delete again to remove "+d.rego+" from this device."); return; } delete st.profiles[d.rego]; st.current=null; state.sel=null; save(); sheet.remove(); render(); }},"Delete registration"));
+    actions.append(h("button",{onclick:()=>sheet.remove()},"Cancel"));
+    card.append(actions); card.append(h("div",{class:"hint",id:"cust-msg"}));
+  };
+  const msg=t2=>{ const el=document.getElementById("cust-msg"); if(el) el.textContent=t2; };
+  draw(); document.body.append(sheet);
+}
+function wbSvg(p,res){
+  const fwd=(p.envelope.forward||[]).map(x=>[num(x[0]),num(x[1])]).filter(x=>x[0]!==null&&x[1]!==null).sort((a,b)=>a[0]-b[0]);
+  const aft=(p.envelope.aft||[]).map(x=>[num(x[0]),num(x[1])]).filter(x=>x[0]!==null&&x[1]!==null).sort((a,b)=>a[0]-b[0]);
+  if(fwd.length<1||aft.length<1) return null;
+  const pts=[res.pts.zfw,res.pts.to,res.pts.ld].filter(x=>x.w&&x.arm!==null);
+  const arms=fwd.concat(aft).map(x=>x[1]).concat(pts.map(x=>x.arm)), ws=fwd.concat(aft).map(x=>x[0]).concat(pts.map(x=>x.w));
+  let x0=Math.min(...arms), x1=Math.max(...arms), y0=Math.min(...ws), y1=Math.max(...ws);
+  const px=(x1-x0)*0.12||1, py=(y1-y0)*0.12||1; x0-=px; x1+=px; y0-=py; y1+=py;
+  const W=640,H=400,L=64,R=16,T=16,B=44;
+  const X=v=>L+(v-x0)/(x1-x0)*(W-L-R), Y=v=>H-B-(v-y0)/(y1-y0)*(H-T-B);
+  const poly=fwd.map(q=>X(q[1])+","+Y(q[0])).concat(aft.slice().reverse().map(q=>X(q[1])+","+Y(q[0]))).join(" ");
+  const ticks=(a,b,n)=>{ const step=Math.pow(10,Math.floor(Math.log10((b-a)/n)))*((b-a)/n/Math.pow(10,Math.floor(Math.log10((b-a)/n)))>5?5:((b-a)/n/Math.pow(10,Math.floor(Math.log10((b-a)/n)))>2?2:1)); const out=[]; for(let v=Math.ceil(a/step)*step; v<=b; v+=step) out.push(v); return out; };
+  let g="";
+  ticks(x0,x1,6).forEach(v=>{ g+=`<line x1="${X(v)}" y1="${T}" x2="${X(v)}" y2="${H-B}" stroke="var(--line)" stroke-width="1"/><text x="${X(v)}" y="${H-B+16}" text-anchor="middle" font-size="11" fill="var(--ink-dim)">${fmt(v,0)}</text>`; });
+  ticks(y0,y1,6).forEach(v=>{ g+=`<line x1="${L}" y1="${Y(v)}" x2="${W-R}" y2="${Y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end" font-size="11" fill="var(--ink-dim)">${fmt(v,0)}</text>`; });
+  g+=`<polygon points="${poly}" fill="color-mix(in srgb, var(--green) 18%, transparent)" stroke="var(--green)" stroke-width="2"/>`;
+  const colors={ "Zero fuel":"var(--ink-dim)", "Take-off":"var(--cyan)", "Landing":"var(--amber)" };
+  if(pts.length>1){ g+=`<polyline points="${pts.map(q=>X(q.arm)+","+Y(q.w)).join(" ")}" fill="none" stroke="var(--ink-dim)" stroke-dasharray="4 4" stroke-width="1.5"/>`; }
+  pts.forEach(q=>{ g+=`<circle cx="${X(q.arm)}" cy="${Y(q.w)}" r="6" fill="${q.env===false?"var(--red)":colors[q.label]}" stroke="var(--panel)" stroke-width="2"/><text x="${X(q.arm)+9}" y="${Y(q.w)+4}" font-size="12" font-weight="600" fill="var(--ink)">${q.label}</text>`; });
+  g+=`<text x="${(L+W-R)/2}" y="${H-6}" text-anchor="middle" font-size="12" fill="var(--ink-dim)">CG arm (${p.units.arm})</text>`;
+  g+=`<text transform="translate(14 ${(T+H-B)/2}) rotate(-90)" text-anchor="middle" font-size="12" fill="var(--ink-dim)">Weight (${p.units.weight})</text>`;
+  const svg=document.createElementNS("http://www.w3.org/2000/svg","svg"); svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.setAttribute("role","img"); svg.setAttribute("aria-label","Centre of gravity envelope with zero-fuel, take-off and landing points"); svg.innerHTML=g; return svg;
+}
+function wbRecalc(){   // update the results in place while the pilot types
+  const p=wbCurrent(); if(!p) return; const res=wbCompute(p); const box=document.getElementById("wb-results"); if(!box) return; box.innerHTML=""; box.append(...wbResultNodes(p,res)); save();
+}
+function wbResultNodes(p,res){
+  const out=[]; const u=p.units;
+  if(res.problems.length){ out.push(h("div",{class:"warn red"},h("div",{style:"font-weight:700"},"Cannot compute yet"),...res.problems.map(x=>h("div",{},x)))); }
+  const cell=(k,v,s,cls)=>h("div",{class:"cell "+(cls||"")},h("div",{class:"k"},k),h("div",{class:"v"},v),h("div",{class:"s"},s));
+  const pt=(key,label)=>{ const q=res.pts[key]; const bad=(q.env===false); return cell(label, fmt(q.w,0)+" "+u.weight, (q.arm!==null?"CG "+fmt(q.arm,1)+" "+u.arm:"")+(q.fwd!==null?" · limits "+fmt(q.fwd,1)+"–"+fmt(q.aft,1):"")+" · "+altW(q.w,u.weight), bad?"bad":(q.env?"ok":"")); };
+  const grid=h("div",{class:"res"}); grid.append(pt("zfw","Zero fuel"),pt("ramp","Ramp"),pt("to","Take-off"),pt("ld","Landing")); out.push(grid);
+  out.push(h("div",{class:"saved"},"Fuel on board "+fmt(res.fuelW,0)+" "+u.weight+(res.taxiW?", taxi "+fmt(res.taxiW,0):"")+", burn "+fmt(res.burnW,0)+" "+u.weight+"."));
+  res.over.forEach(x=>out.push(h("div",{class:"warn red"},/\.$/.test(x)?x:x+" "+u.weight+".")));
+  if(!res.complete) out.push(h("div",{class:"verdict na"},"INCOMPLETE – see above"));
+  else if(!res.envelopeKnown) out.push(h("div",{class:"verdict na"},"WEIGHTS COMPUTED – no CG envelope entered, so CG limits are not checked"));
+  else out.push(h("div",{class:"verdict "+(res.inLimits?"ok":"bad")},res.inLimits?"WITHIN LIMITS":"OUTSIDE LIMITS"));
+  const svg=wbSvg(p,res); if(svg) out.push(svg);
+  return out;
+}
+function renderWb(v){
+  const a=AC(); const t=WBT(); const st=wbStore(); const p=wbCurrent();
+  const w=h("div",{class:"wb"});
+  w.append(h("div",{class:"proc-head",style:"margin:0 -16px 8px"},h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),h("h1",{},p?p.rego:"Weight & balance",h("span",{class:"cond"},a.maker+" "+a.model+(p&&p.reportDate?" · W&B report "+p.reportDate:""))),p?h("div",{class:"tools"},h("button",{onclick:wbEditProfile},"Edit profile")):""));
+  if(!p){
+    w.append(h("div",{class:"warn"},"Set up a registration to compute weight and balance for a specific airframe. Each profile holds that aircraft's empty weight and arm from its weight and balance report, plus the station arms, limits and CG envelope from the POH."));
+    if(t) w.append(h("div",{class:"saved"},"Type template: "+t.basis)); else w.append(h("div",{class:"saved"},"No type template for the "+a.short+": a new registration starts blank."));
+    w.append(h("div",{class:"btns"},h("button",{class:"primary",onclick:wbAddProfile},"+ Add registration")));
+    v.append(w); return;
+  }
+  const u=p.units;
+  if(t&&!t.verified) w.append(h("div",{class:"warn"},"Template figures for this type are UNVERIFIED. Confirm every arm, limit and envelope point in Edit profile against the POH and this aircraft's weight and balance report before relying on the result."));
+  if(num(p.emptyWeight)===null||num(p.emptyArm)===null) w.append(h("div",{class:"warn red"},"Empty weight and arm have not been entered for "+p.rego+". Tap Edit profile."));
+  w.append(h("h2",{},"Loads ("+u.weight+")"));
+  const tbl=h("table",{}); tbl.append(h("tr",{},h("th",{},"Station"),h("th",{class:"num"},"Arm "+u.arm),h("th",{class:"num"},"Weight")));
+  p.stations.forEach(stn=>{
+    const inp=h("input",{id:"wb-load-"+stn.id,type:"number",step:"any",inputmode:"decimal",min:"0",value:p.loads[stn.id]===undefined||p.loads[stn.id]===null?"":p.loads[stn.id],placeholder:"0"});
+    inp.oninput=ev=>{ p.loads[stn.id]=ev.target.value===""?null:ev.target.value; wbRecalc(); };
+    tbl.append(h("tr",{},h("td",{},stn.name,stn.max!==null&&stn.max!==undefined?h("div",{class:"dim"},"max "+stn.max):""),h("td",{class:"num dim"},stn.arm===null||stn.arm===undefined?"–":fmt(stn.arm,1)),h("td",{class:"num"},inp)));
+  });
+  const fuelRow=(label,key,hint)=>{ const inp=h("input",{id:"wb-"+key,type:"number",step:"any",inputmode:"decimal",min:"0",value:p[key]===null||p[key]===undefined?"":p[key],placeholder:"0"}); inp.oninput=ev=>{ p[key]=ev.target.value===""?null:ev.target.value; wbRecalc(); }; tbl.append(h("tr",{},h("td",{},label,hint?h("div",{class:"dim"},hint):""),h("td",{class:"num dim"},p.fuelArm===null||p.fuelArm===undefined?"–":fmt(p.fuelArm,1)),h("td",{class:"num"},inp))); };
+  fuelRow("Fuel on board ("+u.fuel+")","fuel",(p.fuelCapacity?"usable "+p.fuelCapacity+" "+u.fuel+" · ":"")+fmt(p.fuelDensity,2)+" "+u.weight+"/"+u.fuel);
+  fuelRow("Taxi fuel ("+u.fuel+")","taxi","burnt before take-off");
+  fuelRow("Trip fuel burn ("+u.fuel+")","burn","to landing");
+  w.append(tbl);
+  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ p.loads={}; p.fuel=null; p.burn=null; p.taxi=null; save(); render(); }},"Clear loads")));
+  w.append(h("h2",{},"Result"));
+  const box=h("div",{id:"wb-results"}); box.append(...wbResultNodes(p,wbCompute(p))); w.append(box);
+  w.append(h("div",{class:"saved"},"Empty weight "+fmt(p.emptyWeight,0)+" "+u.weight+" at "+fmt(p.emptyArm,1)+" "+u.arm+(p.reportDate?" (report "+p.reportDate+")":"")+". "+(p.notes||"")));
+  w.append(h("div",{class:"saved"},"This calculation is an aid. The pilot in command remains responsible for the weight and balance of the aircraft and must confirm the figures against the POH and the aircraft's weight and balance report."));
+  v.append(w);
+}
 const CHARTS_KEY="ga-ecl-charts";
 let chartsPrefs={icao:""}; try{ const c=JSON.parse(localStorage.getItem(CHARTS_KEY)||"null"); if(c&&typeof c==="object"&&typeof c.icao==="string") chartsPrefs.icao=c.icao; }catch(e){}
 function renderCharts(v){
@@ -805,7 +1053,7 @@ function renderStatus(v){
   if(edited.length) edited.forEach(p=>w.append(h("div",{class:"row"},h("span",{},p.name+" ✎ · "+cfS.overrides[p.id].items.filter(it=>!it.note).length+" lines"),h("button",{class:"link",onclick:()=>openEditor(p.id)},"Edit"))));
   else w.append(h("div",{class:"saved"},"No built-in normal checklist has been edited for the "+a.short+" on this device. Open any normal checklist and tap Edit to add, remove or reorder lines."));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:exportCustom},"Export customisations…"),h("button",{class:"link",onclick:importCustom},"Import…")));
-  w.append(h("div",{class:"saved"},"Edits apply to normal checklists only and are kept on this device for this aircraft. Abnormal and emergency procedures cannot be edited. Export produces text an operator can send to pilots, who paste it with Import."));
+  w.append(h("div",{class:"saved"},"Edits apply to normal checklists only and are kept on this device for this aircraft. Abnormal and emergency procedures cannot be edited. Export produces text an operator can send to pilots, who paste it with Import; it includes the weight and balance registrations for this aircraft."));
   w.append(h("h2",{},"Voice"));
   const tog=(label,get,set,hint)=>h("div",{class:"row"},h("span",{},label,h("div",{class:"saved",style:"margin-top:2px"},hint)),h("button",{class:"tog"+(get()?" on":""),onclick:()=>{set(!get());saveVoice();render()}},get()?"On":"Off"));
   if(!TTS) w.append(h("div",{class:"empty"},"This browser cannot read text aloud."));
@@ -1004,7 +1252,7 @@ function openEditor(pid){
 function exportCustom(){
   const a=AC(); if(!a) return;
   const cf=customFor(a.id);
-  const payload={aeroe:"custom-checklists",version:1,aircraft:a.id,exported:new Date().toISOString(),approach:(sharedApproachActive(a.id)?{name:state.sharedApproach.name||"Approach (shared)",items:state.sharedApproach.items}:(cf.approach||null)),overrides:cf.overrides||{}};
+  const payload={aeroe:"custom-checklists",version:2,aircraft:a.id,exported:new Date().toISOString(),approach:(sharedApproachActive(a.id)?{name:state.sharedApproach.name||"Approach (shared)",items:state.sharedApproach.items}:(cf.approach||null)),overrides:cf.overrides||{},wb:(state.wb[a.id]&&state.wb[a.id].profiles)||{}};
   const text=JSON.stringify(payload,null,1);
   const old=document.getElementById("sheet"); if(old) old.remove();
   const ta=h("textarea",{id:"cust-export",readonly:"readonly",style:"width:100%;height:180px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);padding:8px"},text);
@@ -1031,6 +1279,7 @@ function importCustom(){
     const overrides={}; for(const k of Object.keys(j.overrides||{})){ const o=j.overrides[k]; if(a.normal.some(p=>p.id===k)&&o&&Array.isArray(o.items)&&o.items.every(ok)&&o.items.length) overrides[k]={items:o.items,savedAt:Date.now()}; }
     const approach=(j.approach&&Array.isArray(j.approach.items)&&j.approach.items.every(ok)&&j.approach.items.length)?{name:String(j.approach.name||"Approach (custom)"),items:j.approach.items}:null;
     state.custom[a.id]={approach,overrides};
+    if(j.wb&&typeof j.wb==="object"){ const prof={}; for(const k of Object.keys(j.wb)){ const q=j.wb[k]; if(q&&typeof q==="object"&&typeof q.rego==="string"&&Array.isArray(q.stations)) prof[q.rego]=q; } state.wb[a.id]={profiles:prof,current:Object.keys(prof)[0]||null}; }
     state.per[a.id]={ticks:{},branches:{}};
     save(); document.getElementById("sheet").remove(); render();
   }},"Import"));
@@ -1565,7 +1814,7 @@ function renderVoiceBar(){
   const old=document.getElementById("vbar"); if(old) old.remove();
   const main=$("#main");
   const c=currentRows();
-  const show=voice.read && c && state.mode!=="status" && state.mode!=="charts" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
+  const show=voice.read && c && state.mode!=="status" && state.mode!=="charts" && state.mode!=="wb" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
   main.classList.toggle("voice-on",!!show);
   if(!show){ if(vs.active) voiceStop(true); return; }
   if(vs.pid!==c.p.id){ vs.pid=c.p.id; vs.active=false; vs.pending=null; vs.readNotes={}; vs.skipped={}; vs.status=""; vs.heard=""; }

@@ -54,6 +54,7 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <li><a href="#efb">EFB files for OzRunways and AvPlan</a></li>
 <li><a href="#links">Direct links to an aircraft</a></li>
 <li><a href="#charts">Charts tab</a></li>
+<li><a href="#wb">Weight and balance</a></li>
 <li><a href="#voice">Voice: read aloud, spoken replies and recall</a></li>
 <li><a href="#trouble">If something looks wrong</a></li>
 </ol></div>
@@ -82,6 +83,7 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <b class="g">Normal</b><span>The flight sequence: Before Start, Engine Start, Before Taxi, Before Takeoff, After Takeoff / Climb, Cruise, Descent, Before Landing, After Landing, Shutdown. The first entry, V-speeds &amp; limits, is a reference page, not a checklist.</span>
 <b class="a">Abnormal</b><span>Caution-level problems: alternator failure, low oil pressure, gear unsafe, icing and so on. Action is needed but not immediately.</span>
 <b class="r">Emergency</b><span>Warning-level procedures: engine failure, fire, emergency descent, decompression. Immediate action.</span>
+<b>W&amp;B</b><span>Weight and balance for a specific registration of the current type. See section 12a.</span>
 <b>Charts</b><span>Links that open the Airservices DAP, ERSA and NAIPS pages, or your chart app, outside AeroE. See section 12.</span>
 <b>Status</b><span>Where you are across the whole flight: procedures in progress, items deferred to landing, normal checklist completion, favourites, customised checklists, EFB files, voice settings, version and updates. A number on the tab means an abnormal or emergency procedure is still open.</span>
 </div>
@@ -158,6 +160,15 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <h2 id="charts">12. Charts tab</h2>
 <p>Charts cannot be displayed inside AeroE: Jeppesen FD Pro is a separate app, and the Airservices AIP site does not allow its pages to be shown inside another site. The Charts tab instead gives one-tap links that open outside the app: the AIP index, the DAP index and ERSA contents for the current amendment cycle, an AIP search for the aerodrome code you enter, the NAIPS app or website, and buttons that switch to FliteDeck Pro X, OzRunways or AvPlan when they are installed. The practical arrangement on an iPad is <strong>Split View</strong>: with AeroE open, swipe up slightly to show the Dock and drag your chart app or Safari to the side of the screen. Both stay visible through departure and approach. ERSA is not a separate app: it is inside OzRunways and AvPlan, so the Open OzRunways button is the quickest route to an aerodrome's entry. Open NAIPS app switches to the NAIPS app when it is installed; the website link is beside it. The Charts page needs signal and is not stored offline.</p>
 <p>In Split View the header shortens its tab labels to fit the narrower window.</p>
+
+<h2 id="wb">12a. Weight and balance</h2>
+<p>The W&amp;B tab computes weight and balance for one specific airframe. It is available for every type, with type templates for the C208B and GA8 that pre-fill the station layout, units, fuel density and limits; other types start blank.</p>
+<ol>
+<li><strong>Add a registration.</strong> Tap + Add registration, enter the registration, then complete the profile: basic empty weight and arm from that aircraft's current weight and balance report (and its date), the station arms and any station limits, fuel arm, density and usable capacity, the maximum weights, and the CG envelope as forward and aft points of weight and arm from the POH. Every figure copied from a template is marked unverified until you have checked it.</li>
+<li><strong>Load the flight.</strong> Enter the weight at each station, fuel on board, taxi fuel and trip burn in the profile's units. Results update as you type: zero-fuel, ramp, take-off and landing weights with their CG arms and the forward and aft limits at that weight, the fuel weights, any station or weight limit exceeded, and a WITHIN LIMITS or OUTSIDE LIMITS verdict. The envelope plot shows the three points with the take-off to landing line.</li>
+<li><strong>Keep it.</strong> Loads are remembered per registration, so a regular flight is a few taps. Clear loads resets them. Profiles are included in Export and Import, so a school can issue its fleet's registrations.</li>
+</ol>
+<div class="note warn">The calculation is only as good as the profile. Enter the empty weight and arm from the aircraft's own report, confirm template figures against the POH, and treat the result as an aid: the pilot in command remains responsible for the aircraft's weight and balance.</div>
 
 <h2 id="voice">13. Voice: read aloud, spoken replies and recall</h2>
 <p>Voice is off until you turn it on under <strong>Status → Voice</strong>. It has three parts.</p>

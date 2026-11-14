@@ -76,9 +76,33 @@ header .theme.on{color:var(--ink)}
 }
 nav.modes button .short{display:none}
 @media (max-width:640px){ nav.modes button .full{display:none} nav.modes button .short{display:inline} nav.modes button{font-size:13px;padding:14px 2px} header .brand{min-width:0;padding:10px 12px} header .theme span:not(.g){display:none} header .theme{width:40px} }
-@media (max-width:430px){ nav.modes button{font-size:12px} }
+@media (max-width:430px){ nav.modes button{font-size:11px;padding:14px 1px} }
 /* an installed iPad/Mac window keeps 96px clear for the window controls, so compact a little earlier */
 @media (max-width:760px){ html.win-controls nav.modes button .full{display:none} html.win-controls nav.modes button .short{display:inline} html.win-controls header .brand{min-width:0;padding:10px 10px} html.win-controls header .brand small{display:none} html.win-controls header .theme span:not(.g){display:none} html.win-controls header .theme{width:40px} }
+.wb{padding:0 16px 60px}
+.wb .warn{border-left:4px solid var(--amber);padding:8px 12px;background:var(--panel-2);margin:12px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14px}
+.wb .warn.red{border-left-color:var(--red)}
+.wb h2{font-size:13px;color:var(--ink-dim);margin:18px 0 6px;text-transform:uppercase;letter-spacing:.06em}
+.wb table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.wb td,.wb th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+.wb th{font-size:12px;color:var(--ink-dim);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.wb td.num,.wb th.num{text-align:right;white-space:nowrap}
+.wb td.dim{color:var(--ink-dim);font-size:13px}
+.wb input[type=number],.wb input[type=text],.wb input[type=date]{font:inherit;font-size:17px;padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);width:7.5em;max-width:100%;text-align:right}
+.wb input[type=text],.wb input[type=date]{text-align:left;width:12em}
+.wb .res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0}
+.wb .res .cell{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.wb .res .cell .k{font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em}
+.wb .res .cell .v{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.wb .res .cell .s{font-size:12px;color:var(--ink-dim)}
+.wb .res .cell.ok{border-color:var(--green)} .wb .res .cell.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 10%,var(--panel))}
+.wb .verdict{margin:10px 0;padding:12px 14px;border-radius:var(--radius);font-weight:700;text-align:center}
+.wb .verdict.ok{background:var(--green);color:var(--on-green)} .wb .verdict.bad{background:var(--red);color:var(--on-red)} .wb .verdict.na{background:var(--panel-2);color:var(--ink-dim)}
+.wb svg{width:100%;height:auto;max-height:420px;display:block;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.wb .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.wb .btns button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
+.wb .btns button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
+.wb .btns button.danger{color:var(--red);border-color:var(--red)}
 .charts{padding:0 16px 40px}
 .charts .row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
 .charts .row a{color:var(--cyan);text-decoration:none;font-weight:600}
@@ -295,11 +319,11 @@ header .brand{cursor:default}
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.1 (build 155fabd2)</footer>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.2 (build 765fde42)</footer>
 </div>
 <script>
-window.AEROE_BUILD = "155fabd2";
-window.AEROE_VERSION = "2.1";
+window.AEROE_BUILD = "765fde42";
+window.AEROE_VERSION = "2.2";
 /* Cirrus SR20 – checklist data.
    Prototype content. Verify against the operator's approved checklist and the POH/AFM. */
 window.AIRCRAFT = window.AIRCRAFT || [];

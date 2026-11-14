@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.2",
+    "date": "2026-11-14",
+    "title": "Weight and balance for the C208B and GA8",
+    "notes": [
+      "New W&B tab: set up each registration with its empty weight and arm from the aircraft's weight and balance report, enter loads and fuel, and see zero-fuel, ramp, take-off and landing weights, CG arms, an in-or-out verdict and the envelope plot.",
+      "Type templates for the C208B (stations, limits, envelope – unverified, check against the POH) and the GA8 (layout and limits; arms and envelope entered from the AFM).",
+      "Registrations and last-used loads are kept on the device and travel with Export / Import."
+    ]
+  },
+  {
     "version": "2.1",
     "date": "2026-11-08",
     "title": "Offline voice recognition (experimental)",

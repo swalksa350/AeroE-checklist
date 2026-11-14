@@ -178,3 +178,7 @@ start there. Tick them off here as they are verified.
 ## Maule M-6 / M-7 hot and flooded start (added later)
 - [ ] IO-540 hot start technique (throttle ~1/2 in, mixture cutoff, no prime, boost pump off) and the ~20 min "no prime" window – confirm against the Maule POH / Lycoming SI 1234
 - [ ] Flooded start (mixture cutoff, throttle full, crank, retard as it fires) and starter cooling interval
+
+## Weight and balance templates (wb/)
+- [ ] C208B: station arms (135.5 / 173 / 208 / 243 / 278 / 313 in seats; cargo zones 172.8 / 215 / 264 / 310 / 338; pod 132.4 / 182 / 233 / 287), zone maxima, fuel arm 203.4 in, density 6.7 lb/USgal, usable 332 USgal, max ramp 8,785 / take-off 8,750 / landing 8,500 lb, forward limit 179.6 in to 4,500 lb then linear to 186.0 in at 8,750 lb, aft 204.35 in – all from memory of POH Section 6; verify every figure
+- [ ] GA8: template deliberately omits arms and envelope; confirm MTOW/MLW 1,814 kg for the airframe variant, usable fuel 332 L, Avgas density 0.72 kg/L
