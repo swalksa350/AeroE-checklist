@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.5",
+    "date": "2026-11-14",
+    "title": "Manifest and flight records",
+    "notes": [
+      "Flight manifest on the W&B page: flight details, crew and passengers with seats and weights, baggage and freight with locations. The manifest fills the station loads automatically (switchable), so the W&B follows the manifest.",
+      "Save flight record keeps a dated snapshot of the manifest, the full weight and balance (every weight, arm and moment, the four conditions against their limits and the verdict) and the Perf tab's take-off and landing inputs and results. Records are listed in the W&B side panel.",
+      "Each record can be shared as a PDF built on the device (works offline), printed, copied as text or deleted, and carries a pilot-in-command signature line. Export log (CSV) gives one line per flight for a spreadsheet; Export records (JSON) exports everything.",
+      "Clear loads also clears the manifest when it is in use."
+    ]
+  },
+  {
     "version": "2.4",
     "date": "2026-11-14",
     "title": "Performance tab: take-off and landing distances",

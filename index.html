@@ -117,6 +117,17 @@ nav.modes button .short{display:none}
 .perf button.mini{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;font-weight:600}
 .perf td .dim{font-size:12px}
 .perf .res .cell .v{font-size:19px}
+.mf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 12px;margin:6px 0 10px}
+.mf-grid label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em}
+.mf-grid input{width:100%!important;text-align:left!important;font-size:16px!important;text-transform:none}
+.wb table.mf td{padding:5px 3px} .wb table.mf input{width:100%!important;min-width:4.5em;font-size:15px!important;padding:7px 8px!important} .wb table.mf input[type=text]{text-align:left!important;min-width:7em}
+.wb table.mf select{font:inherit;font-size:14px;padding:7px 4px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);max-width:11em}
+.wb table.mf td:last-child{width:1%} .wb table.mf button.x{padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);color:var(--red)}
+@media (max-width:640px){ .wb table.mf,.wb table.mf tbody,.wb table.mf td{display:block} .wb table.mf tr:first-child{display:none} .wb table.mf tr{display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center} .wb table.mf.pax tr{grid-template-columns:1fr 1.6fr 1fr auto} .wb table.mf.cargo tr{grid-template-columns:2fr 1fr auto} .wb table.mf td{padding:0;border:0;width:auto!important} .wb table.mf td:first-child{grid-column:1/-1} .wb table.mf select{max-width:100%;width:100%} .wb table.mf input{min-width:0} }
+.mf-use{margin:10px 0;font-size:15px} .mf-use label{display:flex;align-items:center;gap:8px} .mf-use input{width:22px;height:22px} .mf-use .dim{margin-top:4px;font-size:13px;color:var(--ink-dim)}
+.record .rec-body{font-size:14px;line-height:1.4;margin-top:10px} .record .rl.b{font-weight:700;margin-top:8px} .record .rl.m{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;font-size:12px!important} .record .rl.red{color:var(--red)} .record .rl.dim{color:var(--ink-dim)}
+.record .actions{display:flex;gap:8px;flex-wrap:wrap} .record .actions button{padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600} .record .actions button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)} .record .actions button.danger{color:var(--red);border-color:var(--red)} .record .hint{font-size:13px;color:var(--ink-dim);min-height:1em;margin:6px 0}
+@media print{ body.print-record > *:not(.sheet){display:none!important} body.print-record{background:#fff;color:#000} body.print-record .sheet{position:static;inset:auto;background:none;display:block} body.print-record .sheet .card2{max-width:none;max-height:none;overflow:visible;padding:0;background:#fff;color:#000;border-radius:0} body.print-record .record .actions,body.print-record .record .hint{display:none} body.print-record .record .rl.red{color:#b00} body.print-record .record .rl.dim{color:#444} }
 .wb .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .wb .btns button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
 .wb .btns button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
@@ -388,10 +399,10 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "4b4aaf8c";
+const BUILD = "79b4f15f";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
-const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}};
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}};
 const MODES = [["normal","Normal","Norm"],["abnormal","Abnormal","Abn"],["emergency","Emergency","Emerg"],["wb","W&B","W&B"],["perf","Perf","Perf"],["charts","Charts","Charts"],["status","Status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
@@ -433,6 +444,8 @@ function load(){
         if(s.custom && typeof s.custom==="object") state.custom = s.custom;
         if(s.wb && typeof s.wb==="object") state.wb = s.wb;
         if(s.perf && typeof s.perf==="object") state.perf = s.perf;
+        if(s.manifest && typeof s.manifest==="object") state.manifest = s.manifest;
+        if(s.records && typeof s.records==="object") state.records = s.records;
         if(s.sharedApproach && typeof s.sharedApproach==="object") state.sharedApproach = {on:!!s.sharedApproach.on, name:String(s.sharedApproach.name||""), items:Array.isArray(s.sharedApproach.items)?s.sharedApproach.items:[]};
         if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
         if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
@@ -452,7 +465,7 @@ function load(){
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, perf:state.perf, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, perf:state.perf, manifest:state.manifest, records:state.records, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
@@ -831,6 +844,7 @@ function renderWbSide(sEl){
   sEl.append(list);
   if(!t) sEl.append(h("div",{class:"saved",style:"padding:8px 16px"},"No type template for the "+(a?a.short:"")+" yet: a new registration starts blank and every figure is entered from the POH."));
   else if(!t.verified) sEl.append(h("div",{class:"saved",style:"padding:8px 16px"},"Template figures for this type are unverified – check them against the POH when setting up a registration."));
+  renderRecordsSide(sEl);
 }
 function wbAddProfile(){
   const st=wbStore(); if(!st) return;
@@ -957,10 +971,13 @@ function renderWb(v){
   if(t&&!t.verified) w.append(h("div",{class:"warn"},"Template figures for this type are UNVERIFIED. Confirm every arm, limit and envelope point in Edit profile against the POH and this aircraft's weight and balance report before relying on the result."));
   if(p.test) w.append(h("div",{class:"warn red"},"TEST DATA. "+p.rego+" is an example registration: its empty weight and arm are fictitious and must not be used for a real flight. Delete it from Edit profile when you no longer need it."));
   if(num(p.emptyWeight)===null||num(p.emptyArm)===null) w.append(h("div",{class:"warn red"},"Empty weight and arm have not been entered for "+p.rego+". Tap Edit profile."));
-  w.append(h("h2",{},"Loads ("+u.weight+")"));
+  renderManifest(w,p);
+  const mfOn=mfActive(mfStore()); if(mfOn) mfApply(p,mfStore());
+  w.append(h("h2",{},"Loads ("+u.weight+")"+(mfOn?" – from the manifest":"")));
   const tbl=h("table",{}); tbl.append(h("tr",{},h("th",{},"Station"),h("th",{class:"num"},"Arm "+u.arm),h("th",{class:"num"},"Weight")));
   p.stations.forEach(stn=>{
     const inp=h("input",{id:"wb-load-"+stn.id,type:"number",step:"any",inputmode:"decimal",min:"0",value:p.loads[stn.id]===undefined||p.loads[stn.id]===null?"":p.loads[stn.id],placeholder:"0"});
+    if(mfOn) inp.setAttribute("readonly","");
     inp.oninput=ev=>{ p.loads[stn.id]=ev.target.value===""?null:ev.target.value; wbRecalc(); };
     tbl.append(h("tr",{},h("td",{},stn.name,stn.max!==null&&stn.max!==undefined?h("div",{class:"dim"},"max "+stn.max):""),h("td",{class:"num dim"},stn.arm===null||stn.arm===undefined?"–":fmt(stn.arm,1)),h("td",{class:"num"},inp)));
   });
@@ -969,12 +986,194 @@ function renderWb(v){
   fuelRow("Taxi fuel ("+u.fuel+")","taxi","burnt before take-off");
   fuelRow("Trip fuel burn ("+u.fuel+")","burn","to landing");
   w.append(tbl);
-  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ p.loads={}; p.fuel=null; p.burn=null; p.taxi=null; save(); render(); }},"Clear loads")));
+  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ p.loads={}; p.fuel=null; p.burn=null; p.taxi=null; if(mfOn){ const m=mfStore(); m.pax=[]; m.cargo=[]; } save(); render(); }},mfOn?"Clear loads and manifest":"Clear loads")));
   w.append(h("h2",{},"Result"));
   const box=h("div",{id:"wb-results"}); box.append(...wbResultNodes(p,wbCompute(p))); w.append(box);
   w.append(h("div",{class:"saved"},"Empty weight "+fmt(p.emptyWeight,0)+" "+u.weight+" at "+fmt(p.emptyArm,1)+" "+u.arm+(p.reportDate?" (report "+p.reportDate+")":"")+". "+(p.notes||"")));
+  w.append(h("h2",{},"Flight record"));
+  w.append(h("div",{class:"saved"},"Save flight record keeps a dated copy of the manifest, this weight and balance and the Perf tab's take-off and landing figures for "+p.rego+". Records are listed in the side panel, where they can be opened, printed, shared as a PDF and exported as a CSV log or JSON."));
+  w.append(h("div",{class:"btns"},h("button",{class:"primary",onclick:saveRecord},"Save flight record"),h("button",{onclick:()=>{ const r=buildRecord(); if(r) showRecord(Object.assign(r,{preview:true})); }},"Preview")));
   w.append(h("div",{class:"saved"},"This calculation is an aid. The pilot in command remains responsible for the weight and balance of the aircraft and must confirm the figures against the POH and the aircraft's weight and balance report."));
   v.append(w);
+}
+/* ---------------- MANIFEST AND FLIGHT RECORDS ---------------- */
+/* The manifest (crew, passengers, baggage and freight with their seats or locations) lives per aircraft type and,
+   when "use manifest" is on, drives the station loads of the current W&B registration. Save flight record takes a
+   snapshot of manifest, W&B and performance into state.records, which can be viewed, printed, shared as PDF and
+   exported as CSV or JSON for record keeping. */
+const todayISO=()=>{ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); };
+function mfStore(){ const a=AC(); if(!a) return null; if(!state.manifest[a.id]) state.manifest[a.id]={date:todayISO(),from:"",to:"",pic:"",ref:"",pax:[],cargo:[],use:true}; const m=state.manifest[a.id]; if(!Array.isArray(m.pax)) m.pax=[]; if(!Array.isArray(m.cargo)) m.cargo=[]; return m; }
+function mfSums(m){ const by={}; let crew=0,paxN=0,paxW=0,cargoW=0; m.pax.forEach(x=>{ const w=num(x.weight)||0; by[x.station]=(by[x.station]||0)+w; if(x.role==="crew") crew++; else paxN++; paxW+=w; }); m.cargo.forEach(x=>{ const w=num(x.weight)||0; by[x.station]=(by[x.station]||0)+w; cargoW+=w; }); return {by,crew,paxN,paxW,cargoW}; }
+const mfActive=m=>!!(m&&m.use&&(m.pax.length||m.cargo.length));
+function mfApply(p,m){ if(!p||!mfActive(m)) return; const s=mfSums(m); p.stations.forEach(st=>{ const w=s.by[st.id]||0; p.loads[st.id]=w?Math.round(w*10)/10:null; }); }
+function mfDefaultStation(p,kind){ const ids=p.stations.map(s=>s.id); if(kind==="cargo"){ const c=p.stations.find(s=>/bag|shelf|bin|pod|luggage/i.test(s.name+" "+s.id))||p.stations.find(s=>/cargo|freight/i.test(s.name)&&!/^row/i.test(s.name)); return c?c.id:ids[ids.length-1]; } return ids[0]; }
+function renderManifest(w,p){
+  const m=mfStore(); const u=p.units;
+  w.append(h("h2",{},"Flight and manifest"));
+  const grid=h("div",{class:"mf-grid"});
+  const tf=(label,key,type,ph)=>{ const i=h("input",{type:type||"text",value:m[key]||"",placeholder:ph||"",autocapitalize:type==="date"?"off":"characters"}); i.oninput=ev=>{ m[key]=ev.target.value; save(); }; grid.append(h("label",{},h("span",{},label),i)); };
+  tf("Date","date","date"); tf("From","from","text","YSBK"); tf("To","to","text","YSCN"); tf("Pilot in command","pic","text","name"); tf("Flight / booking ref","ref","text","optional");
+  w.append(grid);
+  const stationSel=(val,onch)=>{ const s=h("select",{}); p.stations.forEach(st=>s.append(h("option",{value:st.id},st.name))); s.value=val; s.onchange=ev=>onch(ev.target.value); return s; };
+  const refresh=()=>{ mfApply(p,m); p.stations.forEach(st=>{ const el=document.getElementById("wb-load-"+st.id); if(el&&mfActive(m)) el.value=p.loads[st.id]===null||p.loads[st.id]===undefined?"":p.loads[st.id]; }); const tot=document.getElementById("mf-totals"); if(tot) tot.textContent=mfTotalsText(m,u); wbRecalc(); };
+  // crew and passengers
+  w.append(h("h2",{},"Crew and passengers"));
+  const pt=h("table",{class:"mf pax"}); pt.append(h("tr",{},h("th",{},"Name"),h("th",{},"Role"),h("th",{},"Seat"),h("th",{class:"num"},u.weight),h("th",{})));
+  m.pax.forEach((x,i)=>{
+    const name=h("input",{type:"text",value:x.name||"",placeholder:"name",autocapitalize:"words"}); name.oninput=ev=>{ x.name=ev.target.value; save(); };
+    const role=h("select",{}); [["pax","Pax"],["crew","Crew"],["child","Child"],["infant","Infant"]].forEach(([v,l])=>role.append(h("option",{value:v},l))); role.value=x.role||"pax"; role.onchange=ev=>{ x.role=ev.target.value; refresh(); };
+    const wt=h("input",{type:"number",step:"any",inputmode:"decimal",min:"0",value:x.weight===null||x.weight===undefined?"":x.weight,placeholder:"0"}); wt.oninput=ev=>{ x.weight=ev.target.value===""?null:ev.target.value; refresh(); };
+    pt.append(h("tr",{},h("td",{},name),h("td",{},role),h("td",{},stationSel(x.station,v=>{ x.station=v; refresh(); })),h("td",{class:"num"},wt),h("td",{},h("button",{class:"x","aria-label":"Remove",onclick:()=>{ m.pax.splice(i,1); if(!mfActive(m)&&m.use) p.loads={}; mfApply(p,m); save(); render(); }},"✕"))));
+  });
+  w.append(pt);
+  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ m.pax.push({name:"",role:m.pax.length?"pax":"crew",station:mfDefaultStation(p,"pax"),weight:null}); save(); render(); setTimeout(()=>{ const rows=document.querySelectorAll("table.mf input[type=text]"); const last=rows[m.pax.length-1]; if(last) last.focus(); },50); }},"+ Add person")));
+  // baggage and freight
+  w.append(h("h2",{},"Baggage and freight"));
+  const ct=h("table",{class:"mf cargo"}); ct.append(h("tr",{},h("th",{},"Description"),h("th",{},"Location"),h("th",{class:"num"},u.weight),h("th",{})));
+  m.cargo.forEach((x,i)=>{
+    const d=h("input",{type:"text",value:x.desc||"",placeholder:"e.g. 2 bags",autocapitalize:"sentences"}); d.oninput=ev=>{ x.desc=ev.target.value; save(); };
+    const wt=h("input",{type:"number",step:"any",inputmode:"decimal",min:"0",value:x.weight===null||x.weight===undefined?"":x.weight,placeholder:"0"}); wt.oninput=ev=>{ x.weight=ev.target.value===""?null:ev.target.value; refresh(); };
+    ct.append(h("tr",{},h("td",{},d),h("td",{},stationSel(x.station,v=>{ x.station=v; refresh(); })),h("td",{class:"num"},wt),h("td",{},h("button",{class:"x","aria-label":"Remove",onclick:()=>{ m.cargo.splice(i,1); if(!mfActive(m)&&m.use) p.loads={}; mfApply(p,m); save(); render(); }},"✕"))));
+  });
+  w.append(ct);
+  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ m.cargo.push({desc:"",station:mfDefaultStation(p,"cargo"),weight:null}); save(); render(); }},"+ Add item")));
+  const use=h("input",{type:"checkbox",id:"mf-use"}); use.checked=!!m.use; use.onchange=()=>{ m.use=use.checked; mfApply(p,m); save(); render(); };
+  w.append(h("div",{class:"mf-use"},h("label",{},use," Use the manifest for the station loads below"+(m.use&&!mfActive(m)?" (add a person or item first)":"")),h("div",{id:"mf-totals",class:"dim"},mfTotalsText(m,u))));
+  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ if(!confirm("Clear the flight details, passengers and freight?")) return; Object.assign(m,{from:"",to:"",pic:m.pic,ref:"",pax:[],cargo:[],date:todayISO()}); mfApply(p,m); save(); render(); }},"Clear manifest")));
+}
+function mfTotalsText(m,u){ const s=mfSums(m); return (s.crew?s.crew+" crew":"no crew")+", "+s.paxN+" passenger"+(s.paxN===1?"":"s")+" ("+fmt(s.paxW,0)+" "+u.weight+"), baggage and freight "+fmt(s.cargoW,0)+" "+u.weight+"."; }
+/* ----- snapshots ----- */
+function pfSnapshot(isLanding){
+  const T=PT(); if(!T) return null; const st=pfStore(); const spec=isLanding?(T.landing.find(l=>l.id===st.approach)||T.landing[0]):T.takeoff; const inp=pfInputs(st,isLanding);
+  const snap={title:spec.title,units:T.units,inputs:{elev:num(st.elev),qnh:num(st.qnh),oat:inp.oat,ph:inp.ph,rwy:num(st.rwy),wdir:num(st.wdir),wspd:num(st.wspd),windText:inp.windText,windRule:!!st.windRule,windUsed:inp.windUsed,cross:inp.cross,slope:inp.slope,surface:(T.surfaces.find(s=>s[0]===st.surface)||T.surfaces[0])[1],weight:inp.weight,factor:Math.max(1,num(st.factor)||1),avail:num(isLanding?st.lda:st.tora)},warnings:inp.warn.slice(),info:inp.info.slice()};
+  if(inp.missing.length){ snap.complete=false; snap.missing=inp.missing; return snap; }
+  const r=pfSolve(T,spec.chart,{oat:inp.oat,ph:inp.ph,weight:inp.weight,wind:inp.windUsed,slope:inp.slope,gravel:inp.gravel}); snap.complete=true;
+  const sp=pfSpeed(spec.speeds,Math.min(Math.max(inp.weight,T.limits.minWeight),T.limits.maxWeight)); snap.speed=Math.round(sp[0]); snap.speedLabel=spec.speedLabel; if(sp[1]!==undefined&&spec.rodLabel){ snap.rod=Math.round(sp[1]/10)*10; snap.rodLabel=spec.rodLabel; }
+  if(!r.ok){ snap.ok=false; snap.why=r.why; return snap; }
+  snap.ok=true; snap.dist=Math.round(r.dist); snap.roll=Math.round(r.roll); snap.factored=Math.ceil(r.dist*snap.inputs.factor); snap.factoredRoll=Math.ceil(r.roll*snap.inputs.factor); snap.trail=r.trail.map(t=>[t[0],Math.round(t[1])]); snap.notes=r.notes; snap.used=r.used;
+  if(snap.inputs.avail!==null) snap.sufficient=snap.factored<=snap.inputs.avail;
+  return snap;
+}
+function buildRecord(){
+  const a=AC(), p=wbCurrent(), m=mfStore(); if(!p) return null; mfApply(p,m); const res=wbCompute(p); const s=mfSums(m);
+  const rows=[]; const ew=num(p.emptyWeight), ea=num(p.emptyArm); if(ew!==null&&ea!==null) rows.push({name:"Basic empty weight",w:ew,arm:ea});
+  p.stations.forEach(st=>{ const l=num(p.loads[st.id]); if(l) rows.push({name:st.name,w:l,arm:num(st.arm)}); });
+  if(res.fuelW) rows.push({name:"Fuel "+fmt(num(p.fuel),0)+" "+p.units.fuel,w:res.fuelW,arm:num(p.fuelArm)});
+  const pts={}; for(const k of ["zfw","ramp","to","ld"]){ const q=res.pts[k]; pts[k]={w:q.w,arm:q.arm,fwd:q.fwd,aft:q.aft,env:q.env}; }
+  return {id:Date.now().toString(36), savedAt:new Date().toISOString(), app:APP_VERSION()+" ("+BUILD+")", aircraft:{id:a.id,short:a.short,name:a.maker+" "+a.model}, rego:p.rego, test:!!p.test,
+    flight:{date:m.date,from:(m.from||"").toUpperCase(),to:(m.to||"").toUpperCase(),pic:m.pic,ref:m.ref},
+    manifest:{pax:m.pax.map(x=>({name:x.name,role:x.role||"pax",station:(p.stations.find(s=>s.id===x.station)||{}).name||x.station,weight:num(x.weight)})),cargo:m.cargo.map(x=>({desc:x.desc,station:(p.stations.find(s=>s.id===x.station)||{}).name||x.station,weight:num(x.weight)})),crew:s.crew,paxN:s.paxN,paxW:s.paxW,cargoW:s.cargoW,used:!!m.use},
+    wb:{units:p.units,emptyWeight:ew,emptyArm:ea,reportDate:p.reportDate,limits:p.limits,rows,fuel:num(p.fuel),taxi:num(p.taxi),burn:num(p.burn),fuelDensity:num(p.fuelDensity),fuelW:res.fuelW,taxiW:res.taxiW,burnW:res.burnW,pts,over:res.over,problems:res.problems,complete:res.complete,envelopeKnown:res.envelopeKnown,inLimits:res.inLimits,verified:!!(WBT()&&WBT().verified)},
+    perf:{takeoff:pfSnapshot(false),landing:pfSnapshot(true)}};
+}
+function recStore(){ const a=AC(); if(!a) return []; if(!Array.isArray(state.records[a.id])) state.records[a.id]=[]; return state.records[a.id]; }
+function saveRecord(){ const rec=buildRecord(); if(!rec){ alert("Select a registration first."); return; } const list=recStore(); list.unshift(rec); while(list.length>100) list.pop(); save(); render(); showRecord(rec); }
+/* ----- record presentation: one list of lines feeds the PDF, the printable sheet and the copied text ----- */
+function recordLines(r){
+  const L=[]; const H=(t)=>L.push({t,f:"B",s:13,gap:6}); const P=(t)=>L.push({t,f:"R",s:10}); const M=(t)=>L.push({t,f:"M",s:9}); const S=(t)=>L.push({t,f:"R",s:8.5,dim:true}); const BR=()=>L.push({t:"",f:"R",s:5});
+  const u=r.wb.units; const pad=(s,n,right)=>{ s=String(s===null||s===undefined?"–":s); return right?s.padStart(n):s.padEnd(n); };
+  L.push({t:"FLIGHT RECORD – "+r.aircraft.short+" "+r.rego,f:"B",s:17,gap:4});
+  P(r.aircraft.name+" · "+(r.flight.date||"")+(r.flight.from||r.flight.to?" · "+r.flight.from+" – "+r.flight.to:"")+(r.flight.ref?" · ref "+r.flight.ref:""));
+  P("Pilot in command: "+(r.flight.pic||"–")+" · saved "+new Date(r.savedAt).toLocaleString()+" · AeroE Checklist "+r.app);
+  if(r.test) L.push({t:"TEST DATA – the registration's empty weight and arm are fictitious. Not for operational use.",f:"B",s:10,red:true});
+  BR(); H("Crew and passengers");
+  if(!r.manifest.pax.length) S("None recorded.");
+  else { M(pad("Name",28)+pad("Role",8)+pad("Seat / station",30)+pad(u.weight,8,true)); r.manifest.pax.forEach(x=>M(pad(x.name||"–",28)+pad(x.role==="crew"?"Crew":x.role==="child"?"Child":x.role==="infant"?"Infant":"Pax",8)+pad(x.station,30)+pad(fmt(x.weight,0),8,true))); }
+  P(r.manifest.crew+" crew, "+r.manifest.paxN+" passenger"+(r.manifest.paxN===1?"":"s")+", total "+fmt(r.manifest.paxW,0)+" "+u.weight+".");
+  BR(); H("Baggage and freight");
+  if(!r.manifest.cargo.length) S("None recorded.");
+  else { M(pad("Description",36)+pad("Location",30)+pad(u.weight,8,true)); r.manifest.cargo.forEach(x=>M(pad(x.desc||"–",36)+pad(x.station,30)+pad(fmt(x.weight,0),8,true))); P("Total "+fmt(r.manifest.cargoW,0)+" "+u.weight+"."); }
+  BR(); H("Weight and balance – "+r.rego);
+  P("Basic empty weight "+fmt(r.wb.emptyWeight,0)+" "+u.weight+" at "+fmt(r.wb.emptyArm,1)+" "+u.arm+(r.wb.reportDate?" (report "+r.wb.reportDate+")":"")+". Fuel "+fmt(r.wb.fuel,0)+" "+u.fuel+" = "+fmt(r.wb.fuelW,0)+" "+u.weight+(r.wb.taxi?", taxi "+fmt(r.wb.taxi,0)+" "+u.fuel:"")+", trip burn "+fmt(r.wb.burn,0)+" "+u.fuel+".");
+  M(pad("Item",40)+pad("Weight "+u.weight,12,true)+pad("Arm "+u.arm,10,true)+pad("Moment",14,true));
+  r.wb.rows.forEach(x=>M(pad(x.name,40)+pad(fmt(x.w,1),12,true)+pad(fmt(x.arm,1),10,true)+pad(x.arm===null?"–":fmt(x.w*x.arm,0),14,true)));
+  const lim=(q)=>q.fwd!==null&&q.aft!==null?fmt(q.fwd,1)+" – "+fmt(q.aft,1):"–";
+  M(pad("Condition",14)+pad("Weight",10,true)+pad("CG "+u.arm,10,true)+pad("Limits",20,true)+pad("Max",10,true)+pad("",8,true));
+  const mx={zfw:r.wb.limits.maxZeroFuel,ramp:r.wb.limits.maxRamp,to:r.wb.limits.maxTakeoff,ld:r.wb.limits.maxLanding};
+  [["zfw","Zero fuel"],["ramp","Ramp"],["to","Take-off"],["ld","Landing"]].forEach(([k,lab])=>{ const q=r.wb.pts[k]; M(pad(lab,14)+pad(fmt(q.w,0),10,true)+pad(fmt(q.arm,1),10,true)+pad(lim(q),20,true)+pad(mx[k]===null||mx[k]===undefined?"–":fmt(mx[k],0),10,true)+pad(q.env===null?"":(q.env?"OK":"OUT"),8,true)); });
+  r.wb.over.forEach(x=>L.push({t:x,f:"B",s:10,red:true})); r.wb.problems.forEach(x=>L.push({t:x,f:"B",s:10,red:true}));
+  L.push({t:!r.wb.complete?"W&B INCOMPLETE":!r.wb.envelopeKnown?"WEIGHTS COMPUTED – CG envelope not entered":(r.wb.inLimits?"WITHIN LIMITS":"OUTSIDE LIMITS"),f:"B",s:12,red:r.wb.complete&&r.wb.envelopeKnown&&!r.wb.inLimits});
+  const perf=(k,label)=>{ const s=r.perf[k]; BR(); H(label+(s?" – "+s.title:"")); if(!s){ S("No performance charts for this type."); return; }
+    const i=s.inputs; P("Elevation "+fmt(i.elev,0)+" ft, QNH "+fmt(i.qnh,0)+" = pressure height "+fmt(i.ph,0)+" ft · OAT "+fmt(i.oat,0)+" °C · wind "+i.windText+(i.windRule?" (50 % / 150 % rule: "+fmt(Math.abs(i.windUsed),0)+" kt "+(i.windUsed>=0?"head":"tail")+" used)":"")+" · slope "+(i.slope>0?"+":"")+fmt(i.slope,1)+" % · "+i.surface+" · weight "+fmt(i.weight,0)+" "+s.units.weight+" · factor "+fmt(i.factor,2)+(i.avail!==null?" · available "+fmt(i.avail,0)+" "+s.units.dist:""));
+    if(!s.complete){ S("Not computed: "+s.missing.join(", ")+" not entered."); return; }
+    if(s.speed!==undefined) P(s.speedLabel+": "+s.speed+" KIAS"+(s.rod?" · "+s.rodLabel+" "+s.rod:""));
+    if(!s.ok){ L.push({t:"NO RESULT – "+s.why,f:"B",s:10,red:true}); return; }
+    P((k==="takeoff"?"Take-off distance to 50 ft ":"Landing distance from 50 ft ")+fmt(s.dist,0)+" "+s.units.dist+" unfactored, "+fmt(s.factored,0)+" "+s.units.dist+" factored · ground roll "+fmt(s.roll,0)+" "+s.units.dist+" (factored "+fmt(s.factoredRoll,0)+").");
+    if(s.sufficient!==undefined) L.push({t:(s.sufficient?"RUNWAY SUFFICIENT":"RUNWAY INSUFFICIENT")+" – factored "+fmt(s.factored,0)+" against "+fmt(i.avail,0)+" "+s.units.dist,f:"B",s:11,red:!s.sufficient});
+    S("Chart path: "+s.trail.map(t=>t[0]+" "+t[1]).join(", ")+" "+s.units.dist+"."); s.notes.forEach(S); s.warnings.forEach(t=>L.push({t,f:"B",s:10,red:true}));
+  };
+  perf("takeoff","Take-off performance"); perf("landing","Landing performance");
+  BR(); BR(); P("Pilot in command signature: ______________________________    Date: ______________");
+  BR(); S("Template and chart figures "+(r.wb.verified?"verified":"are marked unverified in the app")+". Figures are computed by AeroE Checklist from the data entered by the pilot and the POH data in the app; the pilot in command remains responsible for the weight and balance and performance of the aircraft.");
+  return L;
+}
+function recordText(r){ return recordLines(r).map(l=>l.t).join("\n"); }
+function recordFileName(r,ext){ return ("AeroE-"+r.rego+"-"+(r.flight.date||"")+(r.flight.from?"-"+r.flight.from:"")+(r.flight.to?"-"+r.flight.to:"")+"."+ext).replace(/[^A-Za-z0-9.\-]+/g,"_"); }
+/* ----- minimal PDF writer: Helvetica / Helvetica-Bold / Courier, WinAnsi text, A4 ----- */
+function pdfFromLines(lines,title){
+  const W=595.28,Hh=841.89,ML=48,MT=56,MB=56; const pages=[]; let cur=[],y=Hh-MT;
+  const esc=s=>{ let o=""; for(const ch of String(s)){ const c=ch.codePointAt(0); let b; if(c<128) b=c; else b={160:32,176:176,183:183,215:215,8211:150,8212:151,8216:145,8217:146,8220:147,8221:148,8226:149,8230:133,8249:139,8250:155,8594:62,8804:60,8805:62,10003:42,233:233,232:232,224:224,246:246,252:252,228:228}[c]; if(b===undefined) b=63; if(b===40||b===41||b===92) o+="\\"+String.fromCharCode(b); else if(b<32||b>126) o+="\\"+b.toString(8).padStart(3,"0"); else o+=String.fromCharCode(b); } return o; };
+  const fontOf=f=>f==="B"?"/F2":f==="M"?"/F3":"/F1"; const maxW=W-2*ML;
+  const wrap=(l)=>{ const cw=l.f==="M"?0.6*l.s:0.5*l.s; const n=Math.max(20,Math.floor(maxW/cw)); const out=[]; String(l.t).split("\n").forEach(line=>{ if(line.length<=n||l.f==="M"){ out.push(line); return; } let s=line; while(s.length>n){ let k=s.lastIndexOf(" ",n); if(k<n*0.5) k=n; out.push(s.slice(0,k)); s=s.slice(k).replace(/^\s+/,""); } out.push(s); }); return out; };
+  for(const l of lines){ const lh=l.s*1.35; for(const t of wrap(l)){ if(y-lh<MB){ pages.push(cur); cur=[]; y=Hh-MT; } y-=lh+(l.gap||0); const col=l.red?"0.75 0.1 0.1 rg ":l.dim?"0.4 0.4 0.4 rg ":"0 0 0 rg "; cur.push("BT "+col+fontOf(l.f)+" "+l.s+" Tf "+ML+" "+y.toFixed(1)+" Td ("+esc(t)+") Tj ET"); } }
+  pages.push(cur);
+  const objs=[]; const add=s=>{ objs.push(s); return objs.length; };
+  const fonts=[["F1","Helvetica"],["F2","Helvetica-Bold"],["F3","Courier"]].map(([n,b])=>add("<< /Type /Font /Subtype /Type1 /BaseFont /"+b+" /Encoding /WinAnsiEncoding >>"));
+  const pagesId=objs.length+1+pages.length*2; const pageIds=[];
+  pages.forEach((p,i)=>{ const footer="BT 0.4 0.4 0.4 rg /F1 8 Tf "+ML+" 30 Td ("+esc(title+" · page "+(i+1)+" of "+pages.length)+") Tj ET"; const content=p.concat([footer]).join("\n"); const cid=add("<< /Length "+content.length+" >>\nstream\n"+content+"\nendstream"); const pid=add("<< /Type /Page /Parent "+pagesId+" 0 R /MediaBox [0 0 "+W+" "+Hh+"] /Resources << /Font << /F1 "+fonts[0]+" 0 R /F2 "+fonts[1]+" 0 R /F3 "+fonts[2]+" 0 R >> >> /Contents "+cid+" 0 R >>"); pageIds.push(pid); });
+  add("<< /Type /Pages /Kids ["+pageIds.map(i=>i+" 0 R").join(" ")+"] /Count "+pageIds.length+" >>");
+  const cat=add("<< /Type /Catalog /Pages "+pagesId+" 0 R >>");
+  const info=add("<< /Title ("+esc(title)+") /Producer (AeroE Checklist) /CreationDate (D:"+new Date().toISOString().replace(/[-:T]/g,"").slice(0,14)+"Z) >>");
+  let out="%PDF-1.4\n%âãÏÓ\n"; const offs=[];
+  objs.forEach((o,i)=>{ offs.push(out.length); out+=(i+1)+" 0 obj\n"+o+"\nendobj\n"; });
+  const xref=out.length; out+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+offs.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<< /Size "+(objs.length+1)+" /Root "+cat+" 0 R /Info "+info+" 0 R >>\nstartxref\n"+xref+"\n%%EOF";
+  const bytes=new Uint8Array(out.length); for(let i=0;i<out.length;i++) bytes[i]=out.charCodeAt(i)&255;
+  return new Blob([bytes],{type:"application/pdf"});
+}
+async function shareBlob(blob,name,title){
+  const f=new File([blob],name,{type:blob.type});
+  if(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]})){ try{ await navigator.share({files:[f],title}); return "shared"; }catch(e){ if(e&&e.name==="AbortError") return "cancelled"; } }
+  const url=URL.createObjectURL(blob); const a=h("a",{href:url,download:name}); document.body.append(a); a.click(); setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); },4000); return "downloaded";
+}
+function showRecord(rec){
+  const old=document.getElementById("sheet"); if(old) old.remove();
+  const card=h("div",{class:"card2 record"}); const sheet=h("div",{class:"sheet",id:"sheet"},card);
+  const actions=h("div",{class:"actions"});
+  const msg=h("div",{class:"hint",id:"rec-msg"});
+  actions.append(h("button",{class:"primary",onclick:async ev=>{ const b=ev.currentTarget; b.textContent="Preparing…"; try{ const r=await shareBlob(pdfFromLines(recordLines(rec),"Flight record "+rec.rego+" "+(rec.flight.date||"")),recordFileName(rec,"pdf"),"Flight record "+rec.rego); msg.textContent=r==="downloaded"?"PDF saved to your downloads.":r==="shared"?"PDF shared.":""; }catch(e){ msg.textContent="Could not create the PDF: "+e.message; } b.textContent="Share PDF"; }},"Share PDF"));
+  actions.append(h("button",{onclick:()=>{ document.body.classList.add("print-record"); const done=()=>{ document.body.classList.remove("print-record"); window.removeEventListener("afterprint",done); }; window.addEventListener("afterprint",done); setTimeout(()=>{ window.print(); setTimeout(done,2000); },50); }},"Print"));
+  actions.append(h("button",{onclick:async()=>{ try{ await navigator.clipboard.writeText(recordText(rec)); msg.textContent="Copied as text."; }catch(e){ msg.textContent="Copy is not available here."; } }},"Copy text"));
+  if(!rec.preview) actions.append(h("button",{class:"danger",onclick:ev=>{ const b=ev.currentTarget; if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="Tap again to delete"; return; } const list=recStore(); const i=list.findIndex(x=>x.id===rec.id); if(i>=0) list.splice(i,1); save(); sheet.remove(); render(); }},"Delete record"));
+  if(rec.preview) actions.append(h("button",{class:"primary",onclick:()=>{ delete rec.preview; const list=recStore(); list.unshift(rec); while(list.length>100) list.pop(); save(); render(); sheet.remove(); showRecord(rec); }},"Save this record"));
+  actions.append(h("button",{onclick:()=>sheet.remove()},"Close"));
+  card.append(actions,msg);
+  const body=h("div",{class:"rec-body"});
+  recordLines(rec).forEach(l=>{ const cls=(l.f==="B"?"b ":"")+(l.f==="M"?"m ":"")+(l.red?"red ":"")+(l.dim?"dim ":""); body.append(h("div",{class:"rl "+cls,style:"font-size:"+Math.min(l.s+3,20)+"px"+(l.gap?";margin-top:"+l.gap+"px":"")},l.t||" ")); });
+  card.append(body);
+  sheet.addEventListener("click",ev=>{ if(ev.target===sheet) sheet.remove(); });
+  document.body.append(sheet);
+}
+function recordsCSV(list){
+  const cols=["saved","date","aircraft","rego","from","to","pic","ref","crew","passengers","pax_weight","cargo_weight","fuel","zfw","zfw_cg","tow","tow_cg","ldw","ldw_cg","wb_verdict","to_dist","to_factored","to_roll","to_speed","ld_dist","ld_factored","ld_roll","ld_speed","ld_chart","test_data"];
+  const q=v=>{ v=v===null||v===undefined?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const rnd=(v,d)=>v===null||v===undefined||!isFinite(v)?"":Number(v).toFixed(d);
+  const rows=list.map(r=>{ const t=r.perf.takeoff, l=r.perf.landing; const P=s=>s&&s.complete&&s.ok?s:null; const verdict=!r.wb.complete?"incomplete":!r.wb.envelopeKnown?"no envelope":(r.wb.inLimits?"within limits":"outside limits");
+    return [r.savedAt,r.flight.date,r.aircraft.short,r.rego,r.flight.from,r.flight.to,r.flight.pic,r.flight.ref,r.manifest.crew,r.manifest.paxN,rnd(r.manifest.paxW,0),rnd(r.manifest.cargoW,0),rnd(r.wb.fuel,0),rnd(r.wb.pts.zfw.w,0),rnd(r.wb.pts.zfw.arm,1),rnd(r.wb.pts.to.w,0),rnd(r.wb.pts.to.arm,1),rnd(r.wb.pts.ld.w,0),rnd(r.wb.pts.ld.arm,1),verdict,
+      P(t)?t.dist:"",P(t)?t.factored:"",P(t)?t.roll:"",t&&t.speed!==undefined?t.speed:"",P(l)?l.dist:"",P(l)?l.factored:"",P(l)?l.roll:"",l&&l.speed!==undefined?l.speed:"",l?l.title:"",r.test?"yes":""].map(q).join(","); });
+  return cols.join(",")+"\n"+rows.join("\n")+"\n";
+}
+function renderRecordsSide(sEl){
+  const list=recStore(); const a=AC();
+  sEl.append(h("div",{class:"group-title"},"Flight records"));
+  const l=h("div",{class:"list"});
+  if(!list.length) l.append(h("div",{class:"saved",style:"padding:8px 16px"},"Save flight record on the W&B page keeps the manifest, weight and balance and performance for the flight here, ready to print, share as PDF or export."));
+  list.slice(0,30).forEach(r=>l.append(h("button",{onclick:()=>showRecord(r)},h("span",{class:"dot "+(r.wb.inLimits?"done":"")}),h("span",{class:"name"},r.rego+" · "+(r.flight.date||"")+(r.flight.from||r.flight.to?" · "+r.flight.from+"–"+r.flight.to:"")),h("span",{class:"n"},new Date(r.savedAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})))));
+  if(list.length>30) l.append(h("div",{class:"saved",style:"padding:8px 16px"},(list.length-30)+" older records are kept and included in the exports."));
+  if(list.length){
+    l.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([recordsCSV(list)],{type:"text/csv"}),"AeroE-flight-records-"+a.short+"-"+todayISO()+".csv","Flight records"); }},h("span",{class:"dot"}),h("span",{class:"name"},"Export log (CSV)"),h("span",{class:"n"},list.length)));
+    l.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([JSON.stringify({aeroe:"flight-records",version:1,aircraft:a.id,exported:new Date().toISOString(),records:list},null,1)],{type:"application/json"}),"AeroE-flight-records-"+a.short+"-"+todayISO()+".json","Flight records"); }},h("span",{class:"dot"}),h("span",{class:"name"},"Export records (JSON)"),h("span",{class:"n"},"full")));
+  }
+  sEl.append(l);
 }
 /* ---------------- PERFORMANCE (take-off and landing distances from POH charts) ---------------- */
 /* Each type's perf/<id>.js carries the POH nomograms as guide-line polylines. The engine follows them as a pilot

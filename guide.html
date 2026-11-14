@@ -171,6 +171,17 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <li><strong>Load the flight.</strong> Enter the weight at each station, fuel on board, taxi fuel and trip burn in the profile's units. Results update as you type: zero-fuel, ramp, take-off and landing weights with their CG arms and the forward and aft limits at that weight, the fuel weights, any station or weight limit exceeded, and a WITHIN LIMITS or OUTSIDE LIMITS verdict. The envelope plot shows the three points with the take-off to landing line.</li>
 <li><strong>Keep it.</strong> Loads are remembered per registration, so a regular flight is a few taps. Clear loads resets them. Profiles are included in Export and Import, so a school can issue its fleet's registrations.</li>
 </ol>
+<h3>Manifest</h3>
+<p>Above the loads is the flight manifest: date, departure and destination, pilot in command and a flight or booking reference, then Crew and passengers (name, role, seat and weight) and Baggage and freight (description, location and weight). Each person or item is assigned to one of the registration's stations, and while Use the manifest for the station loads is ticked the Loads table is filled from the manifest totals and shown read-only. Untick it to type loads directly. Weights are entered as actual weights or the standard weights your operation is approved to use. Clear manifest removes the people and items but keeps the pilot's name.</p>
+<h3>Flight records</h3>
+<p>Save flight record (at the bottom of the W&amp;B page; Preview shows it first) stores a dated snapshot of the manifest, the weight and balance calculation with every item's weight, arm and moment, the zero-fuel, ramp, take-off and landing conditions against their limits, and the Perf tab's take-off and landing inputs and results for the current registration. Records are listed in the W&amp;B side panel under Flight records. Open one to:</p>
+<ul>
+<li><strong>Share PDF</strong> – builds a PDF on the device (no signal needed) and opens the share sheet, so it can be saved to Files, sent by mail or dropped into the operator's records system. On a computer it downloads.</li>
+<li><strong>Print</strong> – prints the record (or Save as PDF from the print dialog).</li>
+<li><strong>Copy text</strong> – copies a plain-text version.</li>
+<li><strong>Delete record</strong> – two taps; records are otherwise kept on the device, the newest 100 per type.</li>
+</ul>
+<p>Below the records list, Export log (CSV) shares a one-line-per-flight spreadsheet (date, route, PIC, crew and passenger counts and weights, fuel, weights and CG, W&amp;B verdict, take-off and landing distances and speeds) and Export records (JSON) shares every record in full. The record carries a signature line for the pilot in command; the PDF or printout, signed, is the compliance copy. Records are stored only on the device until exported, so export regularly.</p>
 <div class="note warn">The calculation is only as good as the profile. Enter the empty weight and arm from the aircraft's own report, confirm template figures against the POH, and treat the result as an aid: the pilot in command remains responsible for the aircraft's weight and balance.</div>
 
 <h2 id="perf">12b. Performance: take-off and landing distances</h2>

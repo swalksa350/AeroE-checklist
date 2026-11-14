@@ -106,6 +106,17 @@ nav.modes button .short{display:none}
 .perf button.mini{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;font-weight:600}
 .perf td .dim{font-size:12px}
 .perf .res .cell .v{font-size:19px}
+.mf-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 12px;margin:6px 0 10px}
+.mf-grid label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.05em}
+.mf-grid input{width:100%!important;text-align:left!important;font-size:16px!important;text-transform:none}
+.wb table.mf td{padding:5px 3px} .wb table.mf input{width:100%!important;min-width:4.5em;font-size:15px!important;padding:7px 8px!important} .wb table.mf input[type=text]{text-align:left!important;min-width:7em}
+.wb table.mf select{font:inherit;font-size:14px;padding:7px 4px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);max-width:11em}
+.wb table.mf td:last-child{width:1%} .wb table.mf button.x{padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);color:var(--red)}
+@media (max-width:640px){ .wb table.mf,.wb table.mf tbody,.wb table.mf td{display:block} .wb table.mf tr:first-child{display:none} .wb table.mf tr{display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center} .wb table.mf.pax tr{grid-template-columns:1fr 1.6fr 1fr auto} .wb table.mf.cargo tr{grid-template-columns:2fr 1fr auto} .wb table.mf td{padding:0;border:0;width:auto!important} .wb table.mf td:first-child{grid-column:1/-1} .wb table.mf select{max-width:100%;width:100%} .wb table.mf input{min-width:0} }
+.mf-use{margin:10px 0;font-size:15px} .mf-use label{display:flex;align-items:center;gap:8px} .mf-use input{width:22px;height:22px} .mf-use .dim{margin-top:4px;font-size:13px;color:var(--ink-dim)}
+.record .rec-body{font-size:14px;line-height:1.4;margin-top:10px} .record .rl.b{font-weight:700;margin-top:8px} .record .rl.m{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;font-size:12px!important} .record .rl.red{color:var(--red)} .record .rl.dim{color:var(--ink-dim)}
+.record .actions{display:flex;gap:8px;flex-wrap:wrap} .record .actions button{padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600} .record .actions button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)} .record .actions button.danger{color:var(--red);border-color:var(--red)} .record .hint{font-size:13px;color:var(--ink-dim);min-height:1em;margin:6px 0}
+@media print{ body.print-record > *:not(.sheet){display:none!important} body.print-record{background:#fff;color:#000} body.print-record .sheet{position:static;inset:auto;background:none;display:block} body.print-record .sheet .card2{max-width:none;max-height:none;overflow:visible;padding:0;background:#fff;color:#000;border-radius:0} body.print-record .record .actions,body.print-record .record .hint{display:none} body.print-record .record .rl.red{color:#b00} body.print-record .record .rl.dim{color:#444} }
 .wb .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .wb .btns button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
 .wb .btns button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
@@ -326,11 +337,11 @@ header .brand{cursor:default}
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.4 (build 4b4aaf8c)</footer>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.5 (build 79b4f15f)</footer>
 </div>
 <script>
-window.AEROE_BUILD = "4b4aaf8c";
-window.AEROE_VERSION = "2.4";
+window.AEROE_BUILD = "79b4f15f";
+window.AEROE_VERSION = "2.5";
 /* Mooney M20J 201 – checklist data.
    Prototype content. Verify against the operator's approved checklist and the POH/AFM. */
 window.AIRCRAFT = window.AIRCRAFT || [];
