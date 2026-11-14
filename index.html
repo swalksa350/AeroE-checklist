@@ -126,8 +126,10 @@ nav.modes button .short{display:none}
 @media (max-width:640px){ .wb table.mf,.wb table.mf tbody,.wb table.mf td{display:block} .wb table.mf tr:first-child{display:none} .wb table.mf tr{display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center} .wb table.mf.pax tr{grid-template-columns:1fr 1.6fr 1fr auto} .wb table.mf.cargo tr{grid-template-columns:2fr 1fr auto} .wb table.mf td{padding:0;border:0;width:auto!important} .wb table.mf td:first-child{grid-column:1/-1} .wb table.mf select{max-width:100%;width:100%} .wb table.mf input{min-width:0} }
 .mf-use{margin:10px 0;font-size:15px} .mf-use label{display:flex;align-items:center;gap:8px} .mf-use input{width:22px;height:22px} .mf-use .dim{margin-top:4px;font-size:13px;color:var(--ink-dim)}
 .record .rec-body{font-size:14px;line-height:1.4;margin-top:10px} .record .rl.b{font-weight:700;margin-top:8px} .record .rl.m{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;font-size:12px!important} .record .rl.red{color:var(--red)} .record .rl.dim{color:var(--ink-dim)}
+.signoff{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2)} .signoff .so-title{font-weight:700;font-size:15px;margin-bottom:4px} .signoff .dim{font-size:13px;color:var(--ink-dim)} .signoff .so-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0} .signoff .so-fields input{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);min-width:0} .signoff .so-accept{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:8px 0} .signoff .so-accept input{width:24px;height:24px;flex:none;margin-top:1px} .signoff .so-actions button{padding:10px 16px;border-radius:var(--radius);font-weight:700;background:var(--green);color:var(--on-green);border:1px solid var(--green)} .signoff .so-actions button:disabled{opacity:.6} .signoff .signed{font-weight:700;color:var(--green);font-size:15px} .signoff .fp{font-size:12px;color:var(--ink-dim);margin-top:4px;font-variant-numeric:tabular-nums} .signoff .fp.bad{color:var(--red);font-weight:700}
+@media (max-width:480px){ .signoff .so-fields{grid-template-columns:1fr} }
 .record .actions{display:flex;gap:8px;flex-wrap:wrap} .record .actions button{padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600} .record .actions button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)} .record .actions button.danger{color:var(--red);border-color:var(--red)} .record .hint{font-size:13px;color:var(--ink-dim);min-height:1em;margin:6px 0}
-@media print{ body.print-record > *:not(.sheet){display:none!important} body.print-record{background:#fff;color:#000} body.print-record .sheet{position:static;inset:auto;background:none;display:block} body.print-record .sheet .card2{max-width:none;max-height:none;overflow:visible;padding:0;background:#fff;color:#000;border-radius:0} body.print-record .record .actions,body.print-record .record .hint{display:none} body.print-record .record .rl.red{color:#b00} body.print-record .record .rl.dim{color:#444} }
+@media print{ body.print-record > *:not(.sheet){display:none!important} body.print-record{background:#fff;color:#000} body.print-record .sheet{position:static;inset:auto;background:none;display:block} body.print-record .sheet .card2{max-width:none;max-height:none;overflow:visible;padding:0;background:#fff;color:#000;border-radius:0} body.print-record .record .actions,body.print-record .record .hint,body.print-record .signoff .so-fields,body.print-record .signoff .so-accept,body.print-record .signoff .so-actions{display:none} body.print-record .record .rl.red{color:#b00} body.print-record .record .rl.dim{color:#444} }
 .wb .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .wb .btns button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
 .wb .btns button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
@@ -399,7 +401,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "79b4f15f";
+const BUILD = "05eec9ba";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}};
@@ -1103,7 +1105,9 @@ function recordLines(r){
     S("Chart path: "+s.trail.map(t=>t[0]+" "+t[1]).join(", ")+" "+s.units.dist+"."); s.notes.forEach(S); s.warnings.forEach(t=>L.push({t,f:"B",s:10,red:true}));
   };
   perf("takeoff","Take-off performance"); perf("landing","Landing performance");
-  BR(); BR(); P("Pilot in command signature: ______________________________    Date: ______________");
+  BR(); H("Sign-off");
+  if(r.signoff){ const so=r.signoff; L.push({t:"Accepted by "+so.name+(so.licence?" ("+so.licence+")":"")+" on "+new Date(so.acceptedAt).toLocaleString()+" (digital click-to-accept in AeroE Checklist "+so.app+").",f:"B",s:10}); S(so.statement); S("Record fingerprint (SHA-256, first 16 of 64 hex digits) "+fpShort(so.fingerprint)+". Full: "+so.fingerprint); }
+  else { P("Not signed off in the app."); BR(); P("Pilot in command signature: ______________________________    Date: ______________"); }
   BR(); S("Template and chart figures "+(r.wb.verified?"verified":"are marked unverified in the app")+". Figures are computed by AeroE Checklist from the data entered by the pilot and the POH data in the app; the pilot in command remains responsible for the weight and balance and performance of the aircraft.");
   return L;
 }
@@ -1135,6 +1139,28 @@ async function shareBlob(blob,name,title){
   if(navigator.share&&navigator.canShare&&navigator.canShare({files:[f]})){ try{ await navigator.share({files:[f],title}); return "shared"; }catch(e){ if(e&&e.name==="AbortError") return "cancelled"; } }
   const url=URL.createObjectURL(blob); const a=h("a",{href:url,download:name}); document.body.append(a); a.click(); setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); },4000); return "downloaded";
 }
+/* ----- digital sign-off: click to accept, with a fingerprint (SHA-256) of the record as accepted ----- */
+function recCanonical(rec){ const o={}; Object.keys(rec).filter(k=>k!=="signoff"&&k!=="preview").sort().forEach(k=>o[k]=rec[k]); return JSON.stringify(o); }
+async function recFingerprint(rec){ const txt=recCanonical(rec); try{ if(crypto&&crypto.subtle){ const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(txt)); return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join(""); } }catch(e){} let h1=0x811c9dc5,h2=0x1000193; for(let i=0;i<txt.length;i++){ h1=Math.imul(h1^txt.charCodeAt(i),16777619)>>>0; h2=Math.imul(h2+txt.charCodeAt(i),2246822519)>>>0; } return (h1.toString(16).padStart(8,"0")+h2.toString(16).padStart(8,"0")).repeat(4); }
+const fpShort=fp=>fp?fp.slice(0,16).toUpperCase().replace(/(.{4})/g,"$1 ").trim():"";
+const SIGN_STATEMENT="I have checked the manifest, the weight and balance and the take-off and landing performance recorded here and accept them as correct for this flight.";
+function signoffBlock(rec,sheet){
+  const box=h("div",{class:"signoff"});
+  if(rec.signoff){
+    const so=rec.signoff; const line=h("div",{class:"fp"},"Fingerprint "+fpShort(so.fingerprint)+" · checking…");
+    box.append(h("div",{class:"signed"},"✓ Accepted by "+so.name+(so.licence?" ("+so.licence+")":"")+" on "+new Date(so.acceptedAt).toLocaleString()),h("div",{class:"dim"},so.statement),line);
+    recFingerprint(rec).then(fp=>{ line.textContent="Fingerprint "+fpShort(so.fingerprint)+(fp===so.fingerprint?" · record unchanged since sign-off":" · WARNING: the record no longer matches its sign-off fingerprint"); line.classList.toggle("bad",fp!==so.fingerprint); });
+    return box;
+  }
+  box.append(h("div",{class:"so-title"},"Sign-off"),h("div",{class:"dim"},SIGN_STATEMENT));
+  const name=h("input",{type:"text",id:"so-name",placeholder:"Pilot in command – full name",value:rec.flight.pic||"",autocapitalize:"words"});
+  const lic=h("input",{type:"text",id:"so-licence",placeholder:"Licence / ARN (optional)"});
+  const acc=h("input",{type:"checkbox",id:"so-accept"});
+  const msg=h("div",{class:"hint"});
+  const btn=h("button",{class:"primary",onclick:async()=>{ const n=name.value.trim(); if(n.length<2){ msg.textContent="Enter the pilot in command's name."; return; } if(!acc.checked){ msg.textContent="Tick the acceptance box to sign."; return; } btn.disabled=true; btn.textContent="Signing…"; const fp=await recFingerprint(rec); rec.signoff={name:n,licence:lic.value.trim(),acceptedAt:new Date().toISOString(),statement:SIGN_STATEMENT,fingerprint:fp,app:APP_VERSION()+" ("+BUILD+")"}; save(); render(); const keep=sheet.scrollTop; showRecord(rec); const ns=document.getElementById("sheet"); if(ns) ns.querySelector(".card2").scrollTop=keep; }},"Accept and sign");
+  box.append(h("div",{class:"so-fields"},name,lic),h("label",{class:"so-accept"},acc,h("span",{},"I accept the manifest, weight and balance and performance data above as pilot in command.")),h("div",{class:"so-actions"},btn),msg);
+  return box;
+}
 function showRecord(rec){
   const old=document.getElementById("sheet"); if(old) old.remove();
   const card=h("div",{class:"card2 record"}); const sheet=h("div",{class:"sheet",id:"sheet"},card);
@@ -1143,10 +1169,11 @@ function showRecord(rec){
   actions.append(h("button",{class:"primary",onclick:async ev=>{ const b=ev.currentTarget; b.textContent="Preparing…"; try{ const r=await shareBlob(pdfFromLines(recordLines(rec),"Flight record "+rec.rego+" "+(rec.flight.date||"")),recordFileName(rec,"pdf"),"Flight record "+rec.rego); msg.textContent=r==="downloaded"?"PDF saved to your downloads.":r==="shared"?"PDF shared.":""; }catch(e){ msg.textContent="Could not create the PDF: "+e.message; } b.textContent="Share PDF"; }},"Share PDF"));
   actions.append(h("button",{onclick:()=>{ document.body.classList.add("print-record"); const done=()=>{ document.body.classList.remove("print-record"); window.removeEventListener("afterprint",done); }; window.addEventListener("afterprint",done); setTimeout(()=>{ window.print(); setTimeout(done,2000); },50); }},"Print"));
   actions.append(h("button",{onclick:async()=>{ try{ await navigator.clipboard.writeText(recordText(rec)); msg.textContent="Copied as text."; }catch(e){ msg.textContent="Copy is not available here."; } }},"Copy text"));
-  if(!rec.preview) actions.append(h("button",{class:"danger",onclick:ev=>{ const b=ev.currentTarget; if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="Tap again to delete"; return; } const list=recStore(); const i=list.findIndex(x=>x.id===rec.id); if(i>=0) list.splice(i,1); save(); sheet.remove(); render(); }},"Delete record"));
+  if(!rec.preview) actions.append(h("button",{class:"danger",onclick:ev=>{ const b=ev.currentTarget; if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="Tap again to delete"; return; } const list=recStore(); const i=list.findIndex(x=>x.id===rec.id); if(i>=0) list.splice(i,1); save(); sheet.remove(); render(); }},rec.signoff?"Delete signed record":"Delete record"));
   if(rec.preview) actions.append(h("button",{class:"primary",onclick:()=>{ delete rec.preview; const list=recStore(); list.unshift(rec); while(list.length>100) list.pop(); save(); render(); sheet.remove(); showRecord(rec); }},"Save this record"));
   actions.append(h("button",{onclick:()=>sheet.remove()},"Close"));
   card.append(actions,msg);
+  if(!rec.preview) card.append(signoffBlock(rec,card));
   const body=h("div",{class:"rec-body"});
   recordLines(rec).forEach(l=>{ const cls=(l.f==="B"?"b ":"")+(l.f==="M"?"m ":"")+(l.red?"red ":"")+(l.dim?"dim ":""); body.append(h("div",{class:"rl "+cls,style:"font-size:"+Math.min(l.s+3,20)+"px"+(l.gap?";margin-top:"+l.gap+"px":"")},l.t||" ")); });
   card.append(body);
@@ -1154,12 +1181,12 @@ function showRecord(rec){
   document.body.append(sheet);
 }
 function recordsCSV(list){
-  const cols=["saved","date","aircraft","rego","from","to","pic","ref","crew","passengers","pax_weight","cargo_weight","fuel","zfw","zfw_cg","tow","tow_cg","ldw","ldw_cg","wb_verdict","to_dist","to_factored","to_roll","to_speed","ld_dist","ld_factored","ld_roll","ld_speed","ld_chart","test_data"];
+  const cols=["saved","date","aircraft","rego","from","to","pic","ref","crew","passengers","pax_weight","cargo_weight","fuel","zfw","zfw_cg","tow","tow_cg","ldw","ldw_cg","wb_verdict","to_dist","to_factored","to_roll","to_speed","ld_dist","ld_factored","ld_roll","ld_speed","ld_chart","signed_by","signed_licence","signed_at","fingerprint","test_data"];
   const q=v=>{ v=v===null||v===undefined?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const rnd=(v,d)=>v===null||v===undefined||!isFinite(v)?"":Number(v).toFixed(d);
   const rows=list.map(r=>{ const t=r.perf.takeoff, l=r.perf.landing; const P=s=>s&&s.complete&&s.ok?s:null; const verdict=!r.wb.complete?"incomplete":!r.wb.envelopeKnown?"no envelope":(r.wb.inLimits?"within limits":"outside limits");
     return [r.savedAt,r.flight.date,r.aircraft.short,r.rego,r.flight.from,r.flight.to,r.flight.pic,r.flight.ref,r.manifest.crew,r.manifest.paxN,rnd(r.manifest.paxW,0),rnd(r.manifest.cargoW,0),rnd(r.wb.fuel,0),rnd(r.wb.pts.zfw.w,0),rnd(r.wb.pts.zfw.arm,1),rnd(r.wb.pts.to.w,0),rnd(r.wb.pts.to.arm,1),rnd(r.wb.pts.ld.w,0),rnd(r.wb.pts.ld.arm,1),verdict,
-      P(t)?t.dist:"",P(t)?t.factored:"",P(t)?t.roll:"",t&&t.speed!==undefined?t.speed:"",P(l)?l.dist:"",P(l)?l.factored:"",P(l)?l.roll:"",l&&l.speed!==undefined?l.speed:"",l?l.title:"",r.test?"yes":""].map(q).join(","); });
+      P(t)?t.dist:"",P(t)?t.factored:"",P(t)?t.roll:"",t&&t.speed!==undefined?t.speed:"",P(l)?l.dist:"",P(l)?l.factored:"",P(l)?l.roll:"",l&&l.speed!==undefined?l.speed:"",l?l.title:"",r.signoff?r.signoff.name:"",r.signoff?r.signoff.licence:"",r.signoff?r.signoff.acceptedAt:"",r.signoff?r.signoff.fingerprint:"",r.test?"yes":""].map(q).join(","); });
   return cols.join(",")+"\n"+rows.join("\n")+"\n";
 }
 function renderRecordsSide(sEl){
@@ -1167,7 +1194,7 @@ function renderRecordsSide(sEl){
   sEl.append(h("div",{class:"group-title"},"Flight records"));
   const l=h("div",{class:"list"});
   if(!list.length) l.append(h("div",{class:"saved",style:"padding:8px 16px"},"Save flight record on the W&B page keeps the manifest, weight and balance and performance for the flight here, ready to print, share as PDF or export."));
-  list.slice(0,30).forEach(r=>l.append(h("button",{onclick:()=>showRecord(r)},h("span",{class:"dot "+(r.wb.inLimits?"done":"")}),h("span",{class:"name"},r.rego+" · "+(r.flight.date||"")+(r.flight.from||r.flight.to?" · "+r.flight.from+"–"+r.flight.to:"")),h("span",{class:"n"},new Date(r.savedAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})))));
+  list.slice(0,30).forEach(r=>l.append(h("button",{onclick:()=>showRecord(r)},h("span",{class:"dot "+(r.wb.inLimits?"done":"")}),h("span",{class:"name"},r.rego+" · "+(r.flight.date||"")+(r.flight.from||r.flight.to?" · "+r.flight.from+"–"+r.flight.to:"")),h("span",{class:"n"},(r.signoff?"signed · ":"")+new Date(r.savedAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})))));
   if(list.length>30) l.append(h("div",{class:"saved",style:"padding:8px 16px"},(list.length-30)+" older records are kept and included in the exports."));
   if(list.length){
     l.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([recordsCSV(list)],{type:"text/csv"}),"AeroE-flight-records-"+a.short+"-"+todayISO()+".csv","Flight records"); }},h("span",{class:"dot"}),h("span",{class:"name"},"Export log (CSV)"),h("span",{class:"n"},list.length)));

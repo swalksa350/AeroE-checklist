@@ -115,8 +115,10 @@ nav.modes button .short{display:none}
 @media (max-width:640px){ .wb table.mf,.wb table.mf tbody,.wb table.mf td{display:block} .wb table.mf tr:first-child{display:none} .wb table.mf tr{display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center} .wb table.mf.pax tr{grid-template-columns:1fr 1.6fr 1fr auto} .wb table.mf.cargo tr{grid-template-columns:2fr 1fr auto} .wb table.mf td{padding:0;border:0;width:auto!important} .wb table.mf td:first-child{grid-column:1/-1} .wb table.mf select{max-width:100%;width:100%} .wb table.mf input{min-width:0} }
 .mf-use{margin:10px 0;font-size:15px} .mf-use label{display:flex;align-items:center;gap:8px} .mf-use input{width:22px;height:22px} .mf-use .dim{margin-top:4px;font-size:13px;color:var(--ink-dim)}
 .record .rec-body{font-size:14px;line-height:1.4;margin-top:10px} .record .rl.b{font-weight:700;margin-top:8px} .record .rl.m{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;font-size:12px!important} .record .rl.red{color:var(--red)} .record .rl.dim{color:var(--ink-dim)}
+.signoff{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2)} .signoff .so-title{font-weight:700;font-size:15px;margin-bottom:4px} .signoff .dim{font-size:13px;color:var(--ink-dim)} .signoff .so-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0} .signoff .so-fields input{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);min-width:0} .signoff .so-accept{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:8px 0} .signoff .so-accept input{width:24px;height:24px;flex:none;margin-top:1px} .signoff .so-actions button{padding:10px 16px;border-radius:var(--radius);font-weight:700;background:var(--green);color:var(--on-green);border:1px solid var(--green)} .signoff .so-actions button:disabled{opacity:.6} .signoff .signed{font-weight:700;color:var(--green);font-size:15px} .signoff .fp{font-size:12px;color:var(--ink-dim);margin-top:4px;font-variant-numeric:tabular-nums} .signoff .fp.bad{color:var(--red);font-weight:700}
+@media (max-width:480px){ .signoff .so-fields{grid-template-columns:1fr} }
 .record .actions{display:flex;gap:8px;flex-wrap:wrap} .record .actions button{padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600} .record .actions button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)} .record .actions button.danger{color:var(--red);border-color:var(--red)} .record .hint{font-size:13px;color:var(--ink-dim);min-height:1em;margin:6px 0}
-@media print{ body.print-record > *:not(.sheet){display:none!important} body.print-record{background:#fff;color:#000} body.print-record .sheet{position:static;inset:auto;background:none;display:block} body.print-record .sheet .card2{max-width:none;max-height:none;overflow:visible;padding:0;background:#fff;color:#000;border-radius:0} body.print-record .record .actions,body.print-record .record .hint{display:none} body.print-record .record .rl.red{color:#b00} body.print-record .record .rl.dim{color:#444} }
+@media print{ body.print-record > *:not(.sheet){display:none!important} body.print-record{background:#fff;color:#000} body.print-record .sheet{position:static;inset:auto;background:none;display:block} body.print-record .sheet .card2{max-width:none;max-height:none;overflow:visible;padding:0;background:#fff;color:#000;border-radius:0} body.print-record .record .actions,body.print-record .record .hint,body.print-record .signoff .so-fields,body.print-record .signoff .so-accept,body.print-record .signoff .so-actions{display:none} body.print-record .record .rl.red{color:#b00} body.print-record .record .rl.dim{color:#444} }
 .wb .btns{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 .wb .btns button{padding:9px 14px;border:1px solid var(--line);border-radius:var(--radius);font-weight:600}
 .wb .btns button.primary{background:var(--green);color:var(--on-green);border-color:var(--green)}
@@ -337,11 +339,11 @@ header .brand{cursor:default}
     <aside id="side"></aside>
     <section class="view" id="view"></section>
   </main>
-  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.5 (build 79b4f15f)</footer>
+  <footer>Prototype content. Verify against the operator's approved checklist and the POH/AFM before any use. · AeroE Checklist EFB edition, version 2.6 (build 05eec9ba)</footer>
 </div>
 <script>
-window.AEROE_BUILD = "79b4f15f";
-window.AEROE_VERSION = "2.5";
+window.AEROE_BUILD = "05eec9ba";
+window.AEROE_VERSION = "2.6";
 /* Cessna 206H Stationair – checklist data.
    Prototype content. Verify against the operator's approved checklist and the POH/AFM. */
 window.AIRCRAFT = window.AIRCRAFT || [];

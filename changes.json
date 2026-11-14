@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.6",
+    "date": "2026-11-14",
+    "title": "Digital sign-off of flight records",
+    "notes": [
+      "Each saved flight record now has a Sign-off box: the pilot in command enters their name and optional licence number, ticks the acceptance statement and taps Accept and sign. The name, time and a SHA-256 fingerprint of the record are stored with it.",
+      "Opening a signed record recomputes the fingerprint and confirms the record is unchanged since sign-off. The sign-off and fingerprint are printed on the PDF, shown on the printout and included in the CSV log.",
+      "Signed records are marked in the Flight records list and need the usual two taps to delete."
+    ]
+  },
+  {
     "version": "2.5",
     "date": "2026-11-14",
     "title": "Manifest and flight records",
