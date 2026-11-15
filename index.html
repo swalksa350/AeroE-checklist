@@ -378,6 +378,7 @@ main.picker section.view{display:block}
 <script src="aircraft/sr22.js"></script>
 <script src="wb/c208b.js"></script>
 <script src="wb/ga8.js"></script>
+<script src="perf/c208b.js"></script>
 <script src="perf/ga8.js"></script>
 <!-- aircraft:end -->
 
@@ -401,7 +402,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "73d0fb70";
+const BUILD = "dc3482a7";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}};
@@ -1046,11 +1047,11 @@ function renderManifest(w,p){
 function mfTotalsText(m,u){ const s=mfSums(m); return (s.crew?s.crew+" crew":"no crew")+", "+s.paxN+" passenger"+(s.paxN===1?"":"s")+" ("+fmt(s.paxW,0)+" "+u.weight+"), baggage and freight "+fmt(s.cargoW,0)+" "+u.weight+"."; }
 /* ----- snapshots ----- */
 function pfSnapshot(isLanding){
-  const T=PT(); if(!T) return null; const st=pfStore(); const spec=isLanding?(T.landing.find(l=>l.id===st.approach)||T.landing[0]):T.takeoff; const inp=pfInputs(st,isLanding);
-  const snap={title:spec.title,units:T.units,inputs:{elev:num(st.elev),qnh:num(st.qnh),oat:inp.oat,ph:inp.ph,rwy:num(st.rwy),wdir:num(st.wdir),wspd:num(st.wspd),windText:inp.windText,windRule:!!st.windRule,windUsed:inp.windUsed,cross:inp.cross,slope:inp.slope,surface:(T.surfaces.find(s=>s[0]===st.surface)||T.surfaces[0])[1],weight:inp.weight,factor:Math.max(1,num(st.factor)||1),avail:num(isLanding?st.lda:st.tora)},warnings:inp.warn.slice(),info:inp.info.slice()};
+  const T=PT(); if(!T) return null; const st=pfStore(); const S=pfSpecs(T,st); const spec=isLanding?(S.landing.find(l=>l.id===st.approach)||S.landing[0]):S.takeoff; const inp=pfInputs(st,isLanding); const vr=pfVariant(T,st);
+  const snap={title:spec.title+(vr?" · "+vr.title:""),units:T.units,inputs:{elev:num(st.elev),qnh:num(st.qnh),oat:inp.oat,ph:inp.ph,rwy:num(st.rwy),wdir:num(st.wdir),wspd:num(st.wspd),windText:inp.windText,windRule:!!st.windRule,windUsed:inp.windUsed,cross:inp.cross,slope:inp.slope,surface:(T.surfaces.find(s=>s[0]===st.surface)||T.surfaces[0])[1],weight:inp.weight,factor:Math.max(1,num(st.factor)||1),avail:num(isLanding?st.lda:st.tora)},warnings:inp.warn.slice(),info:inp.info.slice()};
   if(inp.missing.length){ snap.complete=false; snap.missing=inp.missing; return snap; }
   const r=pfSolve(T,spec.chart,{oat:inp.oat,ph:inp.ph,weight:inp.weight,wind:inp.windUsed,slope:inp.slope,gravel:inp.gravel}); snap.complete=true;
-  const sp=pfSpeed(spec.speeds,Math.min(Math.max(inp.weight,T.limits.minWeight),T.limits.maxWeight)); snap.speed=Math.round(sp[0]); snap.speedLabel=spec.speedLabel; if(sp[1]!==undefined&&spec.rodLabel){ snap.rod=Math.round(sp[1]/10)*10; snap.rodLabel=spec.rodLabel; }
+  const sp=pfSpeed(spec.speeds,Math.min(Math.max(inp.weight,T.limits.minWeight),T.limits.maxWeight)); snap.speed=Math.round(sp[0]); snap.speedLabel=spec.speedLabel; if(sp[1]!==undefined&&spec.speed2Label){ const r=spec.speed2Round||1; snap.rod=Math.round(sp[1]/r)*r; snap.rodLabel=spec.speed2Label+(spec.speed2Round?"":" (KIAS)"); }
   if(!r.ok){ snap.ok=false; snap.why=r.why; return snap; }
   snap.ok=true; snap.dist=Math.round(r.dist); snap.roll=Math.round(r.roll); snap.factored=Math.ceil(r.dist*snap.inputs.factor); snap.factoredRoll=Math.ceil(r.roll*snap.inputs.factor); snap.trail=r.trail.map(t=>[t[0],Math.round(t[1])]); snap.notes=r.notes; snap.used=r.used;
   if(snap.inputs.avail!==null) snap.sufficient=snap.factored<=snap.inputs.avail;
@@ -1249,21 +1250,30 @@ function pfLerp3(tab,ws,as,ts,w,a,t){
 function pfSolveTable(T,c,inp,ph,w,wind,notes){
   const u=T.units; const ws=c.weights.slice().sort((a,b)=>a-b), as=c.alts, ts=c.temps;
   if(ph>as[as.length-1]) return {ok:false,why:"Pressure height "+fmt(ph,0)+" ft is above the table's "+fmt(as[as.length-1],0)+" ft."};
-  let oat=inp.oat; if(oat>ts[ts.length-1]) return {ok:false,why:"Temperature above the table's maximum of "+ts[ts.length-1]+" °C."};
+  let oat=inp.oat, hotF=1; const kh=(c.corrections||{}).hot;
+  if(oat>ts[ts.length-1]){
+    if(!kh) return {ok:false,why:"Temperature above the table's maximum of "+ts[ts.length-1]+" °C; the POH gives no figure."};
+    const lim=kh.isaPlus!==undefined?15-1.98*ph/1000+kh.isaPlus:Infinity;
+    if(oat>lim) return {ok:false,why:"Temperature "+fmt(oat,0)+" °C is above the operating temperature limit (ISA + "+kh.isaPlus+" °C = "+fmt(lim,0)+" °C at this pressure height)."};
+    hotF=1+kh.pct/100; notes.push("Above "+kh.above+" °C: the "+kh.above+" °C figures are increased by "+kh.pct+" % as the POH table note directs."); oat=ts[ts.length-1];
+  }
   if(oat<ts[0]){ oat=ts[0]; notes.push("Temperature below the table's lowest "+ts[0]+" °C: that column is used."); }
   let wt=w; if(wt<ws[0]){ wt=ws[0]; notes.push("Weight below the table's lowest "+fmt(ws[0],0)+" "+u.weight+": that weight is used."); }
   const roll=pfLerp3(c.roll,ws,as,ts,wt,ph,oat), total=pfLerp3(c.total,ws,as,ts,wt,ph,oat);
   if(roll===null||total===null) return {ok:false,why:"The POH table has no figure for this combination of weight, pressure height and temperature."};
-  const trail=[["Table",total]]; let d=total, r=roll; const k=c.corrections||{};
+  const trail=[["Table",total*hotF]]; let d=total*hotF, r=roll*hotF; const k=c.corrections||{};
   if(wind>0&&k.headwind){ const f=1+(k.headwind.pct/100)*(wind/k.headwind.per); d*=f; r*=f; trail.push(["Wind",d]); }
   else if(wind<0&&k.tailwind){ if(k.tailwind.max!==undefined&&-wind>k.tailwind.max) return {ok:false,why:"Tailwind component of "+fmt(-wind,0)+" kt exceeds the POH's "+k.tailwind.max+" kt."}; const f=1+(k.tailwind.pct/100)*(-wind/k.tailwind.per); d*=f; r*=f; trail.push(["Wind",d]); }
-  if(inp.gravel&&k.grass){ const add=roll*(k.grass.rollPct/100); d+=add; r+=add; trail.push(["Surface",d]); }
+  if(inp.gravel&&k.grass){ const add=r*(k.grass.rollPct/100); d+=add; r+=add; trail.push(["Surface",d]); }
   if(inp.slope&&!k.slope) notes.push("The POH gives no slope correction: the "+fmt(Math.abs(inp.slope),1)+" % slope entered is not applied.");
   (c.notes||[]).forEach(n=>notes.push(n));
   return {ok:true,dist:d,roll:r,trail,notes,used:{oat,ph,weight:wt,wind,slope:inp.slope,gravel:!!inp.gravel}};
 }
 /* perf-engine:end */
 const PT = () => { const a=AC(); return a && window.PERF ? (window.PERF[a.id]||null) : null; };
+/* A type may carry several configurations (e.g. cargo pod installed / not installed), each with its own charts. */
+function pfVariant(T,st){ if(!T||!T.variants) return null; return T.variants.find(v=>v.id===(st&&st.variant))||T.variants[0]; }
+function pfSpecs(T,st){ const v=pfVariant(T,st); return v?{takeoff:v.takeoff,landing:v.landing}:{takeoff:T.takeoff,landing:T.landing}; }
 function pfStore(){ const a=AC(); if(!a) return null; if(!state.perf[a.id]) state.perf[a.id]={elev:null,qnh:1013,oat:null,rwy:null,wdir:null,wspd:null,windRule:true,slope:0,surface:"sealed",wTo:null,wLd:null,factor:1.15,approach:null,tora:null,lda:null}; return state.perf[a.id]; }
 function pfInputs(st,isLanding){
   const T=PT(); const u=T.units; const warn=[], info=[];
@@ -1278,17 +1288,17 @@ function pfInputs(st,isLanding){
   let windUsed=head;
   if(st.windRule&&head!==0){ windUsed=head>0?head*0.5:head*1.5; info.push("Wind rule applied: "+(head>0?"50 % of the headwind":"150 % of the tailwind")+" → "+fmt(Math.abs(windUsed),0)+" kt "+(windUsed>=0?"headwind":"tailwind")+" used."); }
   if(cross!==null&&T.limits.demoCrosswind&&cross>T.limits.demoCrosswind) warn.push("Crosswind "+fmt(cross,0)+" kt exceeds the maximum demonstrated "+T.limits.demoCrosswind+" kt.");
-  return {missing,ph,oat,weight,head,cross,windText,windSub,windUsed,slope,gravel:st.surface!=="sealed",warn,info,u};
+  const surfOk=T.surfaces.some(x=>x[0]===st.surface); return {missing,ph,oat,weight,head,cross,windText,windSub,windUsed,slope,gravel:surfOk&&st.surface!==T.surfaces[0][0],warn,info,u};
 }
 function pfResultNodes(st,isLanding){
-  const T=PT(); const out=[]; const u=T.units; const spec=isLanding?(T.landing.find(l=>l.id===st.approach)||T.landing[0]):T.takeoff;
+  const T=PT(); const out=[]; const u=T.units; const S=pfSpecs(T,st); const spec=isLanding?(S.landing.find(l=>l.id===st.approach)||S.landing[0]):S.takeoff;
   const inp=pfInputs(st,isLanding);
   const altD=m=>u.dist==="m"?fmt(m*3.28084,0)+" ft":fmt(m/3.28084,0)+" m";
   const cell=(k,v,s,cls)=>h("div",{class:"cell "+(cls||"")},h("div",{class:"k"},k),h("div",{class:"v"},v),s?h("div",{class:"s"},s):"");
   const grid=h("div",{class:"res"});
   grid.append(cell("Pressure height",inp.ph===null?"–":fmt(inp.ph,0)+" ft",inp.ph===null?"needs elevation and QNH":"elevation "+fmt(num(st.elev),0)+" ft, QNH "+fmt(num(st.qnh),0)));
   grid.append(cell("Wind",inp.windText,inp.windSub+(inp.cross!==null&&T.limits.demoCrosswind?" · max demonstrated crosswind "+T.limits.demoCrosswind+" kt":""),inp.warn.length?"bad":""));
-  if(inp.weight!==null){ const sp=pfSpeed(spec.speeds,Math.min(Math.max(inp.weight,T.limits.minWeight),T.limits.maxWeight)); grid.append(cell(spec.speedLabel,fmt(Math.round(sp[0]),0)+" KIAS",(spec.rodLabel&&sp[1]!==undefined?spec.rodLabel+" "+fmt(Math.round(sp[1]/10)*10,0)+" · ":"")+"at "+fmt(inp.weight,0)+" "+u.weight)); }
+  if(inp.weight!==null){ const sp=pfSpeed(spec.speeds,Math.min(Math.max(inp.weight,T.limits.minWeight),T.limits.maxWeight)); grid.append(cell(spec.speedLabel,fmt(Math.round(sp[0]),0)+" KIAS",(spec.speed2Label&&sp[1]!==undefined?spec.speed2Label+" "+fmt(Math.round(sp[1]/(spec.speed2Round||1))*(spec.speed2Round||1),0)+(spec.speed2Round?"":" KIAS")+" · ":"")+"at "+fmt(inp.weight,0)+" "+u.weight)); }
   out.push(grid);
   if(inp.missing.length){ out.push(h("div",{class:"verdict na"},"Enter "+inp.missing.join(", ")+" to compute the distance.")); inp.warn.forEach(t=>out.push(h("div",{class:"warn red"},t))); return out; }
   const r=pfSolve(T,spec.chart,{oat:inp.oat,ph:inp.ph,weight:inp.weight,wind:inp.windUsed,slope:inp.slope,gravel:inp.gravel});
@@ -1324,7 +1334,7 @@ function renderPerf(v){
   const w=h("div",{class:"wb perf"});
   w.append(h("div",{class:"proc-head",style:"margin:0 -16px 8px"},h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),h("h1",{},isLanding?"Landing distance":"Take-off distance",h("span",{class:"cond"},a.maker+" "+a.model))));
   if(!T){ w.append(h("div",{class:"warn"},"No performance charts have been entered for the "+a.short+" yet. Performance data is added per type from its POH, as the GA8's was from GA-FM-04.")); v.append(w); return; }
-  const spec=isLanding?(T.landing.find(l=>l.id===st.approach)||T.landing[0]):T.takeoff;
+  const S=pfSpecs(T,st); const spec=isLanding?(S.landing.find(l=>l.id===st.approach)||S.landing[0]):S.takeoff;
   if(!T.verified) w.append(h("div",{class:"warn"},"Chart data for this type is UNVERIFIED: it was transcribed from the POH charts and has been checked only against the POH worked examples. Confirm results against the charts before relying on them."));
   w.append(h("h2",{},"Conditions"));
   const tbl=h("table",{});
@@ -1338,12 +1348,13 @@ function renderPerf(v){
   const rule=h("input",{type:"checkbox",id:"pf-windRule"}); rule.checked=!!st.windRule; rule.onchange=()=>{ st.windRule=rule.checked; pfRecalc(); };
   tbl.append(h("tr",{},h("td",{},"Use 50 % of headwind, 150 % of tailwind",h("div",{class:"dim"},"the usual allowance when the chart has none; off reproduces the chart exactly")),h("td",{class:"num"},rule)));
   field("Runway slope (%)","slope","+ for uphill in the direction of travel, − for downhill",{step:"0.1"});
-  const sel=h("select",{id:"pf-surface"}); T.surfaces.forEach(([id,name])=>sel.append(h("option",{value:id},name))); sel.value=st.surface||T.surfaces[0][0]; sel.onchange=()=>{ st.surface=sel.value; pfRecalc(); };
+  if(!T.surfaces.some(x=>x[0]===st.surface)) st.surface=T.surfaces[0][0]; const sel=h("select",{id:"pf-surface"}); T.surfaces.forEach(([id,name])=>sel.append(h("option",{value:id},name))); sel.value=st.surface; sel.onchange=()=>{ st.surface=sel.value; pfRecalc(); };
   tbl.append(h("tr",{},h("td",{},"Surface"),h("td",{class:"num"},sel)));
+  if(T.variants){ const vs=h("select",{id:"pf-variant"}); T.variants.forEach(v=>vs.append(h("option",{value:v.id},v.title))); vs.value=pfVariant(T,st).id; vs.onchange=()=>{ st.variant=vs.value; save(); render(); }; tbl.append(h("tr",{},h("td",{},"Configuration",h("div",{class:"dim"},"the POH has separate charts for each")),h("td",{class:"num"},vs))); }
   const wkey=isLanding?"wLd":"wTo";
   const fromWb=h("button",{class:"mini",onclick:()=>{ const p=wbCurrent(); if(!p){ alert("Set up a registration in the W&B tab first."); return; } const r=wbCompute(p); const val=isLanding?r.pts.ld.w:r.pts.to.w; if(!val){ alert("The W&B tab has no "+(isLanding?"landing":"take-off")+" weight yet."); return; } st[wkey]=Math.round(val); document.getElementById("pf-"+wkey).value=st[wkey]; pfRecalc(); }},"From W&B");
   field((isLanding?"Landing":"Take-off")+" weight ("+T.units.weight+")",wkey,"max "+fmt(T.limits.maxWeight,0)+" "+T.units.weight,{extra:fromWb});
-  if(isLanding&&T.landing.length>1){ const ap=h("select",{id:"pf-approach"}); T.landing.forEach(l=>ap.append(h("option",{value:l.id},l.title.replace(/^Landing – /,"")))); ap.value=spec.id; ap.onchange=()=>{ st.approach=ap.value; save(); render(); }; tbl.append(h("tr",{},h("td",{},"Approach"),h("td",{class:"num"},ap))); }
+  if(isLanding&&S.landing.length>1){ const ap=h("select",{id:"pf-approach"}); S.landing.forEach(l=>ap.append(h("option",{value:l.id},l.title.replace(/^Landing – /,"")))); ap.value=spec.id; ap.onchange=()=>{ st.approach=ap.value; save(); render(); }; tbl.append(h("tr",{},h("td",{},"Approach"),h("td",{class:"num"},ap))); }
   field((isLanding?"Landing distance available":"Take-off run available")+" ("+T.units.dist+")",isLanding?"lda":"tora","optional: from ERSA, for a sufficient / insufficient verdict");
   field("Safety factor","factor","multiplies the chart distance; 1.15 is the usual minimum",{step:"0.05"});
   w.append(tbl);

@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.7",
+    "date": "2026-11-15",
+    "title": "C208B weight and balance and performance from the POH",
+    "notes": [
+      "C208B Grand Caravan (G1000) performance from POH 208BPHBUS-00: the short field take-off and landing distance tables for both configurations, cargo pod installed and without pod, with the POH's wind, dry-grass and hot-day corrections, the lift-off and 50 ft speeds, the 10 kt tailwind limit, the ISA + 35 °C operating temperature limit and the 20 kt demonstrated crosswind. A Configuration selector on the Perf page chooses the charts.",
+      "C208B weight and balance template rewritten from POH Section 6: pilot and commuter seat arms, the six cabin cargo zones and four pod zones with their centroids and limits, fuel arm from the sample loading problem, maximum weights and the CG envelope read from the Figure 6-17 chart. VH-SMP, the POH sample loading problem airplane, is seeded as a deletable test registration and reproduces the POH's 8,750 lb take-off at 199.2 in.",
+      "Load AFM example on the C208B take-off page fills the POH sample (8,750 lb, 4,000 ft, 20 °C, 12 kt headwind: POH 2,933 ft / 1,669 ft).",
+      "Fix: a type's first surface is now treated as the paved baseline whatever it is called; the tabulated-data engine applies the hot-day rule and operating temperature limit."
+    ]
+  },
+  {
     "version": "2.6.1",
     "date": "2026-11-15",
     "title": "Groundwork for tabulated POH performance data",
