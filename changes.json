@@ -1,5 +1,13 @@
 [
   {
+    "version": "2.6.1",
+    "date": "2026-11-15",
+    "title": "Groundwork for tabulated POH performance data",
+    "notes": [
+      "No visible change. The performance engine can now read POH performance tables (ground roll and total distance by weight, pressure altitude and temperature with percentage wind and surface corrections), as used by the Cessna 208 POH, ready for that data to be entered from the manual."
+    ]
+  },
+  {
     "version": "2.6",
     "date": "2026-11-14",
     "title": "Digital sign-off of flight records",

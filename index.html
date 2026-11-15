@@ -401,7 +401,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "05eec9ba";
+const BUILD = "73d0fb70";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}};
@@ -1223,6 +1223,7 @@ function pfSolve(T,chart,inp){   // inp: {oat, ph, weight, wind (+head/−tail k
   let wind=inp.wind; if(wind<L.wind[0]) return {ok:false,why:"Tailwind component of "+fmt(-wind,0)+" kt exceeds the chart's "+(-L.wind[0])+" kt."};
   if(wind>L.wind[1]){ wind=L.wind[1]; notes.push("Headwind component above "+L.wind[1]+" kt: "+L.wind[1]+" kt used."); }
   if(inp.slope<L.slope[0]||inp.slope>L.slope[1]) return {ok:false,why:"Slope outside the chart's range of "+L.slope[0]+" % to +"+L.slope[1]+" %."};
+  if(chart.type==="table") return pfSolveTable(T,chart,inp,ph,w,wind,notes);
   const base=pfBase(chart.ph,inp.oat,ph); if(!base) return {ok:false,why:"Outside the chart: this temperature and pressure height combination is not scheduled."};
   if(base.clamped) notes.push("Temperature below the lowest scheduled on the chart: the lowest scheduled figure is used (AFM 5.2).");
   const trail=[["Chart entry",base.v]]; let d=base.v;
@@ -1235,6 +1236,31 @@ function pfSolve(T,chart,inp){   // inp: {oat, ph, weight, wind (+head/−tail k
   if(trail.some(t=>t[1]>max)) return {ok:false,why:"Off the top of the chart (more than "+fmt(max,0)+" "+u.dist+" at one of the steps). The AFM does not permit extrapolation."};
   const roll=pfFollow(chart.obstacle.guides,chart.obstacle.ref,0,d);
   return {ok:true,dist:d,roll,trail,notes,used:{oat:inp.oat,ph,weight:w,wind,slope:inp.slope,gravel:!!inp.gravel}};
+}
+/* Tabular POH data (Cessna-style): ground roll and total distance tabulated by weight, pressure altitude and
+   temperature, with the POH's percentage corrections for wind and surface. Weight, altitude and temperature are
+   interpolated linearly between the tabulated values; nothing is extrapolated beyond them. */
+function pfLerp3(tab,ws,as,ts,w,a,t){
+  const seg=(arr,x)=>{ if(arr.length===1) return [0,0,0]; let i=0; while(i<arr.length-2&&arr[i+1]<x) i++; const f=(x-arr[i])/(arr[i+1]-arr[i]); return [i,i+1,Math.min(1,Math.max(0,f))]; };
+  const [w0,w1,fw]=seg(ws,w),[a0,a1,fa]=seg(as,a),[t0,t1,ft]=seg(ts,t);
+  const v=(i,j,k)=>{ const r=tab[ws[i]]; const x=r&&r[j]?r[j][k]:null; return x===null||x===undefined?null:x; };
+  let out=0; for(const [i,pw] of [[w0,1-fw],[w1,fw]]) for(const [j,pa] of [[a0,1-fa],[a1,fa]]) for(const [k,pt] of [[t0,1-ft],[t1,ft]]){ const p=pw*pa*pt; if(!p) continue; const x=v(i,j,k); if(x===null) return null; out+=x*p; } return out;
+}
+function pfSolveTable(T,c,inp,ph,w,wind,notes){
+  const u=T.units; const ws=c.weights.slice().sort((a,b)=>a-b), as=c.alts, ts=c.temps;
+  if(ph>as[as.length-1]) return {ok:false,why:"Pressure height "+fmt(ph,0)+" ft is above the table's "+fmt(as[as.length-1],0)+" ft."};
+  let oat=inp.oat; if(oat>ts[ts.length-1]) return {ok:false,why:"Temperature above the table's maximum of "+ts[ts.length-1]+" °C."};
+  if(oat<ts[0]){ oat=ts[0]; notes.push("Temperature below the table's lowest "+ts[0]+" °C: that column is used."); }
+  let wt=w; if(wt<ws[0]){ wt=ws[0]; notes.push("Weight below the table's lowest "+fmt(ws[0],0)+" "+u.weight+": that weight is used."); }
+  const roll=pfLerp3(c.roll,ws,as,ts,wt,ph,oat), total=pfLerp3(c.total,ws,as,ts,wt,ph,oat);
+  if(roll===null||total===null) return {ok:false,why:"The POH table has no figure for this combination of weight, pressure height and temperature."};
+  const trail=[["Table",total]]; let d=total, r=roll; const k=c.corrections||{};
+  if(wind>0&&k.headwind){ const f=1+(k.headwind.pct/100)*(wind/k.headwind.per); d*=f; r*=f; trail.push(["Wind",d]); }
+  else if(wind<0&&k.tailwind){ if(k.tailwind.max!==undefined&&-wind>k.tailwind.max) return {ok:false,why:"Tailwind component of "+fmt(-wind,0)+" kt exceeds the POH's "+k.tailwind.max+" kt."}; const f=1+(k.tailwind.pct/100)*(-wind/k.tailwind.per); d*=f; r*=f; trail.push(["Wind",d]); }
+  if(inp.gravel&&k.grass){ const add=roll*(k.grass.rollPct/100); d+=add; r+=add; trail.push(["Surface",d]); }
+  if(inp.slope&&!k.slope) notes.push("The POH gives no slope correction: the "+fmt(Math.abs(inp.slope),1)+" % slope entered is not applied.");
+  (c.notes||[]).forEach(n=>notes.push(n));
+  return {ok:true,dist:d,roll:r,trail,notes,used:{oat,ph,weight:wt,wind,slope:inp.slope,gravel:!!inp.gravel}};
 }
 /* perf-engine:end */
 const PT = () => { const a=AC(); return a && window.PERF ? (window.PERF[a.id]||null) : null; };
