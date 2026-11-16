@@ -1,5 +1,13 @@
 [
   {
+    "version": "2.8.2",
+    "date": "2026-11-16",
+    "title": "LogTen import fix",
+    "notes": [
+      "LogTen entries now carry the out, off, on and in times as exact instants and the flight time as hours:minutes, so the in time and total time import even when LogTen does not know the aerodrome. The aircraft type is sent too, so a new registration is created as the right type instead of LogTen's default."
+    ]
+  },
+  {
     "version": "2.8.1",
     "date": "2026-11-16",
     "title": "Take-offs and approach type on the flight record",

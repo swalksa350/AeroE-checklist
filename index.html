@@ -411,7 +411,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "6804f8c8";
+const BUILD = "b8a597d7";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}, ops:{url:"",token:"",pilotId:"",autoUpload:false,std:{},dutyMax:null,lastRoster:null,notices:[],noticesRead:{}}, duty:{start:null,log:[]}, pilot:{}, outbox:[]};
@@ -1241,13 +1241,20 @@ function showRecord(rec){
 /* ----- logbook exports: LogTen (direct, via its URL scheme), ForeFlight template CSV, generic CSV ----- */
 const hhmm=t=>t?t.replace(":",""):"";
 function logtenURL(recs){
-  const ents=recs.map(r=>{ const f=r.flight, t=f.times||{}; const e={entity_name:"Flight",flight_key:"aeroe-"+r.id,flight_flightDate:f.date,flight_from:f.from,flight_to:f.to,flight_selectedAircraftID:r.rego,flight_remarks:"AeroE flight record "+r.id+(r.signoff?" signed by "+r.signoff.name:"")+(f.ref?" · ref "+f.ref:"")+" · "+r.manifest.paxN+" pax"};
-    if(t.off) e.flight_actualDepartureTime=f.date+" "+t.off; if(t.on) e.flight_actualArrivalTime=f.date+" "+t.on; if(t.to) e.flight_takeoffTime=f.date+" "+t.to; if(t.ld) e.flight_landingTime=f.date+" "+t.ld;
-    if(f.blockTime!==null&&f.blockTime!==undefined){ e.flight_totalTime=f.blockTime.toFixed(2); e.flight_pic=f.blockTime.toFixed(2); }
+  /* Times go to LogTen as exact instants (seconds since the Unix epoch, built from the record date and the device's
+     local time), so LogTen does not have to know the aerodromes' time zones; durations go as h:mm. */
+  const hmm=hrs=>{ const m=Math.round(hrs*60); return Math.floor(m/60)+":"+String(m%60).padStart(2,"0"); };
+  const ents=recs.map(r=>{ const f=r.flight, t=f.times||{};
+    const base=(()=>{ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(f.date||""); return m?new Date(+m[1],+m[2]-1,+m[3]):null; })();
+    const inst=(hm,after)=>{ if(!base||!hm2min(hm)) return null; let v=new Date(base.getTime()+hm2min(hm)*60000); if(after&&v<=after) v=new Date(v.getTime()+86400000); return v; };
+    const out=inst(t.off), to=inst(t.to,out), ld=inst(t.ld,to||out), inn=inst(t.on,ld||to||out);
+    const e={entity_name:"Flight",flight_key:"aeroe-"+r.id,flight_flightDate:f.date,flight_from:f.from,flight_to:f.to,flight_selectedAircraftID:r.rego,flight_selectedAircraftType:r.aircraft.short,flight_remarks:"AeroE flight record "+r.id+(r.signoff?" signed by "+r.signoff.name:"")+(f.ref?" · ref "+f.ref:"")+" · "+r.manifest.paxN+" pax"};
+    if(out) e.flight_actualDepartureTime=Math.round(out.getTime()/1000); if(inn) e.flight_actualArrivalTime=Math.round(inn.getTime()/1000); if(to) e.flight_takeoffTime=Math.round(to.getTime()/1000); if(ld) e.flight_landingTime=Math.round(ld.getTime()/1000);
+    if(f.blockTime!==null&&f.blockTime!==undefined){ e.flight_totalTime=hmm(f.blockTime); e.flight_pic=hmm(f.blockTime); }
     const night=f.nightLandings||0, all=f.landings||0; e.flight_dayLandings=Math.max(0,all-night); e.flight_nightLandings=night;
     const nto=f.nightTakeoffs||0, ato=f.takeoffs===undefined?all:f.takeoffs; e.flight_dayTakeoffs=Math.max(0,ato-nto); e.flight_nightTakeoffs=nto;
     if(f.approach&&f.approach!=="visual") e.flight_selectedApproach1=f.approach; e.flight_remarks+=" · approach "+approachLabel(f.approach); return e; });
-  const pkg={metadata:{application:"AeroE Checklist",version:APP_VERSION(),dateFormat:"yyyy-MM-dd",dateAndTimeFormat:"yyyy-MM-dd HH:mm",timesAreZulu:false,shouldApplyAutoFillTimes:true},entities:ents};
+  const pkg={metadata:{application:"AeroE Checklist",version:APP_VERSION(),dateFormat:"yyyy-MM-dd",dateAndTimeFormat:"yyyy-MM-dd HH:mm",timesAreZulu:true,shouldApplyAutoFillTimes:false},entities:ents};
   return "logten://v2/addEntities?package="+encodeURIComponent(JSON.stringify(pkg));
 }
 function logbookCSV(list){
