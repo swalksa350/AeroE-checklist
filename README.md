@@ -46,3 +46,7 @@ Deep links: `https://<site>/#<id>` opens that aircraft directly, e.g. `#c172s`.
 
 Static files only. Serve the folder over HTTPS (GitHub Pages, Netlify, Cloudflare Pages, any web host),
 open the site on the phone and use "Add to Home Screen".
+
+## Operator integration
+
+An operator can connect the app to its rostering and records systems through a small connector service; the JSON interface (roster, fleet pack, flight record upload, notices) is documented in [docs/INTEGRATION.md](docs/INTEGRATION.md).

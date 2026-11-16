@@ -127,6 +127,11 @@ nav.modes button .short{display:none}
 .mf-grid.times label .tw{display:flex;gap:6px} .mf-grid.times .tw input{flex:1} .mf-grid.times button.now{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;font-weight:600}
 .wb table.mf td.decl{white-space:nowrap} .wb table.mf td.decl input{width:22px;height:22px;margin:0 4px;vertical-align:middle}
 .record .actions.logbook{margin-top:8px;align-items:center} .record .actions.logbook .lbl{font-size:13px;color:var(--ink-dim);font-weight:600} .record .actions.logbook .dim{font-size:12px;color:var(--ink-dim)}
+.ops .ops-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 12px;margin:8px 0} .ops .ops-grid label{display:flex;flex-direction:column;gap:3px;font-size:13px;font-weight:600} .ops .ops-grid label small{display:block;font-weight:400;color:var(--ink-dim);font-size:12px} .ops .ops-grid input{width:100%} .ops h3{font-size:15px;margin:14px 0 4px} .ops .warn{border-left:4px solid var(--amber);padding:6px 10px;background:var(--panel-2);margin:6px 0;border-radius:0 var(--radius) var(--radius) 0;font-size:14px} .ops .warn.red{border-left-color:var(--red)} .ops .saved{font-size:13px;color:var(--ink-dim);margin:4px 0}
+.ops .list.roster button{display:flex;justify-content:space-between;width:100%;padding:10px;border-bottom:1px solid var(--line);text-align:left} .ops .list.roster button.dim{opacity:.6}
+.notice{border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:var(--radius);padding:10px 12px;margin:8px 0;background:var(--panel-2)} .notice.read{border-left-color:var(--line);opacity:.8} .notice .nt{font-weight:700;display:flex;justify-content:space-between;gap:8px} .notice .nd{font-weight:400;color:var(--ink-dim);font-size:12px} .notice .nb{margin:6px 0;white-space:pre-wrap;font-size:14px} .notice button.primary{padding:8px 12px;border-radius:var(--radius);background:var(--green);color:var(--on-green);border:1px solid var(--green);font-weight:600}
+.wb table.mf .wtw{display:flex;gap:4px;align-items:center;justify-content:flex-end} .wb table.mf .wtw input{flex:1;min-width:4em!important}
+.wb table.mf button.std{padding:5px 7px;border:1px solid var(--line);border-radius:var(--radius);font-size:12px;font-weight:600} .wb table.mf button.std.on{background:var(--green);color:var(--on-green);border-color:var(--green)}
 .mf-use{margin:10px 0;font-size:15px} .mf-use label{display:flex;align-items:center;gap:8px} .mf-use input{width:22px;height:22px} .mf-use .dim{margin-top:4px;font-size:13px;color:var(--ink-dim)}
 .record .rec-body{font-size:14px;line-height:1.4;margin-top:10px} .record .rl.b{font-weight:700;margin-top:8px} .record .rl.m{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;font-size:12px!important} .record .rl.red{color:var(--red)} .record .rl.dim{color:var(--ink-dim)}
 .signoff{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2)} .signoff .so-title{font-weight:700;font-size:15px;margin-bottom:4px} .signoff .dim{font-size:13px;color:var(--ink-dim)} .signoff .so-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0} .signoff .so-fields input{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);min-width:0} .signoff .so-accept{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:8px 0} .signoff .so-accept input{width:24px;height:24px;flex:none;margin-top:1px} .signoff .so-actions button{padding:10px 16px;border-radius:var(--radius);font-weight:700;background:var(--green);color:var(--on-green);border:1px solid var(--green)} .signoff .so-actions button:disabled{opacity:.6} .signoff .signed{font-weight:700;color:var(--green);font-size:15px} .signoff .fp{font-size:12px;color:var(--ink-dim);margin-top:4px;font-variant-numeric:tabular-nums} .signoff .fp.bad{color:var(--red);font-weight:700}
@@ -405,10 +410,10 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "ecf18a4d";
+const BUILD = "27ca5865";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
-const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}};
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}, ops:{url:"",token:"",pilotId:"",autoUpload:false,std:{},dutyMax:null,lastRoster:null,notices:[],noticesRead:{}}, duty:{start:null,log:[]}, pilot:{}, outbox:[]};
 const MODES = [["normal","Normal","Norm"],["abnormal","Abnormal","Abn"],["emergency","Emergency","Emerg"],["wb","W&B","W&B"],["perf","Perf","Perf"],["charts","Charts","Charts"],["status","Status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
@@ -452,6 +457,10 @@ function load(){
         if(s.perf && typeof s.perf==="object") state.perf = s.perf;
         if(s.manifest && typeof s.manifest==="object") state.manifest = s.manifest;
         if(s.records && typeof s.records==="object") state.records = s.records;
+        if(s.ops && typeof s.ops==="object") state.ops = Object.assign(state.ops, s.ops); if(!state.ops.std) state.ops.std={}; if(!state.ops.noticesRead) state.ops.noticesRead={}; if(!Array.isArray(state.ops.notices)) state.ops.notices=[];
+        if(s.duty && typeof s.duty==="object") state.duty = Object.assign(state.duty, s.duty); if(!Array.isArray(state.duty.log)) state.duty.log=[];
+        if(s.pilot && typeof s.pilot==="object") state.pilot = s.pilot;
+        if(Array.isArray(s.outbox)) state.outbox = s.outbox;
         if(s.sharedApproach && typeof s.sharedApproach==="object") state.sharedApproach = {on:!!s.sharedApproach.on, name:String(s.sharedApproach.name||""), items:Array.isArray(s.sharedApproach.items)?s.sharedApproach.items:[]};
         if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
         if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
@@ -471,7 +480,7 @@ function load(){
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, perf:state.perf, manifest:state.manifest, records:state.records, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, perf:state.perf, manifest:state.manifest, records:state.records, ops:state.ops, duty:state.duty, pilot:state.pilot, outbox:state.outbox, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
@@ -689,7 +698,7 @@ function favPrompt(){
 function renderSide(){
   const s=$("#side");s.innerHTML="";
   const fp=favPrompt(); if(fp) s.append(fp);
-  if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"))));return}
+  if(state.mode==="status"){s.append(h("div",{class:"group-title"},"Status"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Flight status overview"+(unreadNotices().length?" · "+unreadNotices().length+" notice"+(unreadNotices().length===1?"":"s"):"")))));return}
   if(state.mode==="charts"){s.append(h("div",{class:"group-title"},"Charts"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Charts and documents"))));return}
   if(state.mode==="wb"){ renderWbSide(s); return; }
   if(state.mode==="perf"){ renderPerfSide(s); return; }
@@ -786,7 +795,7 @@ function wbProfiles(){ const st=wbStore(); return st?Object.values(st.profiles).
 function wbCurrent(){ const st=wbStore(); if(!st) return null; return (st.current && st.profiles[st.current]) || null; }
 function wbNewProfile(rego){
   const t=WBT(); const clone=x=>JSON.parse(JSON.stringify(x));
-  return { rego, emptyWeight:null, emptyArm:null, reportDate:"", notes:"",
+  return { rego, emptyWeight:null, emptyArm:null, reportDate:"", notes:"", mrHours:null, mrDate:"",
     units:t?clone(t.units):{weight:"kg",arm:"mm",fuel:"L"}, fuelDensity:t?t.fuelDensity:0.72, fuelArm:t?t.fuelArm:null, fuelCapacity:t?t.fuelCapacity:null,
     limits:t?clone(t.limits):{maxRamp:null,maxTakeoff:null,maxLanding:null,maxZeroFuel:null},
     stations:t?t.stations.map(s=>({id:s.id,name:s.name,arm:s.arm,max:s.max})):[{id:"row1",name:"Pilot and front passenger",arm:null,max:null}],
@@ -879,6 +888,8 @@ function wbEditProfile(){
     card.append(field("Basic empty weight ("+d.units.weight+")","emptyWeight",d,"number","From the current weight and balance report"));
     card.append(field("Empty weight arm ("+d.units.arm+")","emptyArm",d,"number","Moment ÷ weight if the report gives a moment"));
     card.append(field("Report date","reportDate",d,"date","Date of the weight and balance report"));
+    card.append(field("Maintenance release – hours remaining","mrHours",d,"number","Hours to run to the next scheduled maintenance; reduced by each saved flight record's block time"));
+    card.append(field("Maintenance release – expiry date","mrDate",d,"date","Blank if not tracked here"));
     card.append(h("h3",{style:"font-size:15px;margin:12px 0 4px"},"Limits ("+d.units.weight+")"));
     card.append(field("Maximum ramp weight","maxRamp",d.limits,"number","Blank if not published"));
     card.append(field("Maximum take-off weight","maxTakeoff",d.limits,"number"));
@@ -977,6 +988,7 @@ function renderWb(v){
   if(t&&!t.verified) w.append(h("div",{class:"warn"},"Template figures for this type are UNVERIFIED. Confirm every arm, limit and envelope point in Edit profile against the POH and this aircraft's weight and balance report before relying on the result."));
   if(p.test) w.append(h("div",{class:"warn red"},"TEST DATA. "+p.rego+" is an example registration: its empty weight and arm are fictitious and must not be used for a real flight. Delete it from Edit profile when you no longer need it."));
   if(num(p.emptyWeight)===null||num(p.emptyArm)===null) w.append(h("div",{class:"warn red"},"Empty weight and arm have not been entered for "+p.rego+". Tap Edit profile."));
+  { const b1=dutyBanner(); if(b1) w.append(b1); const b2=mrBanner(p); if(b2) w.append(b2); }
   renderManifest(w,p);
   const mfOn=mfActive(mfStore()); if(mfOn) mfApply(p,mfStore());
   w.append(h("h2",{},"Loads ("+u.weight+")"+(mfOn?" – from the manifest":"")));
@@ -1016,6 +1028,7 @@ function mfDefaultStation(p,kind){ const ids=p.stations.map(s=>s.id); if(kind===
 function renderManifest(w,p){
   const m=mfStore(); const u=p.units;
   w.append(h("h2",{},"Flight and manifest"));
+  if(opsReady()) w.append(h("div",{class:"btns"},h("button",{onclick:()=>rosterSheet(p)},"From roster…"),h("span",{class:"dim",style:"align-self:center;font-size:13px"},state.ops.lastRoster?"Roster for "+state.ops.lastRoster.date+" fetched "+new Date(state.ops.lastRoster.fetched).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"Loads the route and passengers from the operator's roster")));
   const grid=h("div",{class:"mf-grid"});
   const tf=(label,key,type,ph)=>{ const i=h("input",{type:type||"text",value:m[key]||"",placeholder:ph||"",autocapitalize:type==="date"?"off":"characters"}); i.oninput=ev=>{ m[key]=ev.target.value; save(); }; grid.append(h("label",{},h("span",{},label),i)); };
   tf("Date","date","date"); tf("From","from","text","YSBK"); tf("To","to","text","YSCN"); tf("Pilot in command","pic","text","name"); tf("Flight / booking ref","ref","text","optional");
@@ -1037,10 +1050,12 @@ function renderManifest(w,p){
   m.pax.forEach((x,i)=>{
     const name=h("input",{type:"text",value:x.name||"",placeholder:"name",autocapitalize:"words"}); name.oninput=ev=>{ x.name=ev.target.value; save(); };
     const role=h("select",{}); [["pax","Pax"],["crew","Crew"],["child","Child"],["infant","Infant"]].forEach(([v,l])=>role.append(h("option",{value:v},l))); role.value=x.role||"pax"; role.onchange=ev=>{ x.role=ev.target.value; refresh(); };
-    const wt=h("input",{type:"number",step:"any",inputmode:"decimal",min:"0",value:x.weight===null||x.weight===undefined?"":x.weight,placeholder:"0"}); wt.oninput=ev=>{ x.weight=ev.target.value===""?null:ev.target.value; refresh(); };
+    const wt=h("input",{type:"number",step:"any",inputmode:"decimal",min:"0",value:x.weight===null||x.weight===undefined?"":x.weight,placeholder:"0"}); wt.oninput=ev=>{ x.weight=ev.target.value===""?null:ev.target.value; x.std=false; refresh(); };
+    const stdW=()=>{ const S=state.ops.std||{}; const r=x.role||"pax"; return num(r==="child"?S.child:r==="infant"?S.infant:S.adult); };
+    const stdBtn=stdW()!==null?h("button",{class:"std"+(x.std?" on":""),title:"Use the operator's standard weight",onclick:()=>{ x.weight=stdW(); x.std=true; wt.value=x.weight; refresh(); stdBtn.classList.add("on"); }},"Std"):"";
     const dg=h("input",{type:"checkbox",title:"Dangerous goods declaration made (no undeclared DG)"}); dg.checked=!!x.dg; dg.onchange=()=>{ x.dg=dg.checked; save(); };
     const br=h("input",{type:"checkbox",title:"Safety briefing acknowledged"}); br.checked=!!x.brief; br.onchange=()=>{ x.brief=br.checked; save(); };
-    pt.append(h("tr",{},h("td",{},name),h("td",{},role),h("td",{},stationSel(x.station,v=>{ x.station=v; refresh(); })),h("td",{class:"num"},wt),h("td",{class:"decl"},dg,br),h("td",{},h("button",{class:"x","aria-label":"Remove",onclick:()=>{ m.pax.splice(i,1); if(!mfActive(m)&&m.use) p.loads={}; mfApply(p,m); save(); render(); }},"✕"))));
+    pt.append(h("tr",{},h("td",{},name),h("td",{},role),h("td",{},stationSel(x.station,v=>{ x.station=v; refresh(); })),h("td",{class:"num"},h("div",{class:"wtw"},wt,stdBtn)),h("td",{class:"decl"},dg,br),h("td",{},h("button",{class:"x","aria-label":"Remove",onclick:()=>{ m.pax.splice(i,1); if(!mfActive(m)&&m.use) p.loads={}; mfApply(p,m); save(); render(); }},"✕"))));
   });
   w.append(pt);
   if(m.pax.length) w.append(h("div",{class:"dim",style:"margin:-4px 0 6px"},"DG: the passenger has declared they carry no undeclared dangerous goods. Brief: the safety briefing was given and acknowledged. Both are recorded on the flight record."));
@@ -1088,7 +1103,10 @@ function buildRecord(){
     perf:{takeoff:pfSnapshot(false),landing:pfSnapshot(true)}};
 }
 function recStore(){ const a=AC(); if(!a) return []; if(!Array.isArray(state.records[a.id])) state.records[a.id]=[]; return state.records[a.id]; }
-function saveRecord(){ const rec=buildRecord(); if(!rec){ alert("Select a registration first."); return; } const list=recStore(); list.unshift(rec); while(list.length>100) list.pop(); save(); render(); showRecord(rec); }
+function commitRecord(rec){ const a=AC(); const p=wbCurrent(); const list=recStore(); list.unshift(rec); while(list.length>100) list.pop();
+  if(p&&num(p.mrHours)!==null&&rec.flight.blockTime){ rec.mr={before:num(p.mrHours),after:Math.round((num(p.mrHours)-rec.flight.blockTime)*100)/100}; p.mrHours=rec.mr.after; }
+  save(); if(state.ops.autoUpload&&opsReady()) queueUpload(a.id,rec); render(); }
+function saveRecord(){ const rec=buildRecord(); if(!rec){ alert("Select a registration first."); return; } commitRecord(rec); showRecord(rec); }
 /* ----- record presentation: one list of lines feeds the PDF, the printable sheet and the copied text ----- */
 function recordLines(r){
   const L=[]; const H=(t)=>L.push({t,f:"B",s:13,gap:6}); const P=(t)=>L.push({t,f:"R",s:10}); const M=(t)=>L.push({t,f:"M",s:9}); const S=(t)=>L.push({t,f:"R",s:8.5,dim:true}); const BR=()=>L.push({t:"",f:"R",s:5});
@@ -1100,6 +1118,8 @@ function recordLines(r){
     P("Times: off blocks "+(ft.off||"–")+" · take-off "+(ft.to||"–")+" · landing "+(ft.ld||"–")+" · on blocks "+(ft.on||"–")+(r.flight.blockTime!==null&&r.flight.blockTime!==undefined?" · flight time "+r.flight.blockTime.toFixed(2)+" h":"")+(r.flight.airTime!==null&&r.flight.airTime!==undefined?" · air time "+r.flight.airTime.toFixed(2)+" h":"")+" · landings "+(r.flight.landings||0)+(r.flight.nightLandings?" ("+r.flight.nightLandings+" night)":"")+(r.flight.uplift!==null&&r.flight.uplift!==undefined?" · fuel uplift "+fmt(r.flight.uplift,0)+" "+u.fuel:"")+(r.flight.fuelArr!==null&&r.flight.fuelArr!==undefined?" · fuel at shutdown "+fmt(r.flight.fuelArr,0)+" "+u.fuel:""));
   }
   if(r.test) L.push({t:"TEST DATA – the registration's empty weight and arm are fictitious. Not for operational use.",f:"B",s:10,red:true});
+  if(r.mr) S("Maintenance release hours: "+r.mr.before.toFixed(1)+" before this flight, "+r.mr.after.toFixed(1)+" after.");
+  if(r.uploadedAt) S("Uploaded to the operator "+new Date(r.uploadedAt).toLocaleString()+(r.uploadRef?" (ref "+r.uploadRef+")":"")+".");
   BR(); H("Crew and passengers");
   if(!r.manifest.pax.length) S("None recorded.");
   else { M(pad("Name",26)+pad("Role",7)+pad("Seat / station",28)+pad(u.weight,7,true)+pad("DG",5,true)+pad("Brief",7,true)); r.manifest.pax.forEach(x=>M(pad(x.name||"–",26)+pad(x.role==="crew"?"Crew":x.role==="child"?"Child":x.role==="infant"?"Infant":"Pax",7)+pad(x.station,28)+pad(fmt(x.weight,0)+(x.std?"*":""),7,true)+pad(x.role==="crew"?"":(x.dg?"yes":"no"),5,true)+pad(x.role==="crew"?"":(x.brief?"yes":"no"),7,true))); }
@@ -1180,7 +1200,7 @@ function signoffBlock(rec,sheet){
   const lic=h("input",{type:"text",id:"so-licence",placeholder:"Licence / ARN (optional)"});
   const acc=h("input",{type:"checkbox",id:"so-accept"});
   const msg=h("div",{class:"hint"});
-  const btn=h("button",{class:"primary",onclick:async()=>{ const n=name.value.trim(); if(n.length<2){ msg.textContent="Enter the pilot in command's name."; return; } if(!acc.checked){ msg.textContent="Tick the acceptance box to sign."; return; } btn.disabled=true; btn.textContent="Signing…"; const fp=await recFingerprint(rec); rec.signoff={name:n,licence:lic.value.trim(),acceptedAt:new Date().toISOString(),statement:SIGN_STATEMENT,fingerprint:fp,app:APP_VERSION()+" ("+BUILD+")"}; save(); render(); const keep=sheet.scrollTop; showRecord(rec); const ns=document.getElementById("sheet"); if(ns) ns.querySelector(".card2").scrollTop=keep; }},"Accept and sign");
+  const btn=h("button",{class:"primary",onclick:async()=>{ const n=name.value.trim(); if(n.length<2){ msg.textContent="Enter the pilot in command's name."; return; } if(!acc.checked){ msg.textContent="Tick the acceptance box to sign."; return; } btn.disabled=true; btn.textContent="Signing…"; const fp=await recFingerprint(rec); rec.signoff={name:n,licence:lic.value.trim(),acceptedAt:new Date().toISOString(),statement:SIGN_STATEMENT,fingerprint:fp,app:APP_VERSION()+" ("+BUILD+")"}; save(); if(state.ops.autoUpload&&opsReady()) queueUpload(AC().id,rec); render(); const keep=sheet.scrollTop; showRecord(rec); const ns=document.getElementById("sheet"); if(ns) ns.querySelector(".card2").scrollTop=keep; }},"Accept and sign");
   box.append(h("div",{class:"so-fields"},name,lic),h("label",{class:"so-accept"},acc,h("span",{},"I accept the manifest, weight and balance and performance data above as pilot in command.")),h("div",{class:"so-actions"},btn),msg);
   return box;
 }
@@ -1193,7 +1213,8 @@ function showRecord(rec){
   actions.append(h("button",{onclick:()=>{ document.body.classList.add("print-record"); const done=()=>{ document.body.classList.remove("print-record"); window.removeEventListener("afterprint",done); }; window.addEventListener("afterprint",done); setTimeout(()=>{ window.print(); setTimeout(done,2000); },50); }},"Print"));
   actions.append(h("button",{onclick:async()=>{ try{ await navigator.clipboard.writeText(recordText(rec)); msg.textContent="Copied as text."; }catch(e){ msg.textContent="Copy is not available here."; } }},"Copy text"));
   if(!rec.preview) actions.append(h("button",{class:"danger",onclick:ev=>{ const b=ev.currentTarget; if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="Tap again to delete"; return; } const list=recStore(); const i=list.findIndex(x=>x.id===rec.id); if(i>=0) list.splice(i,1); save(); sheet.remove(); render(); }},rec.signoff?"Delete signed record":"Delete record"));
-  if(rec.preview) actions.append(h("button",{class:"primary",onclick:()=>{ delete rec.preview; const list=recStore(); list.unshift(rec); while(list.length>100) list.pop(); save(); render(); sheet.remove(); showRecord(rec); }},"Save this record"));
+  if(rec.preview) actions.append(h("button",{class:"primary",onclick:()=>{ delete rec.preview; commitRecord(rec); sheet.remove(); showRecord(rec); }},"Save this record"));
+  if(!rec.preview&&opsReady()){ const aid=AC().id; const ub=h("button",{onclick:async()=>{ ub.disabled=true; ub.textContent="Uploading…"; try{ await uploadRecord(aid,rec); msg.textContent="Uploaded to the operator"+(rec.uploadRef?" (ref "+rec.uploadRef+")":"")+"."; ub.textContent="Uploaded"; }catch(e){ msg.textContent="Upload failed: "+e.message+". Queued for retry."; queueUpload(aid,rec); ub.disabled=false; ub.textContent="Upload"; } }},rec.uploadedAt&&!(rec.signoff&&rec.signoff.acceptedAt>rec.uploadedAt)?"Uploaded":rec.uploadedAt?"Upload signed version":"Upload"); if(rec.uploadedAt&&!(rec.signoff&&rec.signoff.acceptedAt>rec.uploadedAt)) ub.disabled=true; actions.append(ub); }
   actions.append(h("button",{onclick:()=>sheet.remove()},"Close"));
   card.append(actions,msg);
   if(!rec.preview){
@@ -1265,6 +1286,105 @@ function renderRecordsSide(sEl){
   }
   sEl.append(l);
 }
+/* ---------------- OPERATOR LINK, DUTY, PILOT CURRENCY, MAINTENANCE RELEASE, NOTICES ---------------- */
+/* The operator link is a small JSON interface (docs/INTEGRATION.md) that an operator's connector server implements in
+   front of its rostering / operations system (Air Maestro, Leon, FL3XX or a spreadsheet). The app never talks to those
+   systems directly: it posts signed flight records, and pulls the day's roster, a fleet pack and notices. */
+const daysUntil=d=>{ if(!d) return null; const t=new Date(d+"T00:00:00"); if(isNaN(t)) return null; return Math.round((t-new Date().setHours(0,0,0,0))/86400000); };
+const opsReady=()=>!!(state.ops.url&&/^https?:\/\//.test(state.ops.url));
+async function opsFetch(path,opts){
+  if(!opsReady()) throw new Error("No operator link configured");
+  const url=state.ops.url.replace(/\/+$/,"")+path; const headers=Object.assign({"Accept":"application/json"},(opts&&opts.body)?{"Content-Type":"application/json"}:{} ,state.ops.token?{"Authorization":"Bearer "+state.ops.token}:{});
+  const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),15000);
+  try{ const r=await fetch(url,{method:(opts&&opts.method)||"GET",headers,body:opts&&opts.body?JSON.stringify(opts.body):undefined,signal:ctl.signal,cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status); const ct=r.headers.get("content-type")||""; return ct.includes("json")?await r.json():{}; }
+  finally{ clearTimeout(tm); }
+}
+function recById(aid,id){ const l=state.records[aid]||[]; return l.find(r=>r.id===id)||null; }
+async function uploadRecord(aid,rec){
+  const res=await opsFetch("/records",{method:"POST",body:{aeroe:"flight-record",version:1,pilotId:state.ops.pilotId||"",record:rec}});
+  rec.uploadedAt=new Date().toISOString(); rec.uploadRef=res&&res.id?String(res.id):""; state.outbox=state.outbox.filter(x=>!(x.aid===aid&&x.id===rec.id)); save(); return res;
+}
+async function flushOutbox(){
+  if(!opsReady()||!navigator.onLine||!state.outbox.length||flushOutbox.busy) return; flushOutbox.busy=true;
+  try{ for(const item of state.outbox.slice()){ const r=recById(item.aid,item.id); if(!r){ state.outbox=state.outbox.filter(x=>x!==item); continue; } try{ await uploadRecord(item.aid,r); }catch(e){ break; } } }
+  finally{ flushOutbox.busy=false; save(); if(document.getElementById("ops-queue")) render(); }
+}
+function queueUpload(aid,rec){ if(!state.outbox.some(x=>x.aid===aid&&x.id===rec.id)) state.outbox.push({aid,id:rec.id,at:Date.now()}); save(); flushOutbox(); }
+async function fetchRoster(){ const d=todayISO(); const j=await opsFetch("/roster?pilot="+encodeURIComponent(state.ops.pilotId||"")+"&date="+d); const fl=Array.isArray(j.flights)?j.flights:[]; state.ops.lastRoster={fetched:new Date().toISOString(),date:d,flights:fl}; save(); return fl; }
+async function fetchNotices(){ const j=await opsFetch("/notices?pilot="+encodeURIComponent(state.ops.pilotId||"")); const n=Array.isArray(j.notices)?j.notices:[]; state.ops.notices=n.filter(x=>x&&x.id!==undefined).map(x=>({id:String(x.id),title:String(x.title||""),body:String(x.body||""),date:String(x.date||""),ack:!!x.requiresAck})); state.ops.noticesFetched=new Date().toISOString(); save(); return state.ops.notices; }
+async function ackNotice(n){ try{ await opsFetch("/notices/"+encodeURIComponent(n.id)+"/ack",{method:"POST",body:{pilotId:state.ops.pilotId||"",at:new Date().toISOString()}}); }catch(e){} state.ops.noticesRead[n.id]=new Date().toISOString(); save(); render(); }
+const unreadNotices=()=>(state.ops.notices||[]).filter(n=>!state.ops.noticesRead[n.id]);
+async function fetchFleet(){ const j=await opsFetch("/fleet"); const packs=(j&&j.aircraft&&typeof j.aircraft==="object")?j.aircraft:{}; let applied=0, errs=[]; for(const id of Object.keys(packs)){ const ac=byId(id); if(!ac){ errs.push(id+": unknown type"); continue; } const e=applyCustomPayload(ac,Object.assign({aeroe:"custom-checklists",aircraft:id},packs[id])); if(e) errs.push(id+": "+e); else applied++; } if(j&&j.standardWeights&&typeof j.standardWeights==="object") state.ops.std=Object.assign({},state.ops.std,j.standardWeights); if(j&&j.duty&&typeof j.duty==="object"){ if(j.duty.maxHours) state.ops.dutyMax=j.duty.maxHours; } state.ops.fleetFetched=new Date().toISOString(); save(); return {applied,errs}; }
+/* apply an export / fleet-pack payload for one type (the same shape Export customisations produces) */
+function applyCustomPayload(a,j){
+  if(!j||j.aeroe!=="custom-checklists") return "That is not an AeroE export.";
+  if(j.aircraft!==a.id) return "This export is for "+j.aircraft+", not the "+a.short+".";
+  const ok=it=>it&&typeof it==="object"&&(it.branch||typeof it.note==="string"||typeof it.defer==="string"||(typeof it.c==="string"&&typeof it.r==="string"));
+  const overrides={}; for(const k of Object.keys(j.overrides||{})){ const o=j.overrides[k]; if(a.normal.some(p=>p.id===k)&&o&&Array.isArray(o.items)&&o.items.every(ok)&&o.items.length) overrides[k]={items:o.items,savedAt:Date.now()}; }
+  const approach=(j.approach&&Array.isArray(j.approach.items)&&j.approach.items.every(ok)&&j.approach.items.length)?{name:String(j.approach.name||"Approach (custom)"),items:j.approach.items}:null;
+  state.custom[a.id]={approach,overrides};
+  if(j.wb&&typeof j.wb==="object"){ const prof={}; for(const k of Object.keys(j.wb)){ const q=j.wb[k]; if(q&&typeof q==="object"&&typeof q.rego==="string"&&Array.isArray(q.stations)) prof[q.rego]=q; } const cur=state.wb[a.id]; state.wb[a.id]={profiles:prof,current:(cur&&cur.current&&prof[cur.current])?cur.current:(Object.keys(prof)[0]||null),seeded:true}; }
+  state.per[a.id]={ticks:{},branches:{}};
+  return null;
+}
+/* ----- duty ----- */
+function dutyHours(){ if(!state.duty.start) return null; return (Date.now()-new Date(state.duty.start).getTime())/3600000; }
+function dutyBanner(){ const hrs=dutyHours(); if(hrs===null) return null; const max=num(state.ops.dutyMax); const rem=max!==null?max-hrs:null; const cls=rem!==null&&rem<=0?"warn red":rem!==null&&rem<1?"warn":"saved"; return h("div",{class:cls},"On duty since "+new Date(state.duty.start).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" · "+hrs.toFixed(1)+" h"+(max!==null?" of "+fmt(max,1)+" h · "+(rem<=0?"DUTY LIMIT EXCEEDED":fmt(rem,1)+" h remaining"):" (no duty limit set in Operator link)")+"."); }
+/* ----- maintenance release ----- */
+function mrBanner(p){ if(!p) return null; const hrs=num(p.mrHours), days=daysUntil(p.mrDate); if(hrs===null&&days===null) return null; const bad=(hrs!==null&&hrs<=0)||(days!==null&&days<0); const amber=(hrs!==null&&hrs<5)||(days!==null&&days<=7); return h("div",{class:bad?"warn red":amber?"warn":"saved"},"Maintenance release"+(hrs!==null?": "+fmt(hrs,1)+" h remaining":"")+(days!==null?(hrs!==null?" · ":": ")+"expires "+p.mrDate+(days<0?" (EXPIRED)":days===0?" (today)":" (in "+days+" days)"):"")+". Hours are reduced by each saved flight record's block time; confirm against the aircraft's MR."); }
+/* ----- pilot currency from the records on this device ----- */
+function pilotStats(){ const now=new Date().setHours(0,0,0,0); const sums={h30:0,h90:0,h365:0,ld90:0,nt90:0,flights:0,last:null}; for(const aid of Object.keys(state.records)){ for(const r of state.records[aid]||[]){ const f=r.flight||{}; const d=new Date((f.date||r.savedAt.slice(0,10))+"T00:00:00"); const age=(now-d)/86400000; const bt=f.blockTime||0; if(age<=30) sums.h30+=bt; if(age<=90){ sums.h90+=bt; sums.ld90+=f.landings||0; sums.nt90+=f.nightLandings||0; } if(age<=365) sums.h365+=bt; sums.flights++; if(!sums.last||f.date>sums.last) sums.last=f.date; } } return sums; }
+function pilotSheet(){
+  const old=document.getElementById("sheet"); if(old) old.remove(); const P=state.pilot;
+  const card=h("div",{class:"card2 editor ops"}); const sheet=h("div",{class:"sheet",id:"sheet"},card);
+  const f=(label,key,type,hint)=>{ const i=h("input",{type:type||"text",value:P[key]||""}); i.oninput=ev=>{ P[key]=ev.target.value; save(); }; return h("label",{},h("span",{},label,hint?h("small",{},hint):""),i); };
+  const st=pilotStats();
+  const exp=(label,key,warnDays)=>{ const d=daysUntil(P[key]); if(!P[key]) return h("div",{class:"saved"},label+": not entered."); return h("div",{class:d<0?"warn red":d<=warnDays?"warn":"saved"},label+" "+P[key]+(d<0?" – EXPIRED "+(-d)+" days ago":" – "+d+" days remaining")+"."); };
+  card.append(h("h2",{},"Pilot"),h("div",{class:"hint"},"Kept on this device. Dates drive the expiry warnings; recency is counted from the flight records saved on this device, so it is only complete if every flight is recorded here."));
+  card.append(h("div",{class:"ops-grid"},f("Name","name","text"),f("Licence / ARN","licence","text"),f("Medical expiry","medical","date"),f("Flight review / proficiency check","review","date","date of the last one"),f("Instrument proficiency check","ipc","date"),f("Operator line check","lineCheck","date"),f("Dangerous goods training","dg","date"),f("Emergency procedures training","ept","date")));
+  card.append(h("h3",{},"Expiries"),exp("Medical","medical",30));
+  const plus=(key,label,months,warn)=>{ if(!P[key]) return h("div",{class:"saved"},label+": not entered."); const d=new Date(P[key]+"T00:00:00"); d.setMonth(d.getMonth()+months); const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); const n=daysUntil(iso); return h("div",{class:n<0?"warn red":n<=warn?"warn":"saved"},label+" done "+P[key]+" → due by "+iso+(n<0?" – OVERDUE":" – "+n+" days")+"."); };
+  card.append(plus("review","Flight review / proficiency check",24,60),plus("ipc","Instrument proficiency check",12,60),plus("lineCheck","Line check",12,60),plus("dg","Dangerous goods training",24,60),plus("ept","Emergency procedures training",12,60));
+  card.append(h("div",{class:"hint"},"Validity periods used: medical as entered; flight review 24 months; IPC, line check and emergency procedures 12 months; dangerous goods 24 months. Change them to your operator's exposition if they differ – they are reminders, not a legal determination."));
+  card.append(h("h3",{},"Recency from records"),h("div",{class:"saved"},st.flights+" flight records on this device"+(st.last?", latest "+st.last:"")+"."),h("div",{class:"saved"},"Hours: last 30 days "+st.h30.toFixed(1)+" · 90 days "+st.h90.toFixed(1)+" · 365 days "+st.h365.toFixed(1)+"."),h("div",{class:st.ld90>=3?"saved":"warn"},"Landings in the last 90 days: "+st.ld90+" ("+st.nt90+" at night)"+(st.ld90<3?" – fewer than 3; check your passenger-carrying recency.":".")));
+  card.append(h("div",{class:"actions"},h("button",{onclick:()=>sheet.remove()},"Close")));
+  sheet.addEventListener("click",ev=>{ if(ev.target===sheet) sheet.remove(); }); document.body.append(sheet);
+}
+function opsSheet(){
+  const old=document.getElementById("sheet"); if(old) old.remove(); const O=state.ops;
+  const card=h("div",{class:"card2 editor ops"}); const sheet=h("div",{class:"sheet",id:"sheet"},card); const msg=h("div",{class:"hint",id:"ops-msg"});
+  const f=(label,key,type,hint,obj)=>{ obj=obj||O; const i=h("input",{type:type||"text",value:obj[key]===null||obj[key]===undefined?"":obj[key],autocapitalize:"off",autocorrect:"off",spellcheck:"false"}); if(type==="number"){ i.setAttribute("step","any"); i.setAttribute("inputmode","decimal"); } i.oninput=ev=>{ obj[key]=type==="number"?(ev.target.value===""?null:ev.target.value):ev.target.value; save(); }; return h("label",{},h("span",{},label,hint?h("small",{},hint):""),i); };
+  const run=async(b,label,fn)=>{ b.disabled=true; b.textContent=label+"…"; try{ msg.textContent=await fn(); }catch(e){ msg.textContent=label+" failed: "+e.message+(e.name==="TypeError"?" (no connection, or the server does not allow this app's origin – see docs/INTEGRATION.md)":""); } b.disabled=false; b.textContent=label; };
+  card.append(h("h2",{},"Operator link"),h("div",{class:"hint"},"Connects this device to your operator's connector server, which sits in front of the rostering and records systems. Leave the address blank to work stand-alone. The connector's interface is documented in docs/INTEGRATION.md in the app's repository."));
+  card.append(h("div",{class:"ops-grid"},f("Connector address","url","url","https://ops.example.com/aeroe"),f("Access token","token","password","issued by the operator"),f("Pilot ID","pilotId","text","as known to the roster system")));
+  const au=h("input",{type:"checkbox"}); au.checked=!!O.autoUpload; au.onchange=()=>{ O.autoUpload=au.checked; save(); if(au.checked) flushOutbox(); };
+  card.append(h("label",{class:"so-accept"},au,h("span",{},"Upload each flight record automatically when it is saved or signed (queued until there is signal)")));
+  const q=state.outbox.length; card.append(h("div",{class:"saved",id:"ops-queue"},q?q+" record"+(q===1?"":"s")+" waiting to upload.":"No records waiting to upload."));
+  const acts=h("div",{class:"actions"});
+  const b1=h("button",{onclick:()=>run(b1,"Test connection",async()=>{ const j=await opsFetch("/ping"); return "Connected"+(j&&j.operator?" to "+j.operator:"")+"."; })},"Test connection");
+  const b2=h("button",{onclick:()=>run(b2,"Fetch today's roster",async()=>{ const fl=await fetchRoster(); return fl.length+" flight"+(fl.length===1?"":"s")+" for today; use From roster on the W&B page to load one."; })},"Fetch today's roster");
+  const b3=h("button",{onclick:()=>run(b3,"Fetch fleet pack",async()=>{ const r=await fetchFleet(); render(); return "Fleet pack applied to "+r.applied+" type"+(r.applied===1?"":"s")+(r.errs.length?"; skipped: "+r.errs.join("; "):"")+"."; })},"Fetch fleet pack");
+  const b4=h("button",{onclick:()=>run(b4,"Fetch notices",async()=>{ const n=await fetchNotices(); render(); return n.length+" notice"+(n.length===1?"":"s")+", "+unreadNotices().length+" unread."; })},"Fetch notices");
+  const b5=h("button",{onclick:()=>run(b5,"Upload queue now",async()=>{ await flushOutbox(); return state.outbox.length?state.outbox.length+" still waiting.":"Queue uploaded."; })},"Upload queue now");
+  acts.append(b1,b2,b3,b4,b5); card.append(acts,msg);
+  card.append(h("h3",{},"Operator settings"),h("div",{class:"hint"},"Filled by the fleet pack when the operator provides one; otherwise enter them from the operations manual."));
+  O.std=O.std||{}; card.append(h("div",{class:"ops-grid"},f("Maximum duty period (h)","dutyMax","number","from the fatigue rules appendix you operate under"),f("Standard weight – adult","adult","number","blank = actual weights only",O.std),f("Standard weight – child","child","number","",O.std),f("Standard weight – infant","infant","number","",O.std)));
+  card.append(h("div",{class:"hint"},"Standard weights appear as a Std button beside each passenger on the manifest and are marked * on the record. Use only the standard weights your operator is approved to use."));
+  card.append(h("div",{class:"actions"},h("button",{class:"primary",onclick:()=>{ save(); sheet.remove(); render(); }},"Done")));
+  sheet.addEventListener("click",ev=>{ if(ev.target===sheet) sheet.remove(); }); document.body.append(sheet);
+}
+function rosterSheet(p){
+  const old=document.getElementById("sheet"); if(old) old.remove(); const a=AC(); const m=mfStore();
+  const card=h("div",{class:"card2 editor ops"}); const sheet=h("div",{class:"sheet",id:"sheet"},card); const msg=h("div",{class:"hint"});
+  const list=h("div",{class:"list roster"});
+  const draw=()=>{ list.innerHTML=""; const R=state.ops.lastRoster; const fl=R?R.flights:[]; if(!R) list.append(h("div",{class:"saved"},"No roster fetched yet.")); else if(!fl.length) list.append(h("div",{class:"saved"},"No flights rostered for "+R.date+".")); fl.forEach(fx=>{ const mine=!fx.aircraftType||fx.aircraftType===a.id||String(fx.aircraftType).toUpperCase()===a.short.toUpperCase(); list.append(h("button",{class:mine?"":"dim",onclick:()=>{ if(!mine&&!confirm("This flight is rostered on a "+fx.aircraftType+". Load it into the "+a.short+" manifest anyway?")) return; Object.assign(m,{date:fx.date||m.date,from:(fx.from||"").toUpperCase(),to:(fx.to||"").toUpperCase(),pic:fx.pic||m.pic,ref:fx.ref||"",pax:(fx.pax||[]).map(x=>({name:String(x.name||""),role:x.role==="crew"?"crew":x.role==="child"?"child":x.role==="infant"?"infant":"pax",station:(p.stations.find(s=>s.id===x.station)?x.station:mfDefaultStation(p,"pax")),weight:num(x.weight),std:!!x.std})),cargo:(fx.cargo||[]).map(x=>({desc:String(x.desc||""),station:(p.stations.find(s=>s.id===x.station)?x.station:mfDefaultStation(p,"cargo")),weight:num(x.weight)}))}); if(fx.rego){ const st=wbStore(); if(st.profiles[fx.rego]){ st.current=fx.rego; state.sel=fx.rego; } else msg.textContent="Registration "+fx.rego+" is not set up in W&B on this device; the manifest was loaded against "+p.rego+"."; } mfApply(wbCurrent(),m); save(); sheet.remove(); render(); }},h("span",{class:"name"},(fx.std?fx.std+" · ":"")+(fx.from||"?")+" – "+(fx.to||"?")+(fx.rego?" · "+fx.rego:"")+(fx.ref?" · "+fx.ref:"")),h("span",{class:"n"},((fx.pax||[]).length)+" pax"+(mine?"":" · "+fx.aircraftType)))); }); };
+  card.append(h("h2",{},"Today's roster"),h("div",{class:"hint"},"Tap a flight to fill the manifest with its route, reference and passenger list. Weights come from the roster when it has them; otherwise enter them."));
+  const rb=h("button",{onclick:async()=>{ rb.disabled=true; rb.textContent="Fetching…"; try{ await fetchRoster(); draw(); msg.textContent="Roster fetched "+new Date().toLocaleTimeString(); }catch(e){ msg.textContent="Fetch failed: "+e.message; } rb.disabled=false; rb.textContent="Refresh"; }},"Refresh");
+  draw(); card.append(list,h("div",{class:"actions"},rb,h("button",{onclick:()=>sheet.remove()},"Close")),msg);
+  sheet.addEventListener("click",ev=>{ if(ev.target===sheet) sheet.remove(); }); document.body.append(sheet);
+}
+function noticesNodes(){ const out=[]; const un=unreadNotices(); (state.ops.notices||[]).slice(0,20).forEach(n=>{ const read=!!state.ops.noticesRead[n.id]; out.push(h("div",{class:"notice "+(read?"read":"")},h("div",{class:"nt"},n.title||"Notice",h("span",{class:"nd"},n.date||"")),h("div",{class:"nb"},n.body),read?h("div",{class:"saved"},"Acknowledged "+new Date(state.ops.noticesRead[n.id]).toLocaleString()):h("button",{class:"primary",onclick:()=>ackNotice(n)},n.ack?"Acknowledge (read receipt sent)":"Mark as read"))); }); return {nodes:out,unread:un.length}; }
+window.addEventListener("online",()=>flushOutbox()); setTimeout(()=>{ try{ flushOutbox(); }catch(e){} },4000);
 /* ---------------- PERFORMANCE (take-off and landing distances from POH charts) ---------------- */
 /* Each type's perf/<id>.js carries the POH nomograms as guide-line polylines. The engine follows them as a pilot
    does on paper: read the OAT / pressure-height panel, then carry the distance through the weight, wind, slope,
@@ -1484,6 +1604,14 @@ function renderStatus(v){
   }
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(()=>toggleFav(a.id))},isFav(a.id)?"★ Remove "+a.short+" from favourites":"☆ Add "+a.short+" to favourites")));
   w.append(h("div",{class:"row"},h("button",{class:"link",onclick:()=>go(showPicker)},"Change aircraft")));
+  w.append(h("h2",{},"Pilot and operator"));
+  const db=dutyBanner(); if(db) w.append(db);
+  w.append(h("div",{class:"row"},h("span",{},state.duty.start?"On duty":"Off duty",h("div",{class:"saved",style:"margin-top:2px"},state.duty.start?"Started "+new Date(state.duty.start).toLocaleString():"Tap Start duty when you sign on; the W&B page then shows time on duty against your limit.")),h("button",{class:"link",onclick:()=>go(()=>{ if(state.duty.start){ state.duty.log.unshift({start:state.duty.start,end:new Date().toISOString()}); state.duty.log=state.duty.log.slice(0,60); state.duty.start=null; } else state.duty.start=new Date().toISOString(); })},state.duty.start?"End duty":"Start duty")));
+  if(state.duty.log.length){ const l=state.duty.log[0]; w.append(h("div",{class:"saved"},"Last duty period "+new Date(l.start).toLocaleString()+" to "+new Date(l.end).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})+" ("+((new Date(l.end)-new Date(l.start))/3600000).toFixed(1)+" h). "+state.duty.log.length+" period"+(state.duty.log.length===1?"":"s")+" kept on this device.")); }
+  const ps=pilotStats(); const medD=daysUntil(state.pilot.medical);
+  w.append(h("div",{class:"row"},h("span",{},"Pilot currency and expiries",h("div",{class:"saved",style:"margin-top:2px"},(state.pilot.name?state.pilot.name+" · ":"")+ps.h90.toFixed(1)+" h and "+ps.ld90+" landings in the last 90 days"+(medD!==null?" · medical "+(medD<0?"EXPIRED":medD+" days"):""))),h("button",{class:"link",onclick:pilotSheet},"Open")));
+  w.append(h("div",{class:"row"},h("span",{},"Operator link",h("div",{class:"saved",style:"margin-top:2px"},opsReady()?"Connected to "+state.ops.url.replace(/^https?:\/\//,"")+(state.outbox.length?" · "+state.outbox.length+" record"+(state.outbox.length===1?"":"s")+" waiting to upload":"")+(state.ops.autoUpload?" · auto-upload on":""):"Not configured. Links this device to the operator's roster, records and notices through a connector server.")),h("button",{class:"link",onclick:opsSheet},"Settings")));
+  if(opsReady()){ const nn=noticesNodes(); w.append(h("h2",{},"Operator notices"+(nn.unread?" ("+nn.unread+" unread)":""))); if(!nn.nodes.length) w.append(h("div",{class:"empty"},"None fetched."+(state.ops.noticesFetched?" Last check "+new Date(state.ops.noticesFetched).toLocaleString()+".":""))); nn.nodes.forEach(n=>w.append(n)); }
   w.append(h("h2",{},"EFB files for this aircraft"));
   const efb=h("div",{class:"efb"});
   const canShareFiles = !!(navigator.share && navigator.canShare);
@@ -1744,12 +1872,7 @@ function importCustom(){
     let j; try{ j=JSON.parse(ta.value); }catch(e){ note.textContent="That is not a valid export."; return; }
     if(!j||j.aeroe!=="custom-checklists"){ note.textContent="That is not an AeroE export."; return; }
     if(j.aircraft!==a.id){ note.textContent="This export is for "+j.aircraft+", not the "+a.short+". Open that aircraft and import it there."; return; }
-    const ok=it=>it&&typeof it==="object"&&(it.branch||typeof it.note==="string"||typeof it.defer==="string"||(typeof it.c==="string"&&typeof it.r==="string"));
-    const overrides={}; for(const k of Object.keys(j.overrides||{})){ const o=j.overrides[k]; if(a.normal.some(p=>p.id===k)&&o&&Array.isArray(o.items)&&o.items.every(ok)&&o.items.length) overrides[k]={items:o.items,savedAt:Date.now()}; }
-    const approach=(j.approach&&Array.isArray(j.approach.items)&&j.approach.items.every(ok)&&j.approach.items.length)?{name:String(j.approach.name||"Approach (custom)"),items:j.approach.items}:null;
-    state.custom[a.id]={approach,overrides};
-    if(j.wb&&typeof j.wb==="object"){ const prof={}; for(const k of Object.keys(j.wb)){ const q=j.wb[k]; if(q&&typeof q==="object"&&typeof q.rego==="string"&&Array.isArray(q.stations)) prof[q.rego]=q; } state.wb[a.id]={profiles:prof,current:Object.keys(prof)[0]||null}; }
-    state.per[a.id]={ticks:{},branches:{}};
+    const err=applyCustomPayload(a,j); if(err){ note.textContent=err; return; }
     save(); document.getElementById("sheet").remove(); render();
   }},"Import"));
   actions.append(h("button",{onclick:()=>document.getElementById("sheet").remove()},"Cancel"));

@@ -1,5 +1,20 @@
 [
   {
+    "version": "2.8",
+    "date": "2026-11-16",
+    "title": "Operator tools: logbook, roster, records upload, duty, currency, maintenance release",
+    "notes": [
+      "C208B is now shown as C208.",
+      "Manifest: off-blocks, take-off, landing and on-blocks times with Now buttons (flight and air time worked out), landings, fuel uplift and fuel at shutdown, and per-passenger dangerous-goods declaration and safety-briefing acknowledgement, all carried on the flight record.",
+      "Logbook: each record can be sent straight to LogTen (its URL scheme), exported in ForeFlight's template layout or as a generic logbook CSV; the records list exports the whole logbook the same ways.",
+      "Operator link (Status › Operator link): connect to an operator's connector server to upload signed flight records automatically (queued until there is signal), load today's roster into the manifest with From roster, receive a fleet pack of registrations, customisations, standard weights and duty limit, and read company notices with read receipts. The connector interface is documented in docs/INTEGRATION.md.",
+      "Standard passenger weights: when the operator sets them, a Std button beside each passenger fills the approved weight and the record marks it.",
+      "Duty: Start duty / End duty on the Status page; the W&B page shows time on duty against the operator's limit.",
+      "Pilot currency: medical, flight review, IPC, line check, DG and emergency training dates with expiry warnings, plus hours and landings in the last 30/90/365 days counted from the records on the device.",
+      "Maintenance release: each registration can carry hours remaining and an expiry date; saving a flight record deducts its block time and the W&B page warns when hours or date are close."
+    ]
+  },
+  {
     "version": "2.7",
     "date": "2026-11-15",
     "title": "C208B weight and balance and performance from the POH",
