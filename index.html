@@ -123,7 +123,10 @@ nav.modes button .short{display:none}
 .wb table.mf td{padding:5px 3px} .wb table.mf input{width:100%!important;min-width:4.5em;font-size:15px!important;padding:7px 8px!important} .wb table.mf input[type=text]{text-align:left!important;min-width:7em}
 .wb table.mf select{font:inherit;font-size:14px;padding:7px 4px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2);color:var(--ink);max-width:11em}
 .wb table.mf td:last-child{width:1%} .wb table.mf button.x{padding:6px 8px;border:1px solid var(--line);border-radius:var(--radius);color:var(--red)}
-@media (max-width:640px){ .wb table.mf,.wb table.mf tbody,.wb table.mf td{display:block} .wb table.mf tr:first-child{display:none} .wb table.mf tr{display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center} .wb table.mf.pax tr{grid-template-columns:1fr 1.6fr 1fr auto} .wb table.mf.cargo tr{grid-template-columns:2fr 1fr auto} .wb table.mf td{padding:0;border:0;width:auto!important} .wb table.mf td:first-child{grid-column:1/-1} .wb table.mf select{max-width:100%;width:100%} .wb table.mf input{min-width:0} }
+@media (max-width:640px){ .wb table.mf,.wb table.mf tbody,.wb table.mf td{display:block} .wb table.mf tr:first-child{display:none} .wb table.mf tr{display:grid;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center} .wb table.mf.pax tr{grid-template-columns:1fr 1.6fr 1fr auto auto} .wb table.mf.cargo tr{grid-template-columns:2fr 1fr auto} .wb table.mf td{padding:0;border:0;width:auto!important} .wb table.mf td:first-child{grid-column:1/-1} .wb table.mf select{max-width:100%;width:100%} .wb table.mf input{min-width:0} }
+.mf-grid.times label .tw{display:flex;gap:6px} .mf-grid.times .tw input{flex:1} .mf-grid.times button.now{padding:6px 10px;border:1px solid var(--line);border-radius:var(--radius);font-size:13px;font-weight:600}
+.wb table.mf td.decl{white-space:nowrap} .wb table.mf td.decl input{width:22px;height:22px;margin:0 4px;vertical-align:middle}
+.record .actions.logbook{margin-top:8px;align-items:center} .record .actions.logbook .lbl{font-size:13px;color:var(--ink-dim);font-weight:600} .record .actions.logbook .dim{font-size:12px;color:var(--ink-dim)}
 .mf-use{margin:10px 0;font-size:15px} .mf-use label{display:flex;align-items:center;gap:8px} .mf-use input{width:22px;height:22px} .mf-use .dim{margin-top:4px;font-size:13px;color:var(--ink-dim)}
 .record .rec-body{font-size:14px;line-height:1.4;margin-top:10px} .record .rl.b{font-weight:700;margin-top:8px} .record .rl.m{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;font-size:12px!important} .record .rl.red{color:var(--red)} .record .rl.dim{color:var(--ink-dim)}
 .signoff{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2)} .signoff .so-title{font-weight:700;font-size:15px;margin-bottom:4px} .signoff .dim{font-size:13px;color:var(--ink-dim)} .signoff .so-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0} .signoff .so-fields input{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);min-width:0} .signoff .so-accept{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:8px 0} .signoff .so-accept input{width:24px;height:24px;flex:none;margin-top:1px} .signoff .so-actions button{padding:10px 16px;border-radius:var(--radius);font-weight:700;background:var(--green);color:var(--on-green);border:1px solid var(--green)} .signoff .so-actions button:disabled{opacity:.6} .signoff .signed{font-weight:700;color:var(--green);font-size:15px} .signoff .fp{font-size:12px;color:var(--ink-dim);margin-top:4px;font-variant-numeric:tabular-nums} .signoff .fp.bad{color:var(--red);font-weight:700}
@@ -402,7 +405,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "dc3482a7";
+const BUILD = "ecf18a4d";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}};
@@ -1017,18 +1020,30 @@ function renderManifest(w,p){
   const tf=(label,key,type,ph)=>{ const i=h("input",{type:type||"text",value:m[key]||"",placeholder:ph||"",autocapitalize:type==="date"?"off":"characters"}); i.oninput=ev=>{ m[key]=ev.target.value; save(); }; grid.append(h("label",{},h("span",{},label),i)); };
   tf("Date","date","date"); tf("From","from","text","YSBK"); tf("To","to","text","YSCN"); tf("Pilot in command","pic","text","name"); tf("Flight / booking ref","ref","text","optional");
   w.append(grid);
+  // block and flight times, landings and fuel for the logbook and trip record
+  if(!m.times) m.times={off:"",to:"",ld:"",on:""};
+  const tg=h("div",{class:"mf-grid times"});
+  const nowHM=()=>{ const d=new Date(); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
+  const tt=(label,key)=>{ const i=h("input",{type:"time",value:m.times[key]||""}); i.oninput=ev=>{ m.times[key]=ev.target.value; save(); const el=document.getElementById("mf-ft"); if(el) el.textContent=mfTimesText(m); }; const now=h("button",{class:"now",onclick:()=>{ m.times[key]=nowHM(); i.value=m.times[key]; save(); const el=document.getElementById("mf-ft"); if(el) el.textContent=mfTimesText(m); }},"Now"); tg.append(h("label",{},h("span",{},label),h("div",{class:"tw"},i,now))); };
+  tt("Off blocks","off"); tt("Take-off","to"); tt("Landing","ld"); tt("On blocks","on");
+  const nf=(label,key,ph)=>{ const i=h("input",{type:"number",step:"any",inputmode:"decimal",min:"0",value:m[key]===null||m[key]===undefined?"":m[key],placeholder:ph||""}); i.oninput=ev=>{ m[key]=ev.target.value===""?null:ev.target.value; save(); }; tg.append(h("label",{},h("span",{},label),i)); };
+  nf("Landings","landings","1"); nf("Night landings","nightLandings","0"); nf("Fuel uplift ("+u.fuel+")","uplift",""); nf("Fuel at shutdown ("+u.fuel+")","fuelArr","");
+  w.append(tg); w.append(h("div",{id:"mf-ft",class:"dim",style:"margin:-4px 0 8px"},mfTimesText(m)));
   const stationSel=(val,onch)=>{ const s=h("select",{}); p.stations.forEach(st=>s.append(h("option",{value:st.id},st.name))); s.value=val; s.onchange=ev=>onch(ev.target.value); return s; };
   const refresh=()=>{ mfApply(p,m); p.stations.forEach(st=>{ const el=document.getElementById("wb-load-"+st.id); if(el&&mfActive(m)) el.value=p.loads[st.id]===null||p.loads[st.id]===undefined?"":p.loads[st.id]; }); const tot=document.getElementById("mf-totals"); if(tot) tot.textContent=mfTotalsText(m,u); wbRecalc(); };
   // crew and passengers
   w.append(h("h2",{},"Crew and passengers"));
-  const pt=h("table",{class:"mf pax"}); pt.append(h("tr",{},h("th",{},"Name"),h("th",{},"Role"),h("th",{},"Seat"),h("th",{class:"num"},u.weight),h("th",{})));
+  const pt=h("table",{class:"mf pax"}); pt.append(h("tr",{},h("th",{},"Name"),h("th",{},"Role"),h("th",{},"Seat"),h("th",{class:"num"},u.weight),h("th",{},"DG · Brief"),h("th",{})));
   m.pax.forEach((x,i)=>{
     const name=h("input",{type:"text",value:x.name||"",placeholder:"name",autocapitalize:"words"}); name.oninput=ev=>{ x.name=ev.target.value; save(); };
     const role=h("select",{}); [["pax","Pax"],["crew","Crew"],["child","Child"],["infant","Infant"]].forEach(([v,l])=>role.append(h("option",{value:v},l))); role.value=x.role||"pax"; role.onchange=ev=>{ x.role=ev.target.value; refresh(); };
     const wt=h("input",{type:"number",step:"any",inputmode:"decimal",min:"0",value:x.weight===null||x.weight===undefined?"":x.weight,placeholder:"0"}); wt.oninput=ev=>{ x.weight=ev.target.value===""?null:ev.target.value; refresh(); };
-    pt.append(h("tr",{},h("td",{},name),h("td",{},role),h("td",{},stationSel(x.station,v=>{ x.station=v; refresh(); })),h("td",{class:"num"},wt),h("td",{},h("button",{class:"x","aria-label":"Remove",onclick:()=>{ m.pax.splice(i,1); if(!mfActive(m)&&m.use) p.loads={}; mfApply(p,m); save(); render(); }},"✕"))));
+    const dg=h("input",{type:"checkbox",title:"Dangerous goods declaration made (no undeclared DG)"}); dg.checked=!!x.dg; dg.onchange=()=>{ x.dg=dg.checked; save(); };
+    const br=h("input",{type:"checkbox",title:"Safety briefing acknowledged"}); br.checked=!!x.brief; br.onchange=()=>{ x.brief=br.checked; save(); };
+    pt.append(h("tr",{},h("td",{},name),h("td",{},role),h("td",{},stationSel(x.station,v=>{ x.station=v; refresh(); })),h("td",{class:"num"},wt),h("td",{class:"decl"},dg,br),h("td",{},h("button",{class:"x","aria-label":"Remove",onclick:()=>{ m.pax.splice(i,1); if(!mfActive(m)&&m.use) p.loads={}; mfApply(p,m); save(); render(); }},"✕"))));
   });
   w.append(pt);
+  if(m.pax.length) w.append(h("div",{class:"dim",style:"margin:-4px 0 6px"},"DG: the passenger has declared they carry no undeclared dangerous goods. Brief: the safety briefing was given and acknowledged. Both are recorded on the flight record."));
   w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ m.pax.push({name:"",role:m.pax.length?"pax":"crew",station:mfDefaultStation(p,"pax"),weight:null}); save(); render(); setTimeout(()=>{ const rows=document.querySelectorAll("table.mf input[type=text]"); const last=rows[m.pax.length-1]; if(last) last.focus(); },50); }},"+ Add person")));
   // baggage and freight
   w.append(h("h2",{},"Baggage and freight"));
@@ -1042,8 +1057,11 @@ function renderManifest(w,p){
   w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ m.cargo.push({desc:"",station:mfDefaultStation(p,"cargo"),weight:null}); save(); render(); }},"+ Add item")));
   const use=h("input",{type:"checkbox",id:"mf-use"}); use.checked=!!m.use; use.onchange=()=>{ m.use=use.checked; mfApply(p,m); save(); render(); };
   w.append(h("div",{class:"mf-use"},h("label",{},use," Use the manifest for the station loads below"+(m.use&&!mfActive(m)?" (add a person or item first)":"")),h("div",{id:"mf-totals",class:"dim"},mfTotalsText(m,u))));
-  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ if(!confirm("Clear the flight details, passengers and freight?")) return; Object.assign(m,{from:"",to:"",pic:m.pic,ref:"",pax:[],cargo:[],date:todayISO()}); mfApply(p,m); save(); render(); }},"Clear manifest")));
+  w.append(h("div",{class:"btns"},h("button",{onclick:()=>{ if(!confirm("Clear the flight details, passengers and freight?")) return; Object.assign(m,{from:"",to:"",pic:m.pic,ref:"",pax:[],cargo:[],date:todayISO(),times:{off:"",to:"",ld:"",on:""},landings:null,nightLandings:null,uplift:null,fuelArr:null}); mfApply(p,m); save(); render(); }},"Clear manifest")));
 }
+function hm2min(t){ if(!t||!/^\d{1,2}:\d{2}$/.test(t)) return null; const [a,b]=t.split(":").map(Number); return a*60+b; }
+function mfDuration(a,b){ const x=hm2min(a), y=hm2min(b); if(x===null||y===null) return null; let d=y-x; if(d<0) d+=1440; return d/60; }
+function mfTimesText(m){ const t=m.times||{}; const bt=mfDuration(t.off,t.on), at=mfDuration(t.to,t.ld); if(bt===null&&at===null) return "Enter the times with the Now buttons as the flight happens; flight time (blocks) and air time are worked out for the logbook."; return (bt!==null?"Flight time "+bt.toFixed(2)+" h (blocks)":"")+(at!==null?(bt!==null?" · ":"")+"air time "+at.toFixed(2)+" h":"")+"."; }
 function mfTotalsText(m,u){ const s=mfSums(m); return (s.crew?s.crew+" crew":"no crew")+", "+s.paxN+" passenger"+(s.paxN===1?"":"s")+" ("+fmt(s.paxW,0)+" "+u.weight+"), baggage and freight "+fmt(s.cargoW,0)+" "+u.weight+"."; }
 /* ----- snapshots ----- */
 function pfSnapshot(isLanding){
@@ -1064,8 +1082,8 @@ function buildRecord(){
   if(res.fuelW) rows.push({name:"Fuel "+fmt(num(p.fuel),0)+" "+p.units.fuel,w:res.fuelW,arm:num(p.fuelArm)});
   const pts={}; for(const k of ["zfw","ramp","to","ld"]){ const q=res.pts[k]; pts[k]={w:q.w,arm:q.arm,fwd:q.fwd,aft:q.aft,env:q.env}; }
   return {id:Date.now().toString(36), savedAt:new Date().toISOString(), app:APP_VERSION()+" ("+BUILD+")", aircraft:{id:a.id,short:a.short,name:a.maker+" "+a.model}, rego:p.rego, test:!!p.test,
-    flight:{date:m.date,from:(m.from||"").toUpperCase(),to:(m.to||"").toUpperCase(),pic:m.pic,ref:m.ref},
-    manifest:{pax:m.pax.map(x=>({name:x.name,role:x.role||"pax",station:(p.stations.find(s=>s.id===x.station)||{}).name||x.station,weight:num(x.weight)})),cargo:m.cargo.map(x=>({desc:x.desc,station:(p.stations.find(s=>s.id===x.station)||{}).name||x.station,weight:num(x.weight)})),crew:s.crew,paxN:s.paxN,paxW:s.paxW,cargoW:s.cargoW,used:!!m.use},
+    flight:{date:m.date,from:(m.from||"").toUpperCase(),to:(m.to||"").toUpperCase(),pic:m.pic,ref:m.ref,times:Object.assign({off:"",to:"",ld:"",on:""},m.times||{}),blockTime:mfDuration((m.times||{}).off,(m.times||{}).on),airTime:mfDuration((m.times||{}).to,(m.times||{}).ld),landings:num(m.landings)===null?1:num(m.landings),nightLandings:num(m.nightLandings)||0,uplift:num(m.uplift),fuelArr:num(m.fuelArr)},
+    manifest:{pax:m.pax.map(x=>({name:x.name,role:x.role||"pax",station:(p.stations.find(s=>s.id===x.station)||{}).name||x.station,weight:num(x.weight),dg:!!x.dg,brief:!!x.brief,std:!!x.std})),cargo:m.cargo.map(x=>({desc:x.desc,station:(p.stations.find(s=>s.id===x.station)||{}).name||x.station,weight:num(x.weight)})),crew:s.crew,paxN:s.paxN,paxW:s.paxW,cargoW:s.cargoW,used:!!m.use},
     wb:{units:p.units,emptyWeight:ew,emptyArm:ea,reportDate:p.reportDate,limits:p.limits,rows,fuel:num(p.fuel),taxi:num(p.taxi),burn:num(p.burn),fuelDensity:num(p.fuelDensity),fuelW:res.fuelW,taxiW:res.taxiW,burnW:res.burnW,pts,over:res.over,problems:res.problems,complete:res.complete,envelopeKnown:res.envelopeKnown,inLimits:res.inLimits,verified:!!(WBT()&&WBT().verified)},
     perf:{takeoff:pfSnapshot(false),landing:pfSnapshot(true)}};
 }
@@ -1078,11 +1096,15 @@ function recordLines(r){
   L.push({t:"FLIGHT RECORD – "+r.aircraft.short+" "+r.rego,f:"B",s:17,gap:4});
   P(r.aircraft.name+" · "+(r.flight.date||"")+(r.flight.from||r.flight.to?" · "+r.flight.from+" – "+r.flight.to:"")+(r.flight.ref?" · ref "+r.flight.ref:""));
   P("Pilot in command: "+(r.flight.pic||"–")+" · saved "+new Date(r.savedAt).toLocaleString()+" · AeroE Checklist "+r.app);
+  const ft=r.flight.times||{}; if(ft.off||ft.to||ft.ld||ft.on||r.flight.uplift!==null&&r.flight.uplift!==undefined){
+    P("Times: off blocks "+(ft.off||"–")+" · take-off "+(ft.to||"–")+" · landing "+(ft.ld||"–")+" · on blocks "+(ft.on||"–")+(r.flight.blockTime!==null&&r.flight.blockTime!==undefined?" · flight time "+r.flight.blockTime.toFixed(2)+" h":"")+(r.flight.airTime!==null&&r.flight.airTime!==undefined?" · air time "+r.flight.airTime.toFixed(2)+" h":"")+" · landings "+(r.flight.landings||0)+(r.flight.nightLandings?" ("+r.flight.nightLandings+" night)":"")+(r.flight.uplift!==null&&r.flight.uplift!==undefined?" · fuel uplift "+fmt(r.flight.uplift,0)+" "+u.fuel:"")+(r.flight.fuelArr!==null&&r.flight.fuelArr!==undefined?" · fuel at shutdown "+fmt(r.flight.fuelArr,0)+" "+u.fuel:""));
+  }
   if(r.test) L.push({t:"TEST DATA – the registration's empty weight and arm are fictitious. Not for operational use.",f:"B",s:10,red:true});
   BR(); H("Crew and passengers");
   if(!r.manifest.pax.length) S("None recorded.");
-  else { M(pad("Name",28)+pad("Role",8)+pad("Seat / station",30)+pad(u.weight,8,true)); r.manifest.pax.forEach(x=>M(pad(x.name||"–",28)+pad(x.role==="crew"?"Crew":x.role==="child"?"Child":x.role==="infant"?"Infant":"Pax",8)+pad(x.station,30)+pad(fmt(x.weight,0),8,true))); }
-  P(r.manifest.crew+" crew, "+r.manifest.paxN+" passenger"+(r.manifest.paxN===1?"":"s")+", total "+fmt(r.manifest.paxW,0)+" "+u.weight+".");
+  else { M(pad("Name",26)+pad("Role",7)+pad("Seat / station",28)+pad(u.weight,7,true)+pad("DG",5,true)+pad("Brief",7,true)); r.manifest.pax.forEach(x=>M(pad(x.name||"–",26)+pad(x.role==="crew"?"Crew":x.role==="child"?"Child":x.role==="infant"?"Infant":"Pax",7)+pad(x.station,28)+pad(fmt(x.weight,0)+(x.std?"*":""),7,true)+pad(x.role==="crew"?"":(x.dg?"yes":"no"),5,true)+pad(x.role==="crew"?"":(x.brief?"yes":"no"),7,true))); }
+  const paxOnly=r.manifest.pax.filter(x=>x.role!=="crew"); const dgN=paxOnly.filter(x=>x.dg).length, brN=paxOnly.filter(x=>x.brief).length;
+  P(r.manifest.crew+" crew, "+r.manifest.paxN+" passenger"+(r.manifest.paxN===1?"":"s")+", total "+fmt(r.manifest.paxW,0)+" "+u.weight+(r.manifest.pax.some(x=>x.std)?" (* standard weight)":"")+"."+(paxOnly.length?" Dangerous goods declared nil by "+dgN+" of "+paxOnly.length+"; safety briefing acknowledged by "+brN+" of "+paxOnly.length+".":""));
   BR(); H("Baggage and freight");
   if(!r.manifest.cargo.length) S("None recorded.");
   else { M(pad("Description",36)+pad("Location",30)+pad(u.weight,8,true)); r.manifest.cargo.forEach(x=>M(pad(x.desc||"–",36)+pad(x.station,30)+pad(fmt(x.weight,0),8,true))); P("Total "+fmt(r.manifest.cargoW,0)+" "+u.weight+"."); }
@@ -1174,6 +1196,14 @@ function showRecord(rec){
   if(rec.preview) actions.append(h("button",{class:"primary",onclick:()=>{ delete rec.preview; const list=recStore(); list.unshift(rec); while(list.length>100) list.pop(); save(); render(); sheet.remove(); showRecord(rec); }},"Save this record"));
   actions.append(h("button",{onclick:()=>sheet.remove()},"Close"));
   card.append(actions,msg);
+  if(!rec.preview){
+    const lb=h("div",{class:"actions logbook"},h("span",{class:"lbl"},"Logbook:"));
+    lb.append(h("button",{onclick:()=>{ const url=logtenURL([rec]); msg.textContent="Opening LogTen… if nothing happens, LogTen is not installed on this device."; window.location.href=url; }},"LogTen"));
+    lb.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([foreflightCSV([rec])],{type:"text/csv"}),recordFileName(rec,"foreflight.csv"),"ForeFlight logbook import"); }},"ForeFlight CSV"));
+    lb.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([logbookCSV([rec])],{type:"text/csv"}),recordFileName(rec,"logbook.csv"),"Logbook entry"); }},"Logbook CSV"));
+    if(!(rec.flight.times&&rec.flight.times.off&&rec.flight.times.on)) lb.append(h("span",{class:"dim"},"No block times were entered, so the entry has no flight time."));
+    card.append(lb);
+  }
   if(!rec.preview) card.append(signoffBlock(rec,card));
   const body=h("div",{class:"rec-body"});
   recordLines(rec).forEach(l=>{ const cls=(l.f==="B"?"b ":"")+(l.f==="M"?"m ":"")+(l.red?"red ":"")+(l.dim?"dim ":""); body.append(h("div",{class:"rl "+cls,style:"font-size:"+Math.min(l.s+3,20)+"px"+(l.gap?";margin-top:"+l.gap+"px":"")},l.t||" ")); });
@@ -1181,13 +1211,42 @@ function showRecord(rec){
   sheet.addEventListener("click",ev=>{ if(ev.target===sheet) sheet.remove(); });
   document.body.append(sheet);
 }
+/* ----- logbook exports: LogTen (direct, via its URL scheme), ForeFlight template CSV, generic CSV ----- */
+const hhmm=t=>t?t.replace(":",""):"";
+function logtenURL(recs){
+  const ents=recs.map(r=>{ const f=r.flight, t=f.times||{}; const e={entity_name:"Flight",flight_key:"aeroe-"+r.id,flight_flightDate:f.date,flight_from:f.from,flight_to:f.to,flight_selectedAircraftID:r.rego,flight_remarks:"AeroE flight record "+r.id+(r.signoff?" signed by "+r.signoff.name:"")+(f.ref?" · ref "+f.ref:"")+" · "+r.manifest.paxN+" pax"};
+    if(t.off) e.flight_actualDepartureTime=f.date+" "+t.off; if(t.on) e.flight_actualArrivalTime=f.date+" "+t.on; if(t.to) e.flight_takeoffTime=f.date+" "+t.to; if(t.ld) e.flight_landingTime=f.date+" "+t.ld;
+    if(f.blockTime!==null&&f.blockTime!==undefined){ e.flight_totalTime=f.blockTime.toFixed(2); e.flight_pic=f.blockTime.toFixed(2); }
+    const night=f.nightLandings||0, all=f.landings||0; e.flight_dayLandings=Math.max(0,all-night); e.flight_nightLandings=night; return e; });
+  const pkg={metadata:{application:"AeroE Checklist",version:APP_VERSION(),dateFormat:"yyyy-MM-dd",dateAndTimeFormat:"yyyy-MM-dd HH:mm",timesAreZulu:false,shouldApplyAutoFillTimes:true},entities:ents};
+  return "logten://v2/addEntities?package="+encodeURIComponent(JSON.stringify(pkg));
+}
+function logbookCSV(list){
+  const cols=["date","aircraft","registration","from","to","off_blocks","take_off","landing","on_blocks","flight_time_h","air_time_h","pic","day_landings","night_landings","crew","passengers","fuel_uplift","fuel_at_shutdown","remarks","record_id","fingerprint"];
+  const q=v=>{ v=v===null||v===undefined?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const rows=list.slice().reverse().map(r=>{ const f=r.flight, t=f.times||{}; const night=f.nightLandings||0, all=f.landings||0; return [f.date,r.aircraft.short,r.rego,f.from,f.to,t.off,t.to,t.ld,t.on,f.blockTime!==null&&f.blockTime!==undefined?f.blockTime.toFixed(2):"",f.airTime!==null&&f.airTime!==undefined?f.airTime.toFixed(2):"",f.pic,Math.max(0,all-night),night,r.manifest.crew,r.manifest.paxN,f.uplift,f.fuelArr,(f.ref?"ref "+f.ref+" · ":"")+"AeroE record "+r.id,r.id,r.signoff?r.signoff.fingerprint:""].map(q).join(","); });
+  return cols.join(",")+"\n"+rows.join("\n")+"\n";
+}
+function foreflightCSV(list){
+  /* ForeFlight Logbook template layout (Aircraft table, then Flights table). The column set follows ForeFlight's template;
+     if ForeFlight reports a column error, download its current template from the Logbook › Import tab and compare. */
+  const q=v=>{ v=v===null||v===undefined?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const ac={}; list.forEach(r=>{ ac[r.rego]=r.aircraft; });
+  const acRows=Object.keys(ac).map(reg=>{ const a=byId(ac[reg].id)||{}; const turbo=/PT6|turbo|TPE|turbine/i.test(a.engine||"")||/208|Kodiak|Conquest|King Air|PC-12|Airvan 10/i.test(ac[reg].name); return [reg,"Aircraft",ac[reg].short,"",ac[reg].name.split(" ")[0],ac[reg].name.split(" ").slice(1).join(" "),"Airplane","ASEL","fixed_tricycle",turbo?"Turboprop":"Piston","","","",""].map(q).join(","); });
+  const fcols=["Date","AircraftID","From","To","Route","TimeOut","TimeOff","TimeOn","TimeIn","OnDuty","OffDuty","TotalTime","PIC","SIC","Night","Solo","CrossCountry","NVG","NVGOps","Distance","DayTakeoffs","DayLandingsFullStop","NightTakeoffs","NightLandingsFullStop","AllLandings","ActualInstrument","SimulatedInstrument","HobbsStart","HobbsEnd","TachStart","TachEnd","Holds","Approach1","Approach2","Approach3","Approach4","Approach5","Approach6","DualGiven","DualReceived","SimulatedFlight","GroundTraining","InstructorName","InstructorComments","Person1","Person2","Person3","Person4","Person5","Person6","FlightReview","Checkride","IPC","NVGProficiency","FAA6158","[Text]AeroERecord","PilotComments"];
+  const ftypes=["Date","Text","Text","Text","Text","hhmm","hhmm","hhmm","hhmm","hhmm","hhmm","Decimal","Decimal","Decimal","Decimal","Decimal","Decimal","Decimal","Decimal","Decimal","Number","Number","Number","Number","Number","Decimal","Decimal","Decimal","Decimal","Decimal","Decimal","Number","Packed Detail","Packed Detail","Packed Detail","Packed Detail","Packed Detail","Packed Detail","Decimal","Decimal","Decimal","Decimal","Text","Text","Packed Detail","Packed Detail","Packed Detail","Packed Detail","Packed Detail","Packed Detail","Boolean","Boolean","Boolean","Boolean","Boolean","Text","Text"];
+  const frows=list.slice().reverse().map(r=>{ const f=r.flight, t=f.times||{}; const night=f.nightLandings||0, all=f.landings||0; const tt=f.blockTime!==null&&f.blockTime!==undefined?f.blockTime.toFixed(1):""; const row={}; fcols.forEach(c=>row[c]="");
+    Object.assign(row,{Date:f.date,AircraftID:r.rego,From:f.from,To:f.to,TimeOut:hhmm(t.off),TimeOff:hhmm(t.to),TimeOn:hhmm(t.ld),TimeIn:hhmm(t.on),TotalTime:tt,PIC:tt,DayTakeoffs:Math.max(0,all-night),DayLandingsFullStop:Math.max(0,all-night),NightTakeoffs:night,NightLandingsFullStop:night,AllLandings:all,"[Text]AeroERecord":r.id,PilotComments:(f.ref?"ref "+f.ref+" · ":"")+r.manifest.paxN+" pax"+(r.signoff?" · signed "+r.signoff.name:"")});
+    return fcols.map(c=>q(row[c])).join(","); });
+  return ["ForeFlight Logbook Import,This file was exported from AeroE Checklist. Check the column layout against the current ForeFlight template before importing.","","Aircraft Table","Text,Text,Text,YYYY,Text,Text,Text,Text,Text,Text,Boolean,Boolean,Boolean,Boolean","AircraftID,EquipmentType,TypeCode,Year,Make,Model,Category,Class,GearType,EngineType,Complex,HighPerformance,Pressurized,TAA",...acRows,"","Flights Table",ftypes.join(","),fcols.join(","),...frows,""].join("\n");
+}
 function recordsCSV(list){
-  const cols=["saved","date","aircraft","rego","from","to","pic","ref","crew","passengers","pax_weight","cargo_weight","fuel","zfw","zfw_cg","tow","tow_cg","ldw","ldw_cg","wb_verdict","to_dist","to_factored","to_roll","to_speed","ld_dist","ld_factored","ld_roll","ld_speed","ld_chart","signed_by","signed_licence","signed_at","fingerprint","test_data"];
+  const cols=["saved","date","aircraft","rego","from","to","pic","ref","crew","passengers","pax_weight","cargo_weight","fuel","zfw","zfw_cg","tow","tow_cg","ldw","ldw_cg","wb_verdict","to_dist","to_factored","to_roll","to_speed","ld_dist","ld_factored","ld_roll","ld_speed","ld_chart","off_blocks","take_off","landing","on_blocks","flight_time_h","landings","night_landings","fuel_uplift","fuel_at_shutdown","dg_declared","briefed","signed_by","signed_licence","signed_at","fingerprint","test_data"];
   const q=v=>{ v=v===null||v===undefined?"":String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const rnd=(v,d)=>v===null||v===undefined||!isFinite(v)?"":Number(v).toFixed(d);
   const rows=list.map(r=>{ const t=r.perf.takeoff, l=r.perf.landing; const P=s=>s&&s.complete&&s.ok?s:null; const verdict=!r.wb.complete?"incomplete":!r.wb.envelopeKnown?"no envelope":(r.wb.inLimits?"within limits":"outside limits");
     return [r.savedAt,r.flight.date,r.aircraft.short,r.rego,r.flight.from,r.flight.to,r.flight.pic,r.flight.ref,r.manifest.crew,r.manifest.paxN,rnd(r.manifest.paxW,0),rnd(r.manifest.cargoW,0),rnd(r.wb.fuel,0),rnd(r.wb.pts.zfw.w,0),rnd(r.wb.pts.zfw.arm,1),rnd(r.wb.pts.to.w,0),rnd(r.wb.pts.to.arm,1),rnd(r.wb.pts.ld.w,0),rnd(r.wb.pts.ld.arm,1),verdict,
-      P(t)?t.dist:"",P(t)?t.factored:"",P(t)?t.roll:"",t&&t.speed!==undefined?t.speed:"",P(l)?l.dist:"",P(l)?l.factored:"",P(l)?l.roll:"",l&&l.speed!==undefined?l.speed:"",l?l.title:"",r.signoff?r.signoff.name:"",r.signoff?r.signoff.licence:"",r.signoff?r.signoff.acceptedAt:"",r.signoff?r.signoff.fingerprint:"",r.test?"yes":""].map(q).join(","); });
+      P(t)?t.dist:"",P(t)?t.factored:"",P(t)?t.roll:"",t&&t.speed!==undefined?t.speed:"",P(l)?l.dist:"",P(l)?l.factored:"",P(l)?l.roll:"",l&&l.speed!==undefined?l.speed:"",l?l.title:"",(r.flight.times||{}).off,(r.flight.times||{}).to,(r.flight.times||{}).ld,(r.flight.times||{}).on,r.flight.blockTime!==null&&r.flight.blockTime!==undefined?r.flight.blockTime.toFixed(2):"",r.flight.landings,r.flight.nightLandings,r.flight.uplift,r.flight.fuelArr,r.manifest.pax.filter(x=>x.role!=="crew"&&x.dg).length+"/"+r.manifest.pax.filter(x=>x.role!=="crew").length,r.manifest.pax.filter(x=>x.role!=="crew"&&x.brief).length+"/"+r.manifest.pax.filter(x=>x.role!=="crew").length,r.signoff?r.signoff.name:"",r.signoff?r.signoff.licence:"",r.signoff?r.signoff.acceptedAt:"",r.signoff?r.signoff.fingerprint:"",r.test?"yes":""].map(q).join(","); });
   return cols.join(",")+"\n"+rows.join("\n")+"\n";
 }
 function renderRecordsSide(sEl){
@@ -1200,6 +1259,9 @@ function renderRecordsSide(sEl){
   if(list.length){
     l.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([recordsCSV(list)],{type:"text/csv"}),"AeroE-flight-records-"+a.short+"-"+todayISO()+".csv","Flight records"); }},h("span",{class:"dot"}),h("span",{class:"name"},"Export log (CSV)"),h("span",{class:"n"},list.length)));
     l.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([JSON.stringify({aeroe:"flight-records",version:1,aircraft:a.id,exported:new Date().toISOString(),records:list},null,1)],{type:"application/json"}),"AeroE-flight-records-"+a.short+"-"+todayISO()+".json","Flight records"); }},h("span",{class:"dot"}),h("span",{class:"name"},"Export records (JSON)"),h("span",{class:"n"},"full")));
+    l.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([logbookCSV(list)],{type:"text/csv"}),"AeroE-logbook-"+a.short+"-"+todayISO()+".csv","Logbook"); }},h("span",{class:"dot"}),h("span",{class:"name"},"Export logbook (CSV)"),h("span",{class:"n"},"all")));
+    l.append(h("button",{onclick:async()=>{ await shareBlob(new Blob([foreflightCSV(list)],{type:"text/csv"}),"AeroE-logbook-foreflight-"+a.short+"-"+todayISO()+".csv","ForeFlight logbook import"); }},h("span",{class:"dot"}),h("span",{class:"name"},"Export logbook (ForeFlight)"),h("span",{class:"n"},"all")));
+    l.append(h("button",{onclick:()=>{ window.location.href=logtenURL(list.slice(0,25)); }},h("span",{class:"dot"}),h("span",{class:"name"},"Send to LogTen"),h("span",{class:"n"},"last "+Math.min(25,list.length))));
   }
   sEl.append(l);
 }

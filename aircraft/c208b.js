@@ -5,7 +5,7 @@ window.AIRCRAFT.push({
   id: "c208b",
   maker: "Cessna",
   model: "208B Grand Caravan",
-  short: "C208B",
+  short: "C208",
   category: "Turboprop",
   engine: "Pratt & Whitney PT6A-114A, 675 shp",
   seats: "1 + 9 to 13",
