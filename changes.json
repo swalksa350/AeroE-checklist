@@ -1,5 +1,13 @@
 [
   {
+    "version": "2.8.1",
+    "date": "2026-11-16",
+    "title": "Take-offs and approach type on the flight record",
+    "notes": [
+      "The times block now records take-offs and night take-offs alongside landings, and the approach flown: visual, or ILS, LOC, RNAV/RNP, VOR or NDB, classed as an instrument approach. All of them go onto the record, the CSV exports, the LogTen entry (day and night take-offs, approach) and the ForeFlight file."
+    ]
+  },
+  {
     "version": "2.8",
     "date": "2026-11-16",
     "title": "Operator tools: logbook, roster, records upload, duty, currency, maintenance release",
