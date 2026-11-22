@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.9",
+    "date": "2026-11-22",
+    "title": "Plan tab: NAIPS briefing, requirements, fuel plan and flight plan filing",
+    "notes": [
+      "New Plan tab. Enter the route, ETD, times, level and fuel policy; Get NAIPS briefing fetches the TAF, METAR/SPECI, TTF, NOTAM and SIGMET products for departure, destination and alternates through the operator connector, applies the alternate, holding, crosswind and NOTAM rules with every finding quoting the product it rests on, and works out the fuel required against the fuel on board in the W&B tab.",
+      "An optional plain-English summary (written by Claude on the connector, from the quoted products only) sits beside the raw products, labelled as a draft.",
+      "Flight plan: the ICAO fields are filled from the aircraft, the registration in W&B, the manifest and your pilot details; Preview shows the FPL text and File with NAIPS lodges it through the connector's NAIPS account. The briefing and the filed plan are attached to the next flight record.",
+      "The connector itself (connector/ in the repository) is the reference implementation: NAIPS SOAP client built from the published schema, decoder, rules engine, fuel planner and record store, with tests against a mock NAIPS. It needs a NAIPS account and Airservices' agreement for third-party use."
+    ]
+  },
+  {
     "version": "2.8.2",
     "date": "2026-11-16",
     "title": "LogTen import fix",

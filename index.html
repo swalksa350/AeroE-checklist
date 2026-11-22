@@ -87,7 +87,7 @@ header .theme.on{color:var(--ink)}
 }
 nav.modes button .short{display:none}
 @media (max-width:640px){ nav.modes button .full{display:none} nav.modes button .short{display:inline} nav.modes button{font-size:13px;padding:14px 2px} header .brand{min-width:0;padding:10px 12px} header .theme span:not(.g){display:none} header .theme{width:40px} }
-@media (max-width:430px){ nav.modes button{font-size:11px;padding:14px 1px} }
+@media (max-width:430px){ nav.modes button{font-size:10px;padding:14px 1px;letter-spacing:-.01em} }
 /* an installed iPad/Mac window keeps 96px clear for the window controls, so compact a little earlier */
 @media (max-width:760px){ html.win-controls nav.modes button .full{display:none} html.win-controls nav.modes button .short{display:inline} html.win-controls header .brand{min-width:0;padding:10px 10px} html.win-controls header .brand small{display:none} html.win-controls header .theme span:not(.g){display:none} html.win-controls header .theme{width:40px} }
 .wb{padding:0 16px 60px}
@@ -133,6 +133,7 @@ nav.modes button .short{display:none}
 .notice{border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:var(--radius);padding:10px 12px;margin:8px 0;background:var(--panel-2)} .notice.read{border-left-color:var(--line);opacity:.8} .notice .nt{font-weight:700;display:flex;justify-content:space-between;gap:8px} .notice .nd{font-weight:400;color:var(--ink-dim);font-size:12px} .notice .nb{margin:6px 0;white-space:pre-wrap;font-size:14px} .notice button.primary{padding:8px 12px;border-radius:var(--radius);background:var(--green);color:var(--on-green);border:1px solid var(--green);font-weight:600}
 .wb table.mf .wtw{display:flex;gap:4px;align-items:center;justify-content:flex-end} .wb table.mf .wtw input{flex:1;min-width:4em!important}
 .wb table.mf button.std{padding:5px 7px;border:1px solid var(--line);border-radius:var(--radius);font-size:12px;font-weight:600} .wb table.mf button.std.on{background:var(--green);color:var(--on-green);border-color:var(--green)}
+.plan .finding{border:1px solid var(--line);border-left:4px solid var(--ink-dim);border-radius:var(--radius);padding:8px 10px;margin:6px 0;font-size:14px;background:var(--panel-2)} .plan .finding.alternate{border-left-color:var(--red)} .plan .finding.holding{border-left-color:var(--amber)} .plan .finding.warning{border-left-color:var(--amber)} .plan .finding .ft{font-weight:700;font-size:12px;letter-spacing:.04em;margin-bottom:2px} .plan pre.quote,.plan pre.raw,.plan pre.fpl{white-space:pre-wrap;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:8px;margin:6px 0} .plan .summary{white-space:pre-wrap;font-size:14px;line-height:1.45;border:1px solid var(--line);border-radius:var(--radius);padding:10px;background:var(--panel)} .plan details{margin:6px 0} .plan summary{cursor:pointer;font-weight:600} .plan h3{font-size:14px;margin:14px 0 4px}
 .mf-use{margin:10px 0;font-size:15px} .mf-use label{display:flex;align-items:center;gap:8px} .mf-use input{width:22px;height:22px} .mf-use .dim{margin-top:4px;font-size:13px;color:var(--ink-dim)}
 .record .rec-body{font-size:14px;line-height:1.4;margin-top:10px} .record .rl.b{font-weight:700;margin-top:8px} .record .rl.m{font-family:ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;font-size:12px!important} .record .rl.red{color:var(--red)} .record .rl.dim{color:var(--ink-dim)}
 .signoff{margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel-2)} .signoff .so-title{font-weight:700;font-size:15px;margin-bottom:4px} .signoff .dim{font-size:13px;color:var(--ink-dim)} .signoff .so-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0} .signoff .so-fields input{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);min-width:0} .signoff .so-accept{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:8px 0} .signoff .so-accept input{width:24px;height:24px;flex:none;margin-top:1px} .signoff .so-actions button{padding:10px 16px;border-radius:var(--radius);font-weight:700;background:var(--green);color:var(--on-green);border:1px solid var(--green)} .signoff .so-actions button:disabled{opacity:.6} .signoff .signed{font-weight:700;color:var(--green);font-size:15px} .signoff .fp{font-size:12px;color:var(--ink-dim);margin-top:4px;font-variant-numeric:tabular-nums} .signoff .fp.bad{color:var(--red);font-weight:700}
@@ -411,11 +412,11 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "b8a597d7";
+const BUILD = "bbfc62a8";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
-const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, manifest:{}, records:{}, ops:{url:"",token:"",pilotId:"",autoUpload:false,std:{},dutyMax:null,lastRoster:null,notices:[],noticesRead:{}}, duty:{start:null,log:[]}, pilot:{}, outbox:[]};
-const MODES = [["normal","Normal","Norm"],["abnormal","Abnormal","Abn"],["emergency","Emergency","Emerg"],["wb","W&B","W&B"],["perf","Perf","Perf"],["charts","Charts","Charts"],["status","Status","Status"]];
+const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, plan:{}, manifest:{}, records:{}, ops:{url:"",token:"",pilotId:"",autoUpload:false,std:{},dutyMax:null,lastRoster:null,notices:[],noticesRead:{}}, duty:{start:null,log:[]}, pilot:{}, outbox:[]};
+const MODES = [["normal","Normal","Norm"],["abnormal","Abnormal","Abn"],["emergency","Emergency","Emerg"],["wb","W&B","W&B"],["perf","Perf","Perf"],["plan","Plan","Plan"],["charts","Charts","Charts"],["status","Status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
 const CUSTOM_ID="approach-custom";
@@ -462,6 +463,7 @@ function load(){
         if(s.duty && typeof s.duty==="object") state.duty = Object.assign(state.duty, s.duty); if(!Array.isArray(state.duty.log)) state.duty.log=[];
         if(s.pilot && typeof s.pilot==="object") state.pilot = s.pilot;
         if(Array.isArray(s.outbox)) state.outbox = s.outbox;
+        if(s.plan && typeof s.plan==="object") state.plan = s.plan;
         if(s.sharedApproach && typeof s.sharedApproach==="object") state.sharedApproach = {on:!!s.sharedApproach.on, name:String(s.sharedApproach.name||""), items:Array.isArray(s.sharedApproach.items)?s.sharedApproach.items:[]};
         if(MODES.some(([m])=>m===s.mode)) state.mode = s.mode;
         if(typeof s.sel==="string"||s.sel===null) state.sel = s.sel;
@@ -481,7 +483,7 @@ function load(){
 function save(){
   state.savedAt = Date.now();
   try{
-    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, perf:state.perf, manifest:state.manifest, records:state.records, ops:state.ops, duty:state.duty, pilot:state.pilot, outbox:state.outbox, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
+    localStorage.setItem(STORE_KEY, JSON.stringify({per:state.per, ac:state.ac, lastAc:state.lastAc, fav:state.fav, uses:state.uses, favAsked:state.favAsked, custom:state.custom, sharedApproach:state.sharedApproach, wb:state.wb, perf:state.perf, manifest:state.manifest, records:state.records, ops:state.ops, duty:state.duty, pilot:state.pilot, outbox:state.outbox, plan:state.plan, mode:state.mode, sel:state.sel, showing:state.showing, savedAt:state.savedAt}));
   }catch(e){ /* ignore */ }
 }
 
@@ -624,7 +626,7 @@ function render(){
   renderThemeButton();
   $("#main").classList.toggle("showing-proc",!!a&&state.showing);
   $("#main").classList.toggle("picker",!a);
-  const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts"&&state.mode!=="wb"&&state.mode!=="perf") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
+  const view=$("#view"); view.classList.remove("norm","abn","emerg"); if(a&&state.mode!=="status"&&state.mode!=="charts"&&state.mode!=="wb"&&state.mode!=="perf"&&state.mode!=="plan") view.classList.add(state.mode==="normal"?"norm":state.mode==="abnormal"?"abn":"emerg");
   if(!a){ $("#side").innerHTML=""; renderPicker($("#view")); renderVoiceBar(); return; }
   renderSide();renderView();renderVoiceBar();renderWakeDot();
   const k=render._keep; if(k){ const se=document.getElementById("side"), ve=document.getElementById("view"); if(se) se.scrollTop=k.side;
@@ -703,6 +705,7 @@ function renderSide(){
   if(state.mode==="charts"){s.append(h("div",{class:"group-title"},"Charts"));s.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Charts and documents"))));return}
   if(state.mode==="wb"){ renderWbSide(s); return; }
   if(state.mode==="perf"){ renderPerfSide(s); return; }
+  if(state.mode==="plan"){ renderPlanSide(s); return; }
   const list=h("div",{class:"list"});
   const gt=h("div",{class:"group-title"},state.mode==="normal"?"Normal checklists":state.mode==="emergency"?"Emergency procedures":"Abnormal procedures");
   if(voice.reply&&SRX()) gt.append(h("button",{class:"mic"+(recallState.on?" on":""),title:"Say a procedure name",onclick:voiceRecall},recallState.on?"● Listening":"🎤 Say procedure"));
@@ -738,6 +741,7 @@ function renderView(){
   if(state.mode==="charts"){renderCharts(v);return}
   if(state.mode==="wb"){renderWb(v);return}
   if(state.mode==="perf"){renderPerf(v);return}
+  if(state.mode==="plan"){renderPlan(v);return}
   if(state.mode==="normal"&&state.sel==="__vs"){renderVspeeds(v);return}
   const p=proc(state.mode,state.sel);
   if(!p){v.append(h("div",{class:"status"},h("div",{class:"empty"},"Select a checklist."))); return}
@@ -1106,7 +1110,8 @@ function buildRecord(){
     flight:{date:m.date,from:(m.from||"").toUpperCase(),to:(m.to||"").toUpperCase(),pic:m.pic,ref:m.ref,times:Object.assign({off:"",to:"",ld:"",on:""},m.times||{}),blockTime:mfDuration((m.times||{}).off,(m.times||{}).on),airTime:mfDuration((m.times||{}).to,(m.times||{}).ld),takeoffs:num(m.takeoffs)===null?1:num(m.takeoffs),nightTakeoffs:num(m.nightTakeoffs)||0,landings:num(m.landings)===null?1:num(m.landings),nightLandings:num(m.nightLandings)||0,approach:m.approach||"visual",approachCat:approachCat(m.approach),uplift:num(m.uplift),fuelArr:num(m.fuelArr)},
     manifest:{pax:m.pax.map(x=>({name:x.name,role:x.role||"pax",station:(p.stations.find(s=>s.id===x.station)||{}).name||x.station,weight:num(x.weight),dg:!!x.dg,brief:!!x.brief,std:!!x.std})),cargo:m.cargo.map(x=>({desc:x.desc,station:(p.stations.find(s=>s.id===x.station)||{}).name||x.station,weight:num(x.weight)})),crew:s.crew,paxN:s.paxN,paxW:s.paxW,cargoW:s.cargoW,used:!!m.use},
     wb:{units:p.units,emptyWeight:ew,emptyArm:ea,reportDate:p.reportDate,limits:p.limits,rows,fuel:num(p.fuel),taxi:num(p.taxi),burn:num(p.burn),fuelDensity:num(p.fuelDensity),fuelW:res.fuelW,taxiW:res.taxiW,burnW:res.burnW,pts,over:res.over,problems:res.problems,complete:res.complete,envelopeKnown:res.envelopeKnown,inLimits:res.inLimits,verified:!!(WBT()&&WBT().verified)},
-    perf:{takeoff:pfSnapshot(false),landing:pfSnapshot(true)}};
+    perf:{takeoff:pfSnapshot(false),landing:pfSnapshot(true)},
+    plan:planSnapshot()};
 }
 function recStore(){ const a=AC(); if(!a) return []; if(!Array.isArray(state.records[a.id])) state.records[a.id]=[]; return state.records[a.id]; }
 function commitRecord(rec){ const a=AC(); const p=wbCurrent(); const list=recStore(); list.unshift(rec); while(list.length>100) list.pop();
@@ -1154,6 +1159,13 @@ function recordLines(r){
     S("Chart path: "+s.trail.map(t=>t[0]+" "+t[1]).join(", ")+" "+s.units.dist+"."); s.notes.forEach(S); s.warnings.forEach(t=>L.push({t,f:"B",s:10,red:true}));
   };
   perf("takeoff","Take-off performance"); perf("landing","Landing performance");
+  if(r.plan){ BR(); H("Flight plan and briefing"); const pl=r.plan;
+    P("Route "+(pl.dep||"–")+" – "+(pl.dest||"–")+(pl.altn&&pl.altn.length?" alternates "+pl.altn.join(", "):"")+(pl.etd?" · ETD "+new Date(pl.etd).toLocaleString():"")+(pl.eetMin?" · EET "+pl.eetMin+" min":""));
+    if(pl.briefing){ const B=pl.briefing, SS=B.summary||{}; L.push({t:"Briefing fetched "+new Date(B.fetched).toLocaleString()+": "+(SS.problem?SS.problem:(SS.alternateRequired?"alternate required":"no alternate required by weather")+(SS.holdingMinutes?", "+SS.holdingMinutes+" min holding":"")+(SS.alternatesSuitable&&SS.alternatesSuitable.length?", suitable alternates "+SS.alternatesSuitable.join(", "):"")),f:"B",s:10,red:!!SS.problem});
+      B.findings.filter(f=>f.level!=="info").forEach(f=>{ P(f.level.toUpperCase()+" "+f.aerodrome+" – "+f.rule+": "+f.text); if(f.quote) S("  "+f.quote.replace(/\n/g," / ").slice(0,200)); });
+      if(B.fuel) P("Fuel plan: required "+fmt(B.fuel.required,0)+(B.fuel.onBoard!==null?", on board "+fmt(B.fuel.onBoard,0)+" – "+(B.fuel.sufficient?"sufficient":"INSUFFICIENT"):"")+".");
+      if(B.text) S("Summary (draft): "+B.text.replace(/\s+/g," ").slice(0,900)); }
+    if(pl.fpl){ P(pl.fpl.filed?"Flight plan filed with NAIPS "+new Date(pl.fpl.at).toLocaleString()+(pl.fpl.status?" ("+pl.fpl.status+")":""):"Flight plan prepared, not filed:"); pl.fpl.text.split("\n").forEach(l=>M(l)); } }
   BR(); H("Sign-off");
   if(r.signoff){ const so=r.signoff; L.push({t:"Accepted by "+so.name+(so.licence?" ("+so.licence+")":"")+" on "+new Date(so.acceptedAt).toLocaleString()+" (digital click-to-accept in AeroE Checklist "+so.app+").",f:"B",s:10}); S(so.statement); S("Record fingerprint (SHA-256, first 16 of 64 hex digits) "+fpShort(so.fingerprint)+". Full: "+so.fingerprint); }
   else { P("Not signed off in the app."); BR(); P("Pilot in command signature: ______________________________    Date: ______________"); }
@@ -1357,7 +1369,7 @@ function pilotSheet(){
   const st=pilotStats();
   const exp=(label,key,warnDays)=>{ const d=daysUntil(P[key]); if(!P[key]) return h("div",{class:"saved"},label+": not entered."); return h("div",{class:d<0?"warn red":d<=warnDays?"warn":"saved"},label+" "+P[key]+(d<0?" – EXPIRED "+(-d)+" days ago":" – "+d+" days remaining")+"."); };
   card.append(h("h2",{},"Pilot"),h("div",{class:"hint"},"Kept on this device. Dates drive the expiry warnings; recency is counted from the flight records saved on this device, so it is only complete if every flight is recorded here."));
-  card.append(h("div",{class:"ops-grid"},f("Name","name","text"),f("Licence / ARN","licence","text"),f("Medical expiry","medical","date"),f("Flight review / proficiency check","review","date","date of the last one"),f("Instrument proficiency check","ipc","date"),f("Operator line check","lineCheck","date"),f("Dangerous goods training","dg","date"),f("Emergency procedures training","ept","date")));
+  card.append(h("div",{class:"ops-grid"},f("Name","name","text"),f("Licence / ARN","licence","text"),f("Phone (for flight plan item 19)","phone","tel"),f("Medical expiry","medical","date"),f("Flight review / proficiency check","review","date","date of the last one"),f("Instrument proficiency check","ipc","date"),f("Operator line check","lineCheck","date"),f("Dangerous goods training","dg","date"),f("Emergency procedures training","ept","date")));
   card.append(h("h3",{},"Expiries"),exp("Medical","medical",30));
   const plus=(key,label,months,warn)=>{ if(!P[key]) return h("div",{class:"saved"},label+": not entered."); const d=new Date(P[key]+"T00:00:00"); d.setMonth(d.getMonth()+months); const iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); const n=daysUntil(iso); return h("div",{class:n<0?"warn red":n<=warn?"warn":"saved"},label+" done "+P[key]+" → due by "+iso+(n<0?" – OVERDUE":" – "+n+" days")+"."); };
   card.append(plus("review","Flight review / proficiency check",24,60),plus("ipc","Instrument proficiency check",12,60),plus("lineCheck","Line check",12,60),plus("dg","Dangerous goods training",24,60),plus("ept","Emergency procedures training",12,60));
@@ -1401,6 +1413,82 @@ function rosterSheet(p){
 }
 function noticesNodes(){ const out=[]; const un=unreadNotices(); (state.ops.notices||[]).slice(0,20).forEach(n=>{ const read=!!state.ops.noticesRead[n.id]; out.push(h("div",{class:"notice "+(read?"read":"")},h("div",{class:"nt"},n.title||"Notice",h("span",{class:"nd"},n.date||"")),h("div",{class:"nb"},n.body),read?h("div",{class:"saved"},"Acknowledged "+new Date(state.ops.noticesRead[n.id]).toLocaleString()):h("button",{class:"primary",onclick:()=>ackNotice(n)},n.ack?"Acknowledge (read receipt sent)":"Mark as read"))); }); return {nodes:out,unread:un.length}; }
 window.addEventListener("online",()=>flushOutbox()); setTimeout(()=>{ try{ flushOutbox(); }catch(e){} },4000);
+/* ---------------- PLAN: route, NAIPS briefing, requirements, fuel and flight plan filing (through the operator connector) ---------------- */
+function planStore(){ const a=AC(); if(!a) return null; if(!state.plan[a.id]) state.plan[a.id]={dep:"",dest:"",altn1:"",altn2:"",etdDate:todayISO(),etdTime:"",eetMin:null,altEetMin:30,level:"A050",tas:null,fuelFlow:null,fixedMin:45,varPct:10,taxi:null,areas:"",maxCrosswind:null,maxTailwind:null,rwyDest:null,minCeiling:1500,minVis:8000,rules:"I",ftype:"N",equip:"SG",surv:"S",pbn:"",pob:null,colour:"",rmk:"",sartimeMin:null,briefing:null,fpl:null}; return state.plan[a.id]; }
+const planEtdISO=p=>{ if(!p.etdDate||!p.etdTime) return null; const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(p.etdDate), t=hm2min(p.etdTime); if(!m||t===null) return null; return new Date(+m[1],+m[2]-1,+m[3],Math.floor(t/60),t%60).toISOString(); };
+function planAltns(p){ return [p.altn1,p.altn2].map(s=>(s||"").toUpperCase().trim()).filter(Boolean); }
+function planBriefingRequest(p){
+  const wb=wbCurrent(); const fob=wb?num(wb.fuel):null; const aircraft={}; if(num(p.maxCrosswind)!==null) aircraft.maxCrosswind=num(p.maxCrosswind); if(num(p.maxTailwind)!==null) aircraft.maxTailwind=num(p.maxTailwind); if(num(p.rwyDest)!==null) aircraft.runwayHdg={[p.dest.toUpperCase()]:num(p.rwyDest)};
+  const minima={}; if(num(p.minCeiling)!==null||num(p.minVis)!==null){ const mm={}; if(num(p.minCeiling)!==null) mm.ceiling=num(p.minCeiling); if(num(p.minVis)!==null) mm.vis=num(p.minVis); minima[p.dest.toUpperCase()]=mm; planAltns(p).forEach(a=>minima[a]=mm); }
+  return {dep:p.dep.toUpperCase().trim(),dest:p.dest.toUpperCase().trim(),altn:planAltns(p),etd:planEtdISO(p),eetMin:num(p.eetMin)||60,altEetMin:num(p.altEetMin)||30,fuelFlow:num(p.fuelFlow),fuelOnBoard:fob,policy:{fixedReserveMin:num(p.fixedMin)||45,variableReservePct:num(p.varPct)||0,taxi:num(p.taxi)||0},aircraft,minima,areas:(p.areas||"").split(/[\s,]+/).filter(Boolean),summary:true};
+}
+function planFplRequest(p){
+  const a=AC(); const wb=wbCurrent(); const rego=(wb?wb.rego:"").replace(/-/g,""); const eet=num(p.eetMin)||60; const flow=num(p.fuelFlow), fob=wb?num(wb.fuel):null; const endurance=flow&&fob?Math.floor(fob/flow*60):null;
+  const m=mfStore(); const pob=num(p.pob)!==null?num(p.pob):(m?m.pax.length:null);
+  return {acid:rego,atyp:(p.atyp||a.short).toUpperCase(),wtc:"L",reg:rego,rules:p.rules||"I",flightType:p.ftype||"N",equip:(p.equip||"SG").toUpperCase().split(/[\s,]*/).filter(Boolean),surv:(p.surv||"S").toUpperCase().split(/[\s,]*/).filter(Boolean),adep:p.dep.toUpperCase().trim(),ades:p.dest.toUpperCase().trim(),etd:planEtdISO(p),eetMinutes:eet,altn:planAltns(p),route:{speed:"N"+String(Math.round(num(p.tas)||120)).padStart(4,"0"),level:(p.level||"A050").toUpperCase(),segments:(p.route||"").split(/\s+/).filter(Boolean).map(w=>({waypoint:w}))},other:Object.assign({},p.pbn?{pbn:p.pbn.toUpperCase()}:{},p.rmk?{rmk:p.rmk}:{}),suppl:{endurance,pob,pilotName:state.pilot.name||m&&m.pic||"",pilotPhone:state.pilot.phone||"",colour:p.colour||"",vhf:true},sartime:num(p.sartimeMin)?new Date(new Date(planEtdISO(p)).getTime()+(eet+num(p.sartimeMin))*60000).toISOString():undefined,sartimeLocation:p.dest.toUpperCase().trim()};
+}
+function renderPlanSide(sEl){ sEl.append(h("div",{class:"group-title"},"Plan and briefing")); sEl.append(h("div",{class:"list"},h("button",{class:"sel",onclick:()=>go(()=>{state.showing=true})},h("span",{class:"name"},"Route, briefing and flight plan")))); if(!opsReady()) sEl.append(h("div",{class:"saved",style:"padding:8px 16px"},"Briefings and flight plan filing go through the operator connector (Status › Operator link).")); }
+function renderPlan(v){
+  const a=AC(); const p=planStore(); const w=h("div",{class:"wb perf plan"}); const wb=wbCurrent();
+  w.append(h("div",{class:"proc-head",style:"margin:0 -16px 8px"},h("button",{class:"back",onclick:()=>go(()=>{state.showing=false})},"‹ Back"),h("h1",{},"Plan and briefing",h("span",{class:"cond"},a.maker+" "+a.model+(wb?" · "+wb.rego:"")))));
+  if(!opsReady()) w.append(h("div",{class:"warn"},"No operator connector is configured (Status › Operator link). The route and fuel plan can be prepared here, but the NAIPS briefing and flight plan filing need the connector, which holds the NAIPS account."));
+  const tbl=h("table",{}); const row=(label,inp,hint)=>tbl.append(h("tr",{},h("td",{},label,hint?h("div",{class:"dim"},hint):""),h("td",{class:"num"},inp)));
+  const field=(label,key,hint,o)=>{ o=o||{}; const i=h("input",{id:"pl-"+key,type:o.type||"text",value:p[key]===null||p[key]===undefined?"":p[key],placeholder:o.ph||"",autocapitalize:o.type?"off":"characters",autocorrect:"off",spellcheck:"false",style:o.wide?"width:12em;text-align:left":""}); if(o.type==="number"){ i.setAttribute("step","any"); i.setAttribute("inputmode","decimal"); } i.oninput=ev=>{ p[key]=o.type==="number"?(ev.target.value===""?null:ev.target.value):ev.target.value; save(); }; row(label,i,hint); return i; };
+  w.append(h("h2",{},"Route and times"));
+  field("Departure","dep","ICAO, e.g. YSBK"); field("Destination","dest","ICAO"); field("Alternate 1","altn1","ICAO, optional"); field("Alternate 2","altn2","optional");
+  field("ETD date","etdDate","",{type:"date"}); field("ETD (local)","etdTime","device local time; sent to NAIPS as UTC",{type:"time"});
+  field("Estimated elapsed time (min)","eetMin","to destination",{type:"number"}); field("Time to alternate (min)","altEetMin","from destination",{type:"number"});
+  field("Cruise level","level","A050 or F120"); field("TAS (kt)","tas","",{type:"number"}); field("Route","route","waypoints separated by spaces, blank for DCT",{wide:true}); field("Briefing areas","areas","GAF/area codes, e.g. 21 or 30, optional");
+  w.append(tbl);
+  const t2=h("table",{}); const row2=(label,inp,hint)=>t2.append(h("tr",{},h("td",{},label,hint?h("div",{class:"dim"},hint):""),h("td",{class:"num"},inp)));
+  const f2=(label,key,hint,o)=>{ o=o||{}; const i=h("input",{id:"pl-"+key,type:o.type||"number",step:"any",inputmode:"decimal",value:p[key]===null||p[key]===undefined?"":p[key],placeholder:o.ph||""}); i.oninput=ev=>{ p[key]=o.type==="text"?ev.target.value:(ev.target.value===""?null:ev.target.value); save(); }; row2(label,i,hint); };
+  w.append(h("h2",{},"Fuel policy and limits"));
+  const fu=wb?wb.units.fuel:"L";
+  f2("Fuel flow ("+fu+"/h)","fuelFlow","planning burn rate"); f2("Fixed reserve (min)","fixedMin","45 IFR / night, 30 day VFR, or as your exposition requires"); f2("Variable reserve (%)","varPct","of trip fuel; 10 for air transport, 0 if not required"); f2("Taxi fuel ("+fu+")","taxi","");
+  row2("Fuel on board",h("span",{},wb?fmt(num(wb.fuel),0)+" "+fu+" (W&B tab, "+wb.rego+")":"set up a registration in W&B"),"from the W&B tab");
+  f2("Alternate minima – ceiling (ft)","minCeiling","1,500 ft unless the aerodrome's published alternate minima are lower"); f2("Alternate minima – visibility (m)","minVis","8,000 m unless published otherwise");
+  f2("Max crosswind (kt)","maxCrosswind","aircraft or operator limit, optional"); f2("Max tailwind (kt)","maxTailwind","optional"); f2("Destination runway heading (°)","rwyDest","for the crosswind check, optional");
+  w.append(t2);
+  const msg=h("div",{class:"hint",id:"pl-msg"});
+  const bb=h("button",{class:"primary",onclick:async()=>{ const req=planBriefingRequest(p); if(!req.dep||!req.dest||!req.etd){ msg.textContent="Enter departure, destination, ETD date and time."; return; } if(!opsReady()){ msg.textContent="No operator connector configured."; return; } bb.disabled=true; bb.textContent="Fetching briefing…"; try{ const b=await opsFetch("/briefing",{method:"POST",body:req}); p.briefing=b; save(); render(); }catch(e){ msg.textContent="Briefing failed: "+e.message; } bb.disabled=false; bb.textContent="Get NAIPS briefing"; }},"Get NAIPS briefing");
+  w.append(h("div",{class:"btns"},bb,h("button",{onclick:()=>{ p.briefing=null; save(); render(); }},"Clear briefing")),msg);
+  if(p.briefing) w.append(...briefingNodes(p.briefing));
+  // flight plan
+  w.append(h("h2",{},"Flight plan (ICAO)"));
+  const t3=h("table",{}); const row3=(label,inp,hint)=>t3.append(h("tr",{},h("td",{},label,hint?h("div",{class:"dim"},hint):""),h("td",{class:"num"},inp)));
+  const f3=(label,key,hint,o)=>{ o=o||{}; const i=h("input",{id:"pl-"+key,type:o.type||"text",value:p[key]===null||p[key]===undefined?"":p[key],placeholder:o.ph||"",autocapitalize:"characters",autocorrect:"off",spellcheck:"false"}); if(o.type==="number"){ i.setAttribute("step","any"); i.setAttribute("inputmode","decimal"); } i.oninput=ev=>{ p[key]=o.type==="number"?(ev.target.value===""?null:ev.target.value):ev.target.value; save(); }; row3(label,i,hint); };
+  const sel=(label,key,opts,hint)=>{ const s=h("select",{id:"pl-"+key}); opts.forEach(([v,l])=>s.append(h("option",{value:v},l))); s.value=p[key]||opts[0][0]; s.onchange=()=>{ p[key]=s.value; save(); }; row3(label,s,hint); };
+  row3("Aircraft",h("span",{},(wb?wb.rego:"–")+" · "+(p.atyp||a.short)),"registration from the W&B tab; ICAO type from the aircraft data");
+  f3("ICAO type designator","atyp","blank = "+a.short,{ph:a.short});
+  sel("Flight rules","rules",[["I","IFR"],["V","VFR"],["Y","IFR then VFR"],["Z","VFR then IFR"]]); sel("Type of flight","ftype",[["N","Non-scheduled air transport (charter)"],["S","Scheduled air transport"],["G","General aviation"],["M","Military"],["X","Other"]]);
+  f3("Equipment (item 10a)","equip","e.g. SG, SDG, or SBDFGRY – letters only"); f3("Surveillance (item 10b)","surv","e.g. S, or SB1 for ADS-B"); f3("PBN","pbn","e.g. B2C2 or D2, optional");
+  f3("Persons on board","pob","blank = manifest count",{type:"number"}); f3("Aircraft colour and markings","colour","e.g. WHITE BLUE"); f3("Remarks (RMK/)","rmk","optional"); f3("SARTIME (min after ETA)","sartimeMin","blank for no SARTIME; e.g. 30",{type:"number"});
+  w.append(t3);
+  w.append(h("div",{class:"saved"},"Pilot in command on the plan: "+(state.pilot.name||"(set your name in Status › Pilot)")+(state.pilot.phone?" · "+state.pilot.phone:" · add a phone number in Status › Pilot for item 19")));
+  const m2=h("div",{class:"hint",id:"pl-fpl-msg"});
+  const pv=h("button",{onclick:async()=>{ const req=planFplRequest(p); if(!req.adep||!req.ades||!req.etd||!req.acid){ m2.textContent="Enter the route, ETD and select a registration first."; return; } if(!opsReady()){ m2.textContent="No operator connector configured."; return; } pv.disabled=true; try{ const r=await opsFetch("/fpl",{method:"POST",body:Object.assign(req,{dryRun:true})}); p.fpl={preview:r.preview,filed:false,at:new Date().toISOString()}; save(); render(); }catch(e){ m2.textContent="Preview failed: "+e.message; } pv.disabled=false; }},"Preview plan");
+  const fb=h("button",{class:"primary",onclick:async ev=>{ const b=ev.currentTarget; if(b.dataset.c!=="1"){ b.dataset.c="1"; b.textContent="Tap again to file with NAIPS"; return; } const req=planFplRequest(p); if(!req.adep||!req.ades||!req.etd||!req.acid){ m2.textContent="Enter the route, ETD and select a registration first."; b.dataset.c="0"; b.textContent="File with NAIPS"; return; } b.disabled=true; b.textContent="Filing…"; try{ const r=await opsFetch("/fpl",{method:"POST",body:req}); p.fpl={preview:r.preview,filed:!!r.filed,status:r.status,info:r.info,text:(r.fplText||[]).join("\n"),at:new Date().toISOString(),dryRun:!!r.dryRun}; save(); render(); }catch(e){ m2.textContent="Filing failed: "+e.message; b.disabled=false; b.dataset.c="0"; b.textContent="File with NAIPS"; } }},"File with NAIPS");
+  w.append(h("div",{class:"btns"},pv,fb),m2);
+  if(p.fpl){ w.append(h("div",{class:p.fpl.filed?"verdict ok":"verdict na"},p.fpl.filed?"FILED WITH NAIPS "+new Date(p.fpl.at).toLocaleString()+(p.fpl.status?" · "+p.fpl.status:""):(p.fpl.dryRun?"PREVIEW ONLY – the connector has no NAIPS account, nothing was filed":"PREVIEW – not filed")+(p.fpl.info?" · "+p.fpl.info:""))); w.append(h("pre",{class:"fpl"},p.fpl.text||p.fpl.preview||"")); if(p.fpl.filed) w.append(h("div",{class:"saved"},"Changes after filing (delay, cancellation, SARTIME) are made through NAIPS or your briefing office; the record keeps this FPL text.")); }
+  w.append(h("div",{class:"saved"},"The briefing and the filed plan are attached to the next flight record saved from the W&B page for this aircraft. Weather and NOTAM rules are planning aids drawn from the quoted products; the pilot in command decides whether the flight can proceed and must read the raw products."));
+  v.append(w);
+}
+function briefingNodes(b){
+  const out=[]; const S=b.evaluation&&b.evaluation.summary||{}; const u=b.fuel&&b.fuel.flow?"":"";
+  out.push(h("h2",{},"Briefing · fetched "+new Date(b.fetched).toLocaleString()+(b.source!=="naips"?" ("+b.source+")":"")));
+  out.push(h("div",{class:"verdict "+(S.problem?"bad":S.alternateRequired||S.holdingMinutes?"na":"ok")},S.problem?S.problem.toUpperCase():(S.alternateRequired?"ALTERNATE REQUIRED":"NO ALTERNATE REQUIRED BY WEATHER")+(S.holdingMinutes?" · "+S.holdingMinutes+" MIN HOLDING":"")+(S.alternatesSuitable&&S.alternatesSuitable.length?" · "+S.alternatesSuitable.join(", ")+" SUITABLE":"")+(S.alternatesUnsuitable&&S.alternatesUnsuitable.length?" · "+S.alternatesUnsuitable.join(", ")+" NOT SUITABLE":"")));
+  out.push(h("div",{class:"dim"},"ETA "+new Date(S.eta).toLocaleString()+" · rules applied with ETA ± "+(b.plan.bufferMin||30)+" min, minima "+JSON.stringify(b.plan.minima||{})));
+  const groups=[["Departure – "+b.plan.dep,b.evaluation.departure.findings],["Destination – "+b.plan.dest,b.evaluation.destination.findings],...b.evaluation.alternates.map(x=>["Alternate – "+x.icao,x.findings]),["En route",b.evaluation.route]];
+  groups.forEach(([title,F])=>{ out.push(h("h3",{},title+(F.length?"":" – no findings"))); F.forEach(f=>out.push(h("div",{class:"finding "+f.level},h("div",{class:"ft"},f.level.toUpperCase()+" · "+f.rule+(f.holdMin?" · "+f.holdMin+" min":"")),h("div",{},f.text),f.quote?h("pre",{class:"quote"},f.quote):""))); });
+  if(b.fuel){ out.push(h("h3",{},"Fuel plan ("+(wbCurrent()?wbCurrent().units.fuel:"")+")")); const t=h("table",{}); b.fuel.lines.forEach(([k,v])=>t.append(h("tr",{},h("td",{},k),h("td",{class:"num"},fmt(v,1))))); t.append(h("tr",{},h("td",{},h("b",{},"Required")),h("td",{class:"num"},h("b",{},fmt(b.fuel.required,0))))); if(b.fuel.onBoard!==null) t.append(h("tr",{},h("td",{},"On board (W&B)"),h("td",{class:"num"},fmt(b.fuel.onBoard,0)))); out.push(t); if(b.fuel.onBoard!==null) out.push(h("div",{class:"verdict "+(b.fuel.sufficient?"ok":"bad")},b.fuel.sufficient?"FUEL SUFFICIENT – margin "+fmt(b.fuel.margin,0)+(b.fuel.enduranceMin?" · endurance "+Math.floor(b.fuel.enduranceMin/60)+" h "+(b.fuel.enduranceMin%60)+" min":""):"FUEL INSUFFICIENT – short by "+fmt(-b.fuel.margin,0))); }
+  if(b.summary){ out.push(h("h3",{},"Summary (draft, written from the quoted products)")); out.push(h("div",{class:"summary"},b.summary)); out.push(h("div",{class:"dim"},"Check every statement against the raw products below; the summary is an aid to reading them, not a replacement.")); }
+  out.push(h("h3",{},"Raw products"));
+  const kinds=[["taf","TAF"],["metar","METAR / SPECI"],["ttf","TTF"],["sigmet","SIGMET / AIRMET"],["notam","NOTAM"]];
+  kinds.forEach(([k,label])=>{ const items=(b.decoded&&b.decoded[k])||[]; if(!items.length) return; const det=h("details",{},h("summary",{},label+" ("+items.length+")")); items.forEach(x=>det.append(h("pre",{class:"raw"},x.raw||x.text))); out.push(det); });
+  const other=(b.decoded&&b.decoded.products||[]).filter(p=>!["TAF","METAR","SPECI","TTF","NOTAM","SIGMET","AIRMET"].includes(p.kind)); if(other.length){ const det=h("details",{},h("summary",{},"Other products ("+other.length+")")); other.forEach(x=>det.append(h("pre",{class:"raw"},x.text))); out.push(det); }
+  return out;
+}
+function planSnapshot(){ const a=AC(); const p=state.plan[a.id]; if(!p||(!p.briefing&&!p.fpl)) return null; const b=p.briefing; return {dep:p.dep,dest:p.dest,altn:planAltns(p),etd:planEtdISO(p),eetMin:num(p.eetMin),briefing:b?{fetched:b.fetched,summary:b.evaluation&&b.evaluation.summary,findings:[].concat(b.evaluation.departure.findings,b.evaluation.destination.findings,...b.evaluation.alternates.map(x=>x.findings),b.evaluation.route).map(f=>({level:f.level,aerodrome:f.aerodrome,rule:f.rule,text:f.text,quote:f.quote})),fuel:b.fuel?{required:b.fuel.required,onBoard:b.fuel.onBoard,sufficient:b.fuel.sufficient,lines:b.fuel.lines}:null,text:b.summary||null,products:(b.decoded&&b.decoded.products||[]).map(x=>({kind:x.kind,icao:x.icao,text:x.text}))}:null,fpl:p.fpl?{filed:!!p.fpl.filed,status:p.fpl.status||"",at:p.fpl.at,text:p.fpl.text||p.fpl.preview||""}:null}; }
 /* ---------------- PERFORMANCE (take-off and landing distances from POH charts) ---------------- */
 /* Each type's perf/<id>.js carries the POH nomograms as guide-line polylines. The engine follows them as a pilot
    does on paper: read the OAT / pressure-height panel, then carry the distance through the weight, wind, slope,
@@ -2422,7 +2510,7 @@ function renderVoiceBar(){
   const old=document.getElementById("vbar"); if(old) old.remove();
   const main=$("#main");
   const c=currentRows();
-  const show=voice.read && c && state.mode!=="status" && state.mode!=="charts" && state.mode!=="wb" && state.mode!=="perf" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
+  const show=voice.read && c && state.mode!=="status" && state.mode!=="charts" && state.mode!=="wb" && state.mode!=="perf" && state.mode!=="plan" && state.sel!=="__vs" && (state.showing || window.innerWidth>760);
   main.classList.toggle("voice-on",!!show);
   if(!show){ if(vs.active) voiceStop(true); return; }
   if(vs.pid!==c.p.id){ vs.pid=c.p.id; vs.active=false; vs.pending=null; vs.readNotes={}; vs.skipped={}; vs.status=""; vs.heard=""; }

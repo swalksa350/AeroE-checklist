@@ -56,6 +56,7 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <li><a href="#charts">Charts tab</a></li>
 <li><a href="#wb">Weight and balance</a></li>
 <li><a href="#ops">Operator link, duty, currency and maintenance release</a></li>
+<li><a href="#plan">Plan: briefing and flight plan</a></li>
 <li><a href="#perf">Performance</a></li>
 <li><a href="#voice">Voice: read aloud, spoken replies and recall</a></li>
 <li><a href="#trouble">If something looks wrong</a></li>
@@ -87,6 +88,7 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <b class="r">Emergency</b><span>Warning-level procedures: engine failure, fire, emergency descent, decompression. Immediate action.</span>
 <b>W&amp;B</b><span>Weight and balance for a specific registration of the current type. See section 12a.</span>
 <b>Perf</b><span>Take-off and landing distances and speeds from the POH charts. See section 12b.</span>
+<b>Plan</b><span>NAIPS briefing, requirements, fuel plan and flight plan filing through the operator connector. See section 12d.</span>
 <b>Charts</b><span>Links that open the Airservices DAP, ERSA and NAIPS pages, or your chart app, outside AeroE. See section 12.</span>
 <b>Status</b><span>Where you are across the whole flight: procedures in progress, items deferred to landing, normal checklist completion, favourites, customised checklists, EFB files, voice settings, version and updates. A number on the tab means an abnormal or emergency procedure is still open.</span>
 </div>
@@ -198,6 +200,16 @@ footer{color:var(--ink-dim);font-size:13px;margin-top:40px;padding-top:12px;bord
 <li><strong>Pilot currency.</strong> Enter medical, flight review, IPC, line check, DG and emergency procedures dates for expiry reminders; hours and landings in the last 30, 90 and 365 days are counted from the flight records on the device.</li>
 <li><strong>Maintenance release.</strong> In Edit profile, each registration can carry hours remaining and an expiry date. Saving a flight record deducts its block time and notes the before and after figures on the record; the W&amp;B page warns when fewer than 5 hours or 7 days remain. Confirm against the aircraft's actual maintenance release.</li>
 </ul>
+<h2 id="plan">12d. Plan: briefing, requirements, fuel and flight plan</h2>
+<p>The Plan tab prepares a flight end to end through the operator connector, which holds the NAIPS account (Status › Operator link must be configured).</p>
+<ul>
+<li><strong>Route and times.</strong> Departure, destination, up to two alternates, ETD (local time, sent to NAIPS as UTC), estimated elapsed time, time to the alternate, cruise level, TAS, route waypoints and optional briefing areas.</li>
+<li><strong>Fuel policy and limits.</strong> Fuel flow, fixed and variable reserves, taxi fuel, the alternate minima to apply (1,500 ft and 8 km unless the aerodrome publishes lower), the aircraft's crosswind and tailwind limits and the destination runway heading. Fuel on board comes from the registration selected in the W&amp;B tab.</li>
+<li><strong>Get NAIPS briefing.</strong> Fetches TAF, METAR/SPECI, TTF, NOTAM and SIGMET for the aerodromes, then shows: a verdict line (alternate required, holding minutes, which alternates are suitable), the findings for each aerodrome with the quoted product and the rule applied, the fuel plan against fuel on board, an optional draft summary, and the raw products to read. No TAF, a TAF not covering ETA ± 30 min, cloud more than SCT or visibility below the minima, thunderstorms or winds beyond the limits require an alternate; TEMPO below minima carries 60 min holding, INTER 30 min, a bare PROB 60 min; relevant NOTAMs (closures, lighting, navaids, fuel, obstacles) are flagged. These rules are planning aids that your operator must align with its exposition and the AIP.</li>
+<li><strong>Flight plan.</strong> The ICAO fields are filled from the aircraft type, the registration, the manifest count and your pilot name and phone (Status › Pilot). Preview plan shows the FPL text; File with NAIPS (two taps) lodges it and shows NAIPS's response. Changes after filing are made through NAIPS or the briefing office.</li>
+<li><strong>Record.</strong> The briefing verdict, findings, fuel plan, summary and the filed plan text are attached to the next flight record saved from the W&amp;B page, so the signed record carries the planning basis.</li>
+</ul>
+<div class="note warn">The briefing is as good as the products and the rules it applies. The pilot in command must read the raw products, apply the operator's rules and the AIP, and decide whether the flight can proceed.</div>
 <h2 id="perf">12b. Performance: take-off and landing distances</h2>
 <p>The Perf tab reads the POH take-off and landing charts for the conditions you enter. It has two pages, Take-off distance and Landing distance. Enter the aerodrome elevation and QNH (the app works out pressure height at 30 ft per hectopascal), the temperature, the runway heading and the wind as broadcast (ATIS and AWIS give magnetic directions, a METAR gives true), the runway slope and surface, and the weight. From W&amp;B copies the take-off or landing weight of the registration currently selected in the W&amp;B tab. Leave the runway heading blank to enter the wind directly as a headwind component (negative for a tailwind).</p>
 <ul>
