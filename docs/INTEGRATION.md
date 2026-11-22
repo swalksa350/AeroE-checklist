@@ -65,9 +65,27 @@ Uploads are queued on the device until there is signal; the same record may be p
 { "notices": [ { "id": "n42", "title": "Runway 11/29 works at YSCN", "body": "…", "date": "2026-11-16", "requiresAck": true } ] }
 ```
 
+## Briefing
+
+`POST /briefing` with `{ "dep": "YSBK", "dest": "YSCN", "altn": ["YBTH"], "etd": "2026-11-22T22:30:00Z", "eetMin": 35,
+"altEetMin": 30, "fuelFlow": 60, "fuelOnBoard": 320, "policy": { "fixedReserveMin": 45, "variableReservePct": 10, "taxi": 5 },
+"aircraft": { "maxCrosswind": 20, "maxTailwind": 5, "runwayHdg": { "YSCN": 240 } }, "minima": { "YSCN": { "ceiling": 1500, "vis": 8000 } },
+"areas": ["21"], "summary": true }` returns `{ fetched, plan, decoded: { taf, metar, ttf, notam, sigmet, products }, evaluation:
+{ summary: { alternateRequired, holdingMinutes, alternatesSuitable, alternatesUnsuitable, eta }, departure, destination,
+alternates, route }, fuel: { lines, required, onBoard, sufficient, margin }, summary (text or null), rawContent }`. Each
+finding is `{ level: "alternate" | "holding" | "warning" | "info", aerodrome, rule, text, quote, holdMin }` and quotes the
+product it rests on. The reference connector gets the products from NAIPS; another connector may use any briefing source
+as long as it returns the same shape.
+
+## Flight plan
+
+`POST /fpl` with the ICAO fields `{ acid, atyp, wtc, reg, rules, flightType, equip: ["S","G"], surv: ["S"], adep, etd, ades,
+eetMinutes, altn: [], route: { speed: "N0120", level: "A050", segments: [{ waypoint: "WOL" }] }, other: { pbn, rmk, ... },
+suppl: { endurance (min), pob, pilotName, pilotPhone, colour, ... }, sartime, sartimeLocation, dryRun }` returns
+`{ filed, status, info, fplText: [], preview }`. `preview` is the FPL as text for the record; `fplText` is NAIPS's own
+rendering when filed. The app stores both with the flight record.
+
 ## Not yet covered
 
-Flight planning and NAIPS submission, weather and NOTAM briefings and their analysis are planned as a separate
-`/briefing` service on the connector, since NAIPS access requires an Airservices account and server-side credentials.
-The record and roster interfaces above are designed so that a planned flight (route, alternates, fuel plan) can be added
-to the roster entry and carried into the flight record unchanged.
+Departure and arrival messages after filing (SARTIME cancellation, delay, revision) and NOTAM proposals are not
+exposed yet; the NAIPS service has operations for them (`revise-active-fn`, `submit-sar-fn`).

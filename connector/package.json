@@ -1,0 +1,10 @@
+{
+  "name": "aeroe-connector",
+  "version": "0.1.0",
+  "description": "Operator connector for AeroE Checklist: roster, records, notices, NAIPS briefings and flight plan filing",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node --test test/*.test.js" },
+  "engines": { "node": ">=18" },
+  "optionalDependencies": { "@anthropic-ai/sdk": "^0.80.0" },
+  "license": "MIT"
+}

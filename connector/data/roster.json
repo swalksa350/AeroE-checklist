@@ -1,0 +1,4 @@
+{ "flights": [
+  { "pilotId": "P42", "date": "2026-11-23", "ref": "EX101", "std": "08:30", "aircraftType": "ga8", "rego": "VH-WSM", "from": "YSBK", "to": "YSCN", "pic": "Example Pilot",
+    "pax": [ { "name": "A Passenger", "role": "pax", "weight": 84, "station": "row2" } ], "cargo": [ { "desc": "2 bags", "weight": 30, "station": "shelf" } ] }
+] }

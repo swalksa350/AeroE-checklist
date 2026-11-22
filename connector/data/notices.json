@@ -1,0 +1,1 @@
+{ "notices": [ { "id": "n1", "title": "Welcome to the AeroE connector", "body": "Replace this file with your company notices. Set requiresAck to true for notices that need a read receipt.", "date": "2026-11-22", "requiresAck": false } ] }
