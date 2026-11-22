@@ -18,18 +18,18 @@ function body(req) { return new Promise((resolve, reject) => { let b = ""; req.o
 async function briefing(p) {
   for (const k of ["dep", "dest", "etd"]) if (!p[k]) throw new Error("missing " + k);
   const locs = [p.dep, p.dest, ...(p.altn || [])].map(s => String(s).toUpperCase()).filter((v, i, a) => a.indexOf(v) === i);
-  const ref = new Date(); let content = "", notamText = "", source = "naips";
+  const ref = new Date(); let content = "", source = "naips", charts = [];
   if (p.products) { content = p.products; source = "supplied"; }            // for testing or a pasted briefing
   else {
-    const r = await naips.locBrief(locs, { met: true, ntm: true, sigmet: true });
-    if (!r.ok) throw new Error("NAIPS: " + (r.info || r.status)); content = r.content || "";
-    if (p.areas && p.areas.length) { const a = await naips.areaBrief(p.areas, { met: true, ntm: true }); if (a.ok && a.content) content += "\n\n" + a.content; }
+    const r = await naips.locBrief(locs, { met: true, ntm: true, sigmet: true, charts: !!p.charts });
+    if (!r.ok) throw new Error("NAIPS: " + (r.info || r.status)); content = r.content || ""; charts = (r.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type)).slice(0, 12);
+    if (p.areas && p.areas.length) { const a = await naips.areaBrief(p.areas, { met: true, ntm: true, charts: !!p.charts }); if (a.ok && a.content) content += "\n\n" + a.content; if (a.ok) charts = charts.concat((a.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type))).slice(0, 16); }
   }
   const decoded = met.decodeBriefing(content, ref);
   const plan = { dep: p.dep.toUpperCase(), dest: p.dest.toUpperCase(), altn: (p.altn || []).map(s => String(s).toUpperCase()), etd: p.etd, eetMin: +p.eetMin || 60, altEetMin: +p.altEetMin || 30, minima: p.minima || {}, aircraft: p.aircraft || {}, bufferMin: p.bufferMin || 30 };
   const evaluation = rules.evaluateFlight(decoded, plan);
   const fuel = p.fuelFlow ? fuelPlan({ fuelFlow: p.fuelFlow, eetMin: plan.eetMin, altEetMin: plan.altEetMin, alternateRequired: evaluation.summary.alternateRequired || (p.altn && p.altn.length && p.alwaysCarryAlternate), holdingMin: evaluation.summary.holdingMinutes, policy: p.policy, fuelOnBoard: p.fuelOnBoard }) : null;
-  const out = { fetched: ref.toISOString(), source, plan, decoded: { taf: decoded.taf, metar: decoded.metar, ttf: decoded.ttf, notam: decoded.notam, sigmet: decoded.sigmet, products: decoded.products }, evaluation, fuel, rawContent: content };
+  const out = { fetched: ref.toISOString(), source, plan, decoded: { taf: decoded.taf, metar: decoded.metar, ttf: decoded.ttf, notam: decoded.notam, sigmet: decoded.sigmet, products: decoded.products }, evaluation, fuel, rawContent: content, charts };
   if (p.summary !== false) { try { out.summary = await summarise(out); } catch (e) { out.summaryError = e.message; log("summary failed", e.message); } }
   return out;
 }

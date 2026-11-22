@@ -1,5 +1,19 @@
 [
   {
+    "version": "2.10",
+    "date": "2026-11-22",
+    "title": "Flight sequence: pre-flight sign-off, enroute, completion and logbook",
+    "notes": [
+      "The Plan tab now runs the flight in sequence with a step bar: Plan & brief → W&B → Perf → Pre-flight sign-off → Enroute → Complete → Logbook. Each step shows its status and jumps to the right page.",
+      "The record is accepted twice. The pre-flight acceptance covers the manifest, weight and balance, performance and plan and is signed before departure, when times are not yet known; the completion acceptance covers the times, landings, approach, fuel and fuel checks added after the flight. Each has its own fingerprint and both print on the record.",
+      "Times, landings, approach and fuel have moved from the manifest to the Enroute and Complete pages; each time field has a Now button and a clear (✕) button, and Clear times resets the whole block. Clear manifest and Clear loads and manifest now also clear the times.",
+      "Aerodrome search: find any of 2,680 Australian aerodromes by code, name or town and set it as departure, destination, alternate or a waypoint; legs are computed with great-circle track and distance, ETE from the TAS (nil wind), with Use computed EET; a route diagram works offline and Show map draws it on OpenStreetMap when online.",
+      "Enroute page: airborne time, ETA and SARTIME, the legs with planned fuel per leg, and fuel checks that compare fuel now with the plan, show the actual burn rate and project the fuel at destination against the fixed reserve.",
+      "Complete page: Complete flight copies the times onto the record and deducts the block time from the maintenance release; after the completion acceptance the logbook exports (LogTen, ForeFlight, CSV) are right there, then Start next flight clears the flight for the next sector.",
+      "Briefing option Include charts fetches NAIPS graphics (area forecast and wind/temperature charts) with the briefing when the connector supports it."
+    ]
+  },
+  {
     "version": "2.9",
     "date": "2026-11-22",
     "title": "Plan tab: NAIPS briefing, requirements, fuel plan and flight plan filing",

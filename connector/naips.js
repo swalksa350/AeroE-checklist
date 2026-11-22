@@ -29,13 +29,13 @@ class Naips {
   /* --- briefing service --- */
   authenticate() { return this.call("briefing", "authenticate", `<ndd:authenticate-rqs ${this.attrs()}/>`).catch(e => { throw e; }); }
   locBrief(locs, flags = {}) {
-    const f = Object.assign({ met: true, ntm: true, sigmet: true, hon: false }, flags);
-    const body = `<ndd:loc-brief-rqs ${this.attrs()}>${locs.map(l => `<ndd:loc>${esc(l)}</ndd:loc>`).join("")}<ndd:flags met="${!!f.met}" ntm="${!!f.ntm}" hon="${!!f.hon}" sigmet="${!!f.sigmet}"/></ndd:loc-brief-rqs>`;
+    const f = Object.assign({ met: true, ntm: true, sigmet: true, hon: false, charts: false }, flags);
+    const body = `<ndd:loc-brief-rqs ${this.attrs()}>${locs.map(l => `<ndd:loc>${esc(l)}</ndd:loc>`).join("")}<ndd:flags met="${!!f.met}" ntm="${!!f.ntm}" hon="${!!f.hon}" sigmet="${!!f.sigmet}"${f.charts ? ' charts="true"' : ""}/></ndd:loc-brief-rqs>`;
     return this.call("briefing", "loc-brief", body);
   }
   areaBrief(areas, flags = {}) {
     const f = Object.assign({ met: true, ntm: true, hon: false }, flags);
-    return this.call("briefing", "area-brief", `<ndd:area-brief-rqs ${this.attrs()}>${areas.map(a => `<ndd:area>${esc(a)}</ndd:area>`).join("")}<ndd:flags met="${!!f.met}" ntm="${!!f.ntm}" hon="${!!f.hon}"/></ndd:area-brief-rqs>`);
+    return this.call("briefing", "area-brief", `<ndd:area-brief-rqs ${this.attrs()}>${areas.map(a => `<ndd:area>${esc(a)}</ndd:area>`).join("")}<ndd:flags met="${!!f.met}" ntm="${!!f.ntm}" hon="${!!f.hon}"${f.charts ? ' charts="true"' : ""}/></ndd:area-brief-rqs>`);
   }
   /* SPFIB: route briefing for one or more stages. spec: {acid, domestic, tas:"N0160", stages:[{adep, etd (Date/ISO), ades, level:"A085", altn:[...], additional:[...], areas:[...]}], fullText} */
   spfib(spec) {
@@ -67,7 +67,8 @@ function parseResponse(xml, operation) {
   const status = (/status="([^"]*)"/.exec(attrs) || [])[1] || "UNKNOWN";
   const grab = name => { const m = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">").exec(inner); return m ? unesc(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")) : null; };
   const all = name => { const re = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">", "g"); const out = []; let m; while ((m = re.exec(inner))) out.push(unesc(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"))); return out; };
-  const res = { operation, status, ok: status === "SUCCESS", info: grab("info"), content: grab("content"), fplText: all("fpl-text"), name: grab("name"), motd: grab("motd"), number: grab("number") };
+  const products = []; const pre = /<(?:\w+:)?product\b([^>]*)>([\s\S]*?)<\/(?:\w+:)?product>/g; let pm; while ((pm = pre.exec(inner))) { const type = (/type="([^"]*)"/.exec(pm[1]) || [])[1]; const variant = (/variant="([^"]*)"/.exec(pm[1]) || [])[1]; const c = /<(?:\w+:)?content>([\s\S]*?)<\/(?:\w+:)?content>/.exec(pm[2]); if (type && c) products.push({ type, variant: variant || null, data: c[1].replace(/\s+/g, "") }); }
+  const res = { operation, status, ok: status === "SUCCESS", info: grab("info"), content: grab("content"), fplText: all("fpl-text"), name: grab("name"), motd: grab("motd"), number: grab("number"), products };
   if (!res.ok && !res.info) res.info = "NAIPS returned " + status;
   return res;
 }
