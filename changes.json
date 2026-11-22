@@ -1,5 +1,14 @@
 [
   {
+    "version": "2.15",
+    "date": "2026-11-22",
+    "title": "Navigation log; NAIPS client corrected against the live service",
+    "notes": [
+      "Enroute page: a navigation log with every waypoint of the route, planned ETA and fuel on board from the fuel plan, actual time (tap now) and fuel entries, revised ETAs from the last actual time, fuel difference from plan and a projected fuel at destination with a reserve warning. Included in the flight record and PDF.",
+      "NAIPS: the login check now uses an operation NAIPS actually provides (there is no authenticate operation); briefing requests carry one alternate; flight plan filing follows the published schema for supplementary information, SARTIME, PBN and lat/long waypoints. Confirmed against the live service: login and a location briefing from the installed app."
+    ]
+  },
+  {
     "version": "2.14",
     "date": "2026-11-22",
     "title": "Radar, airspace, IFR routes and custom charts on the plan map",
