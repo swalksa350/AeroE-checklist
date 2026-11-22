@@ -22,6 +22,7 @@ class Naips {
   envelope(body) { return `<?xml version="1.0" encoding="UTF-8"?><soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ndd="${NS}"><soapenv:Header/><soapenv:Body>${body}</soapenv:Body></soapenv:Envelope>`; }
   async call(service, operation, body) {
     if (!this.configured()) throw new Error("NAIPS account not configured (NAIPS_USER / NAIPS_PASS)");
+    Naips.lastRequest = { operation, at: new Date().toISOString(), body: body.replace(/password="[^"]*"/, 'password="***"') };   // for the app's debug view
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), this.timeout);
     try {
       const r = await fetch(this.base + SERVICES[service], { method: "POST", headers: { "Content-Type": 'text/xml;charset="utf-8"', "Accept": "text/xml", "SOAPAction": operation }, body: this.envelope(body), signal: ctl.signal });
