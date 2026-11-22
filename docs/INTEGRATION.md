@@ -85,6 +85,8 @@ suppl: { endurance (min), pob, pilotName, pilotPhone, colour, ... }, sartime, sa
 `{ filed, status, info, fplText: [], preview }`. `preview` is the FPL as text for the record; `fplText` is NAIPS's own
 rendering when filed. The app stores both with the flight record.
 
+Route `segments[].waypoint` entries are aerodrome codes or ICAO lat/long tokens such as `3340S15110E` (turning points added from the map); they go into the NAIPS route as waypoints.
+
 ## Winds and personal NAIPS accounts
 
 `POST /winds` with `{ dep, dest, etd, tas }` returns the NAIPS wind and temperature profile for the stage as text plus

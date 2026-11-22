@@ -1,0 +1,20 @@
+# Render blueprint: deploys the AeroE connector from the connector/ folder as a free web service.
+# Open https://render.com/deploy?repo=<your fork of this repository> and Render reads this file.
+services:
+  - type: web
+    name: aeroe-connector
+    runtime: node
+    rootDir: connector
+    plan: free
+    buildCommand: "true"
+    startCommand: node server.js
+    healthCheckPath: /ping
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: AEROE_TOKENS
+        sync: false          # Render asks you for this: yourPilotId:a-long-random-secret
+      - key: ALLOWED_ORIGIN
+        value: https://swalksa350.github.io
+      - key: OPERATOR_NAME
+        value: My connector

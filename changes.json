@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.12",
+    "date": "2026-11-22",
+    "title": "Interactive plan map, equipment code pickers, running your own connector",
+    "notes": [
+      "Plan map: Street, Terrain and Satellite hybrid base layers, an optional openAIP aeronautical overlay (airspace, aerodromes, navaids) with a free key, aerodromes you can tap to set departure, destination, via or alternate, legs you can tap to insert a turning point, and via points you can remove. Turning points are written as ICAO lat/long in the route and the flight plan.",
+      "Equipment (10a), Surveillance (10b) and PBN now have Choose… pickers listing every ICAO code with its meaning, and a warning line for mismatched codes.",
+      "NAIPS login: the app now explains that NAIPS can only be reached through a connector and points to connector/README.md, which gains a Run your own section (free Render deployment, Dockerfile) so a pilot can use a personal NAIPS login without an operator."
+    ]
+  },
+  {
     "version": "2.11",
     "date": "2026-11-22",
     "title": "POH fuel planning, winds, personal NAIPS login, full EFB file",

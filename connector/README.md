@@ -32,6 +32,28 @@ node server.js
 Run it behind HTTPS (a reverse proxy such as Caddy or nginx), because the app is served over HTTPS and browsers block
 mixed content. `ALLOWED_ORIGIN` must be the app's origin exactly.
 
+## Run your own (a pilot's personal connector)
+
+NAIPS cannot be called from a web page directly – Airservices' servers do not allow it – so the app always talks
+to NAIPS through a connector. You do not need an operator to have one: this server runs happily with no roster,
+no fleet pack and no operator NAIPS account, using the NAIPS login you enter in the app (Status › Operator link ›
+Your NAIPS login), which it forwards per request and never stores.
+
+The quickest free hosting is Render (https://render.com), which gives you HTTPS without any setup:
+
+1. Fork this repository on GitHub (or push a copy of the `connector/` folder plus the root `render.yaml`).
+2. In Render choose New › Blueprint, pick your fork; it reads `render.yaml`. When asked, set `AEROE_TOKENS` to
+   `yourname:` followed by a long random secret (that pair is your pilot ID and access token in the app).
+3. When the service is live, note its address (`https://aeroe-connector-xxxx.onrender.com`).
+4. In the app: Status › Operator link › Connector address = that address, Access token = the secret, Pilot ID = `yourname`,
+   then Test connection, enter your NAIPS login and Test NAIPS login.
+
+Notes: the free plan sleeps after 15 minutes idle and the first request then takes up to a minute – press the
+button again. Records uploaded to a free instance are not kept across restarts (your device keeps its own copies);
+use a paid plan or a disk-backed `DATA_DIR` if the connector is to be the record store. Any other Node host
+(Fly.io, Railway, a VPS behind Caddy) works the same way, and `connector/Dockerfile` builds a container for them.
+`ALLOWED_ORIGIN` must match the app's origin exactly; set it to `*` only while testing.
+
 ## Briefing rules
 
 `rules.js` applies the Australian aeroplane alternate and holding rules in a simple form: no TAF or a TAF not covering
