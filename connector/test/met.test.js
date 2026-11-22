@@ -32,3 +32,12 @@ test("fuel plan", () => {
   assert.equal(f.required, Math.ceil(5 + 90 + 30 + 60 + 9 + 45)); assert.equal(f.sufficient, true); assert.equal(f.enduranceMin, 300);
 });
 test("wind profile parsing", () => { const { parseWinds } = require("../server"); const w = parseWinds("FL050 240/25 +05\n 7000FT 250/30 -01\nA100 260/35 M05\nno wind here"); assert.deepEqual(w.map(x => [x.alt, x.dir, x.spd, x.temp]), [[5000, 240, 25, 5], [7000, 250, 30, -1], [10000, 260, 35, -5]]); });
+
+test("NAIPS location briefing layout (section titles, NAME (ICAO) headers, wrapped products, short NOTAM numbers)", () => {
+  const C = ["2246 UTC 22/11/26          AIRSERVICES AUSTRALIA", "                     LOCATION BRIEFING", "", "PREPARED FOR: TESTUSER", "VALID FROM 2246 UTC NOV 22, 2026 TO 2246 UTC NOV 23, 2026", "", "                     WEATHER INFORMATION", "                     -------------------", "", "GERALDTON (YGEL)", "   TAF YGEL 221705Z 2218/2312", "   09005KT 9999 FEW030", "   FM230300 19015G25KT CAVOK", "   RMK", "   T 14 14 20 23 Q 1020 1020 1021 1020", "", "   METAR YGEL 222230Z AUTO 05005KT 9999 // NCD 16/10 Q1021 RMK", "   RF00.0/000.0", "", "                     NOTAM INFORMATION", "                     -----------------", "", "GERALDTON (YGEL)", "                              C67/26", "   METAR/SPECI AND AD WX INFO SERVICE (AWIS) NOT AVBL", "   FROM 11 230400 TO 11 230900", "", "                         C65/26 REPLACE C62/26", "   NDB 'GEL' 359 U/S", "   FROM 11 182057 TO 01 180800 EST", "", "JANDAKOT (YPJT)", "   C300/26", "   TWY K CLSD", "   FROM 11 232300 TO 11 240930", ""].join("\n");
+  const d = met.decodeBriefing(C, new Date("2026-11-22T22:50:00Z"));
+  assert.equal(d.taf.length, 1); assert.equal(d.taf[0].icao, "YGEL"); assert.equal(d.taf[0].validity.from.toISOString(), "2026-11-22T18:00:00.000Z"); assert.equal(d.taf[0].segments.length, 2);
+  assert.equal(d.metar.length, 1); assert.equal(d.metar[0].icao, "YGEL"); assert.match(d.metar[0].raw, /^METAR YGEL 222230Z/); assert.equal(d.metar[0].qnh, 1021);
+  assert.deepEqual(d.notam.map(n => n.icao + " " + n.id), ["YGEL C67/26", "YGEL C65/26", "YPJT C300/26"]);
+  assert.equal(d.products.filter(p => p.kind === "TEXT").length, 0);
+});

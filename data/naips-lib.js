@@ -149,25 +149,32 @@ function parseMetar(text) {
   const auto = toks[i] === "AUTO"; if (auto) i++;
   const rmkAt = toks.indexOf("RMK"); const body = toks.slice(i, rmkAt < 0 ? undefined : rmkAt);
   const g = decodeGroups(body); const temp = /^(M?\d{2})\/(M?\d{2})$/.exec(body.find(t => /^M?\d{2}\/M?\d{2}$/.test(t)) || ""); const qnh = /^Q(\d{4})$/.exec(body.find(t => /^Q\d{4}$/.test(t)) || "");
-  return Object.assign({ type, icao, time, auto, raw: text, temp: temp ? +temp[1].replace("M", "-") : null, dew: temp ? +temp[2].replace("M", "-") : null, qnh: qnh ? +qnh[1] : null }, g);
+  return Object.assign({}, g, { type, icao, time, auto, raw: text.replace(/\s+/g, " ").trim(), temp: temp ? +temp[1].replace("M", "-") : null, dew: temp ? +temp[2].replace("M", "-") : null, qnh: qnh ? +qnh[1] : null });   // raw is the whole report; decodeGroups' own raw (body only) must not override it
 }
 /* Split NAIPS briefing text into products. Products start at a line beginning with a known keyword. NOTAMs are the
    lines from an identifier like "C1234/26" (or the location header in loc briefings) to the next blank line. */
 function splitProducts(content) {
+  /* NAIPS location/area briefing text: section titles ("WEATHER INFORMATION", "NOTAM INFORMATION"), then a location header
+     per aerodrome in either "GERALDTON (YGEL)" or "YGEL (GERALDTON)" form, with the products indented beneath it. TAFs and
+     METARs wrap over several lines; a blank line ends a product. NOTAMs start with their number (C67/26, C1234/26,
+     "C65/26 REPLACE C62/26") on a line of its own. */
   const lines = String(content || "").replace(/\r/g, "").split("\n"); const out = []; let cur = null; let loc = null;
   const start = l => /^(TAF( AMD| COR)?|METAR|SPECI|TTF|SIGMET|AIRMET|GAF|GPWT|ATIS)\b/.test(l.trim());
-  const notamStart = l => /^[A-Z]\d{3,4}\/\d{2}\b/.test(l.trim()) || /^\s*([A-Z]{4})\s+\(.*\)\s*$/.test(l);
+  const notamId = l => /^[A-Z]\d{1,4}\/\d{2}\b/.test(l.trim());
+  const header = l => { const t = l.trim(); let m = /^([A-Z]{4})\s*\(([^)]*)\)\s*$/.exec(t); if (m) return m[1]; m = /^([A-Z][A-Z0-9 \-\/'.]{1,48}?)\s*\(([A-Z]{4})\)\s*$/.exec(t); if (m) return m[2]; m = /^([A-Z]{4})\s+[A-Z][A-Z \-\/']{2,40}$/.exec(t); return m && !start(t) ? m[1] : null; };
   for (const raw of lines) {
-    const l = raw.trimEnd();
-    const hdr = /^([A-Z]{4})(?:\s*\(.*\)|\s+[A-Z][A-Z \-\/']{2,40})?\s*$/.exec(l.trim());
-    if (hdr && !cur && !start(l)) { loc = hdr[1]; continue; }       // location header above its NOTAMs ("YSCN (CAMDEN)")
-    if (start(l)) { if (cur) out.push(cur); cur = { kind: l.trim().split(/\s+/)[0].replace(/^SPECI$/, "SPECI"), text: l.trim() }; continue; }
-    if (notamStart(l) && /^[A-Z]\d{3,4}\/\d{2}\b/.test(l.trim())) { if (cur) out.push(cur); cur = { kind: "NOTAM", id: l.trim().split(/\s+/)[0], text: l.trim(), loc }; continue; }
-    if (!l.trim()) { if (cur && cur.kind !== "GAF" && cur.kind !== "GPWT") { out.push(cur); cur = null; } else if (cur) cur.text += "\n"; continue; }
-    if (cur) cur.text += "\n" + l.trim(); else if (/^[A-Z]{4}\b/.test(l.trim())) { cur = { kind: "TEXT", text: l.trim() }; }
+    const l = raw.trimEnd(); const t = l.trim();
+    if (!t) { if (cur && cur.kind !== "GAF" && cur.kind !== "GPWT") { out.push(cur); cur = null; } else if (cur) cur.text += "\n"; continue; }
+    if (!cur) { const h = header(l); if (h) { loc = h; continue; } }
+    if (start(l)) { if (cur) out.push(cur); cur = { kind: t.split(/\s+/)[0], text: t, loc }; continue; }
+    if (notamId(l)) { if (cur) out.push(cur); cur = { kind: "NOTAM", id: t.split(/\s+/)[0], text: t, loc }; continue; }
+    if (cur) { cur.text += "\n" + t; continue; }
+    /* free text outside any product: section titles, "PREPARED FOR", rules, etc. are dropped; anything else is kept as TEXT */
+    if (/^[-=_ ]+$/.test(t) || /^(WEATHER|NOTAM|LOCATION|AREA|AIRSERVICES|PREPARED|VALID|CHART|REFERENCE|HEAD OFFICE|END OF)\b/i.test(t) || /^\d{4} UTC/.test(t)) continue;
+    cur = { kind: "TEXT", text: t, loc };
   }
   if (cur) out.push(cur);
-  return out.map(p => { const first = p.text.split("\n")[0]; const icao = (/^(?:TAF(?: AMD| COR)?|METAR|SPECI|TTF)\s+(?:COR\s+)?([A-Z]{4})/.exec(first) || /^[A-Z]\d{3,4}\/\d{2}\s+(?:[A-Z\s]*?)\b([A-Z]{4})\b/.exec(first) || [])[1] || null; return Object.assign(p, { icao: icao || p.loc || null }); });
+  return out.map(p => { const first = p.text.split("\n")[0]; const icao = (/^(?:TAF(?: AMD| COR)?|METAR|SPECI|TTF)\s+(?:COR\s+)?([A-Z]{4})/.exec(first) || [])[1] || null; return Object.assign(p, { icao: icao || p.loc || null }); });
 }
 /* Decode everything decodable in a briefing content string. */
 function decodeBriefing(content, ref = new Date()) {
