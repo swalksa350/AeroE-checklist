@@ -25,7 +25,7 @@ class Naips {
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), this.timeout);
     try {
       const r = await fetch(this.base + SERVICES[service], { method: "POST", headers: { "Content-Type": 'text/xml;charset="utf-8"', "Accept": "text/xml", "SOAPAction": operation }, body: this.envelope(body), signal: ctl.signal });
-      const text = await r.text();
+      const text = await r.text(); Naips.lastReply = { operation, status: r.status, text: text.slice(0, 20000), at: new Date().toISOString() };   // kept for the app's "Show last NAIPS reply" debug view
       if (!/Envelope/.test(text)) { const t = /<title>([^<]*)<\/title>/i.exec(text); throw new Error("NAIPS answered HTTP " + r.status + " without a SOAP reply" + (t ? " (" + t[1].trim().slice(0, 60) + ")" : "")); }
       return parseResponse(text, operation);
     } finally { clearTimeout(tm); }
