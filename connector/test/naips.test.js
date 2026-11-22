@@ -19,7 +19,7 @@ test("submit ICAO flight notification", async () => {
   const n = new Naips(); const r = await n.submitIcaoFn({ acid: "VHWSM", atyp: "GA8", reg: "VHWSM", adep: "YSBK", ades: "YSCN", etd: "2026-11-22T22:30:00Z", eetMinutes: 30, altn: ["YBTH"], tas: "N0120", level: "A050", equip: ["S", "G"], surv: ["S"], other: { pbn: "B2C2", rmk: "AEROE TEST" }, suppl: { endurance: 240, pob: 3, pilotName: "T PILOT", pilotPhone: "0400000000", colour: "WHITE BLUE" }, sartime: "2026-11-22T23:30:00Z", sartimeLocation: "YSCN" });
   assert.equal(r.ok, true); assert.match(r.fplText[0], /^\(FPL-VHWSM/); const b = seen[2].body; assert.equal(seen[2].path, "/naips/flight-notification-service");
   for (const re of [/<ndd:frul>I<\/ndd:frul>/, /<ndd:ftyp>N<\/ndd:ftyp>/, /<ndd:teet>PT0H30M<\/ndd:teet>/, /<ndd:altn>YBTH<\/ndd:altn>/, /<ndd:pbn>B2 C2<\/ndd:pbn>/, /<ndd:radios uhf="false" vhf="true" elt-406-MHz="false"\/>/, /<ndd:end>PT4H0M<\/ndd:end>/, /<ndd:pilot name="T PILOT" phone="0400000000"\/>/, /<ndd:sartime>2026-11-22T23:30:00Z<\/ndd:sartime>/, /<ndd:etd>2026-11-22T22:30:00Z<\/ndd:etd>/]) assert.match(b, re);
-  assert.throws(() => parseResponse("<soap:Fault><faultstring>Bad</faultstring></soap:Fault>", "x"), /NAIPS fault: Bad/);
+  assert.throws(() => parseResponse("<soap:Fault><faultstring>Bad</faultstring></soap:Fault>", "x"), /NAIPS fault: Bad/); const sc = parseResponse('<S:Envelope><S:Body><active-spfib-dir-rsp xmlns="x" status="SUCCESS"/></S:Body></S:Envelope>', "active-spfib-dir"); assert.equal(sc.ok, true); assert.equal(sc.status, "SUCCESS");
 });
 test("HTTP: /briefing and /fpl through the connector", async () => {
   await new Promise(r => server.listen(8798, r)); const H = { Authorization: "Bearer tok", "Content-Type": "application/json" };

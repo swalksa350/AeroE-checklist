@@ -75,9 +75,10 @@ class Naips {
 function parseResponse(xml, operation) {
   const fault = /<(?:\w+:)?Fault>[\s\S]*?<faultstring>([\s\S]*?)<\/faultstring>/.exec(xml);
   if (fault) throw new Error("NAIPS fault: " + unesc(fault[1]).trim());
-  const rsp = /<(?:\w+:)?([a-z-]+-rsp)\b([^>]*)>([\s\S]*?)<\/(?:\w+:)?\1>/.exec(xml);
-  if (!rsp) throw new Error("NAIPS: no response element for " + operation);
-  const attrs = rsp[2]; const inner = rsp[3];
+  /* <x-rsp ...>...</x-rsp>, or the self-closing <x-rsp .../> NAIPS sends when a successful reply carries no content. */
+  const rsp = /<(?:\w+:)?([a-z-]+-rsp)\b([^>]*?)(?:\/>|>([\s\S]*?)<\/(?:\w+:)?\1>)/.exec(xml);
+  if (!rsp) throw new Error("NAIPS: no response element for " + operation + " in: " + xml.replace(/\s+/g, " ").slice(0, 160));
+  const attrs = rsp[2]; const inner = rsp[3] || "";
   const status = (/status="([^"]*)"/.exec(attrs) || [])[1] || "UNKNOWN";
   const grab = name => { const m = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">").exec(inner); return m ? unesc(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")) : null; };
   const all = name => { const re = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">", "g"); const out = []; let m; while ((m = re.exec(inner))) out.push(unesc(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"))); return out; };
