@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.13",
+    "date": "2026-11-22",
+    "title": "NAIPS direct from the installed app",
+    "notes": [
+      "The installed iOS/Android app now talks to NAIPS directly with your own NAIPS login: briefings, winds and flight plan filing with no connector or server. The connector's NAIPS client, weather and NOTAM decoding, briefing rules and fuel requirement are bundled into the app (data/naips-lib.js) so both give the same answers.",
+      "Status › Operator link gains a NAIPS access setting (Automatic, Direct, Always through the connector) and says whether this copy is the installed app or a browser. In a browser a connector is still required, because Airservices does not accept NAIPS requests from web pages.",
+      "The Plan page states which NAIPS path is in use; Test connection without a connector reports NAIPS direct and what it provides."
+    ]
+  },
+  {
     "version": "2.12",
     "date": "2026-11-22",
     "title": "Interactive plan map, equipment code pickers, running your own connector",

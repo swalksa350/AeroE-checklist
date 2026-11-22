@@ -89,6 +89,8 @@ Route `segments[].waypoint` entries are aerodrome codes or ICAO lat/long tokens 
 
 ## Winds and personal NAIPS accounts
 
+The installed iOS/Android app reaches NAIPS directly and only uses the connector for roster, fleet, notices and records; a browser uses the connector for everything.
+
 `POST /winds` with `{ dep, dest, etd, tas }` returns the NAIPS wind and temperature profile for the stage as text plus
 the wind groups the connector could parse (`winds: [{ alt, dir, spd, temp }]`). Any of `/briefing`, `/winds`, `/fpl` and
 `POST /naips/status` may carry `"naips": { "user", "pass" }`; the connector then uses that NAIPS account for the request

@@ -2,6 +2,7 @@
    element per call, carrying the NAIPS account in the requestor/password attributes. Schema from
    https://www.airservicesaustralia.com/naips/flight-notification-service?xsd=1 (shared by all NAIPS services). */
 const NS = "http://www.airservicesaustralia.com/naips/xsd";
+const ENV = (typeof process !== "undefined" && process.env) || {};   // the same file runs in the connector and, bundled, in the app
 const SERVICES = { briefing: "/naips/briefing-service", fn: "/naips/flight-notification-service" };
 const esc = s => String(s === undefined || s === null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const unesc = s => String(s || "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&amp;/g, "&");
@@ -9,9 +10,9 @@ const isoZ = d => new Date(d).toISOString().replace(/\.\d{3}Z$/, "Z");
 
 class Naips {
   constructor(opts = {}) {
-    this.base = (opts.base || process.env.NAIPS_URL || "https://www.airservicesaustralia.com").replace(/\/+$/, "");
-    this.user = opts.user || process.env.NAIPS_USER || ""; this.pass = opts.pass || process.env.NAIPS_PASS || "";
-    this.source = opts.source || process.env.NAIPS_SOURCE || "aeroe"; this.timeout = opts.timeout || 30000;
+    this.base = (opts.base || ENV.NAIPS_URL || "https://www.airservicesaustralia.com").replace(/\/+$/, "");
+    this.user = opts.user || ENV.NAIPS_USER || ""; this.pass = opts.pass || ENV.NAIPS_PASS || "";
+    this.source = opts.source || ENV.NAIPS_SOURCE || "aeroe"; this.timeout = opts.timeout || 30000;
   }
   configured() { return !!(this.user && this.pass); }
   attrs() { return `requestor="${esc(this.user.toUpperCase())}" password="${esc(this.pass)}" source="${esc(this.source)}"`; }

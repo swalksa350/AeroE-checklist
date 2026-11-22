@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /* Regenerates the aircraft <script> tags in index.html and the precache list + version in sw.js.
    Run after adding, removing or editing anything: node tools/build.js */
+require("./build-naips");
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const root = path.join(__dirname, "..");
 const files = fs.readdirSync(path.join(root, "aircraft")).filter(f => f.endsWith(".js")).sort();

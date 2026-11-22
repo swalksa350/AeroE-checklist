@@ -3,7 +3,7 @@
    plus /briefing (NAIPS weather and NOTAM with rules and fuel plan) and /fpl (file an ICAO flight plan through NAIPS).
    No dependencies beyond Node 18+. Configuration by environment variables – see README.md. */
 const http = require("http"), fs = require("fs"), path = require("path"), crypto = require("crypto");
-const { Naips } = require("./naips"); const met = require("./met"); const rules = require("./rules"); const { fuelPlan } = require("./fuel"); const { summarise } = require("./summary");
+const { Naips } = require("./naips"); const { summarise } = require("./summary");
 const PORT = +process.env.PORT || 8790; const DATA = process.env.DATA_DIR || path.join(__dirname, "data"); const ORIGIN = process.env.ALLOWED_ORIGIN || "*";
 const TOKENS = (process.env.AEROE_TOKENS || "").split(",").map(s => s.trim()).filter(Boolean).map(s => { const i = s.indexOf(":"); return i < 0 ? { pilot: "*", token: s } : { pilot: s.slice(0, i), token: s.slice(i + 1) }; });
 const naips = new Naips();
@@ -14,27 +14,10 @@ const log = (...a) => console.log(new Date().toISOString(), ...a);
 function auth(req) { const h = req.headers.authorization || ""; const t = h.replace(/^Bearer\s+/i, "").trim(); if (!t) return null; const hit = TOKENS.find(x => x.token === t); return hit ? hit : null; }
 function send(res, code, obj) { res.writeHead(code, { "Content-Type": "application/json", "Access-Control-Allow-Origin": ORIGIN, "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Cache-Control": "no-store" }); res.end(JSON.stringify(obj)); }
 function body(req) { return new Promise((resolve, reject) => { let b = ""; req.on("data", c => { b += c; if (b.length > 4e6) req.destroy(); }); req.on("end", () => { try { resolve(b ? JSON.parse(b) : {}); } catch (e) { reject(new Error("bad JSON")); } }); req.on("error", reject); }); }
-/* Build a briefing: NAIPS products for departure, destination and alternates (+ optional areas), decode, evaluate, fuel. */
+const core = require("./core");
 const naipsFor = p => (p && p.naips && p.naips.user && p.naips.pass) ? naips.withCredentials(p.naips) : naips;   // a pilot's own NAIPS account, sent with the request, overrides the operator's
-async function briefing(p) {
-  for (const k of ["dep", "dest", "etd"]) if (!p[k]) throw new Error("missing " + k);
-  const naips = naipsFor(p);
-  const locs = [p.dep, p.dest, ...(p.altn || [])].map(s => String(s).toUpperCase()).filter((v, i, a) => a.indexOf(v) === i);
-  const ref = new Date(); let content = "", source = "naips", charts = [];
-  if (p.products) { content = p.products; source = "supplied"; }            // for testing or a pasted briefing
-  else {
-    const r = await naips.locBrief(locs, { met: true, ntm: true, sigmet: true, charts: !!p.charts });
-    if (!r.ok) throw new Error("NAIPS: " + (r.info || r.status)); content = r.content || ""; charts = (r.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type)).slice(0, 12);
-    if (p.areas && p.areas.length) { const a = await naips.areaBrief(p.areas, { met: true, ntm: true, charts: !!p.charts }); if (a.ok && a.content) content += "\n\n" + a.content; if (a.ok) charts = charts.concat((a.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type))).slice(0, 16); }
-  }
-  const decoded = met.decodeBriefing(content, ref);
-  const plan = { dep: p.dep.toUpperCase(), dest: p.dest.toUpperCase(), altn: (p.altn || []).map(s => String(s).toUpperCase()), etd: p.etd, eetMin: +p.eetMin || 60, altEetMin: +p.altEetMin || 30, minima: p.minima || {}, aircraft: p.aircraft || {}, bufferMin: p.bufferMin || 30 };
-  const evaluation = rules.evaluateFlight(decoded, plan);
-  const fuel = p.fuelFlow ? fuelPlan({ fuelFlow: p.fuelFlow, eetMin: plan.eetMin, altEetMin: plan.altEetMin, alternateRequired: evaluation.summary.alternateRequired || (p.altn && p.altn.length && p.alwaysCarryAlternate), holdingMin: evaluation.summary.holdingMinutes, policy: p.policy, fuelOnBoard: p.fuelOnBoard }) : null;
-  const out = { fetched: ref.toISOString(), source, plan, decoded: { taf: decoded.taf, metar: decoded.metar, ttf: decoded.ttf, notam: decoded.notam, sigmet: decoded.sigmet, products: decoded.products }, evaluation, fuel, rawContent: content, charts };
-  if (p.summary !== false) { try { out.summary = await summarise(out); } catch (e) { out.summaryError = e.message; log("summary failed", e.message); } }
-  return out;
-}
+const briefing = p => core.briefing(naipsFor(p), p, { summarise, log });
+const { parseWinds, fplPreview } = core;
 const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") { res.writeHead(204, { "Access-Control-Allow-Origin": ORIGIN, "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" }); return res.end(); }
   const u = new URL(req.url, "http://x"); const who = auth(req);
@@ -47,18 +30,13 @@ const server = http.createServer(async (req, res) => {
     if (/^\/notices\/[^/]+\/ack$/.test(u.pathname) && req.method === "POST") { const b = await body(req); const acks = readJSON("acks.json", []); acks.push({ notice: decodeURIComponent(u.pathname.split("/")[2]), pilotId: b.pilotId || who.pilot, at: b.at || new Date().toISOString() }); writeJSON("acks.json", acks); return send(res, 200, { ok: true }); }
     if (u.pathname === "/records" && req.method === "POST") { const b = await body(req); const r = b.record; if (!r || !r.id) return send(res, 400, { error: "no record" }); const f = path.join(DATA, "records", r.id.replace(/[^a-z0-9_-]/gi, "") + ".json"); fs.writeFileSync(f, JSON.stringify({ receivedAt: new Date().toISOString(), pilotId: b.pilotId || who.pilot, record: r }, null, 1)); log("record", r.id, r.rego, r.signoff ? "signed" : "unsigned"); return send(res, 200, { id: r.id, stored: true, fingerprintChecked: !!r.signoff && fingerprint(r) === r.signoff.fingerprint }); }
     if (u.pathname === "/records" && req.method === "GET") { const files = fs.readdirSync(path.join(DATA, "records")).filter(f => f.endsWith(".json")); return send(res, 200, { count: files.length, records: files.map(f => { const j = JSON.parse(fs.readFileSync(path.join(DATA, "records", f), "utf8")); return { id: j.record.id, rego: j.record.rego, date: j.record.flight && j.record.flight.date, pilotId: j.pilotId, signed: !!j.record.signoff, receivedAt: j.receivedAt }; }) }); }
-    if (u.pathname === "/naips/status") { const b = req.method === "POST" ? await body(req) : {}; const n = naipsFor(b); if (!n.configured()) return send(res, 200, { configured: false }); const a = await n.authenticate(); return send(res, 200, { configured: true, personal: n !== naips, ok: a.ok, status: a.status, name: a.name, info: a.info, motd: a.motd }); }
-    if (u.pathname === "/winds" && req.method === "POST") { const b = await body(req); const n = naipsFor(b); if (!b.dep || !b.dest || !b.etd) return send(res, 400, { error: "dep, dest and etd are required" }); const r = await n.windTempProfile({ stages: [{ adep: b.dep, ades: b.dest, etd: b.etd }], tas: "N" + String(Math.round(+b.tas || 120)).padStart(4, "0") }); return send(res, 200, { ok: r.ok, status: r.status, info: r.info, content: r.content || "", winds: parseWinds(r.content || "") }); }
+    if (u.pathname === "/naips/status") { const b = req.method === "POST" ? await body(req) : {}; const n = naipsFor(b); return send(res, 200, await core.status(n, n !== naips)); }
+    if (u.pathname === "/winds" && req.method === "POST") { const b = await body(req); return send(res, 200, await core.winds(naipsFor(b), b)); }
     if (u.pathname === "/briefing" && req.method === "POST") { const b = await body(req); const out = await briefing(b); log("briefing", out.plan.dep, out.plan.dest, out.evaluation.summary); return send(res, 200, out); }
-    if (u.pathname === "/fpl" && req.method === "POST") { const b = await body(req); const naips = naipsFor(b); if (!b.acid || !b.adep || !b.ades || !b.etd || !b.atyp) return send(res, 400, { error: "acid, atyp, adep, ades and etd are required" }); if (b.dryRun || !naips.configured()) { const { Naips: N } = require("./naips"); const n = new N({ user: naips.user || "TEST", pass: naips.pass || "TESTPASS1" }); return send(res, 200, { filed: false, dryRun: true, naipsConfigured: naips.configured(), request: n.submitIcaoFn.toString().length ? "ok" : "", preview: fplPreview(b) }); } const r = await naips.submitIcaoFn(b); log("fpl", b.acid, b.adep, b.ades, r.status); return send(res, 200, { filed: r.ok, status: r.status, info: r.info, fplText: r.fplText, preview: fplPreview(b) }); }
+    if (u.pathname === "/fpl" && req.method === "POST") { const b = await body(req); const r = await core.fileFpl(naipsFor(b), b); if (!r.dryRun) log("fpl", b.acid, b.adep, b.ades, r.status); return send(res, 200, r); }
     return send(res, 404, { error: "unknown endpoint" });
   } catch (e) { log("error", u.pathname, e.message); return send(res, 500, { error: e.message }); }
 });
-/* Best-effort reader for NAIPS wind/temperature profile text: collects (level, direction/speed, temperature) triples
-   wherever a level marker (FL120, 5000, A050) is followed by a ddd/ss wind group on the same line. */
-function parseWinds(text) { const out = []; for (const line of String(text).split(/\r?\n/)) { const lv = /\b(?:FL\s?(\d{3})|A(\d{3})|(\d{4,5})\s*FT|(\d{4,5}))\b/.exec(line); const ws = [...line.matchAll(/\b(\d{3})\/(\d{2,3})\b/g)]; if (!lv || !ws.length) continue; const alt = lv[1] ? +lv[1] * 100 : lv[2] ? +lv[2] * 100 : +(lv[3] || lv[4]); const t = /(?:^|\s)([+-]\d{1,2}|M\d{2}|PS\d{2})(?=\s|$)/.exec(line.slice(ws[0].index + ws[0][0].length)); out.push({ alt, dir: +ws[0][1], spd: +ws[0][2], temp: t ? +t[1].replace(/\s/g, "").replace("M", "-").replace("PS", "+") : null, line: line.trim() }); } return out; }
-/* ICAO FPL as text, for display and for the record. */
-function fplPreview(b) { const d = new Date(b.etd); const hhmm = String(d.getUTCHours()).padStart(2, "0") + String(d.getUTCMinutes()).padStart(2, "0"); const eet = String(Math.floor((b.eetMinutes || 60) / 60)).padStart(2, "0") + String((b.eetMinutes || 60) % 60).padStart(2, "0"); const route = (b.route && b.route.segments || []).map(s => s.atsRoute || s.waypoint).filter(Boolean).join(" ") || "DCT"; const other = Object.entries(b.other || {}).filter(([k, v]) => v).map(([k, v]) => k.toUpperCase() + "/" + v).join(" "); return "(FPL-" + b.acid + "-" + (b.rules || "I") + (b.flightType || "N") + "\n-" + b.atyp + "/" + (b.wtc || "L") + "-" + (b.equip || ["S", "G"]).join("") + "/" + (b.surv || ["S"]).join("") + "\n-" + b.adep + hhmm + "\n-" + (b.route && b.route.speed || b.tas || "N0120") + (b.route && b.route.level || b.level || "A050") + " " + route + "\n-" + b.ades + eet + (b.altn || []).map(a => " " + a).join("") + "\n-" + (other ? other + " " : "") + (b.reg ? "REG/" + b.reg : "") + ")"; }
 function fingerprint(rec) { const o = {}; Object.keys(rec).filter(k => k !== "signoff" && k !== "preview" && k !== "uploadedAt" && k !== "uploadRef").sort().forEach(k => o[k] = rec[k]); return crypto.createHash("sha256").update(JSON.stringify(o)).digest("hex"); }
 if (require.main === module) { if (!TOKENS.length) { console.error("Set AEROE_TOKENS (pilotId:token,...) before starting."); process.exit(1); } server.listen(PORT, () => log("AeroE connector on port " + PORT + (naips.configured() ? " with NAIPS account " + naips.user : " (NAIPS not configured)"))); }
 module.exports = { server, briefing, fplPreview, fingerprint, parseWinds };
