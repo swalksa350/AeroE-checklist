@@ -419,7 +419,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "fd9c7218";
+const BUILD = "958859ba";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, plan:{}, manifest:{}, records:{}, ops:{url:"",token:"",pilotId:"",autoUpload:false,std:{},dutyMax:null,lastRoster:null,notices:[],noticesRead:{}}, duty:{start:null,log:[]}, pilot:{}, outbox:[]};
@@ -1331,6 +1331,7 @@ function renderRecordsSide(sEl){
 const daysUntil=d=>{ if(!d) return null; const t=new Date(d+"T00:00:00"); if(isNaN(t)) return null; return Math.round((t-new Date().setHours(0,0,0,0))/86400000); };
 const opsReady=()=>!!(state.ops.url&&/^https?:\/\//.test(state.ops.url));
 async function opsFetch(path,opts){
+  if(/airservicesaustralia\.com|\/naips\b/i.test(state.ops.url||"")) throw new Error("the connector address is NAIPS itself. NAIPS does not accept requests from a web page, so this field needs the address of a connector server that forwards them (for example the onrender.com address from the guide, section 12c). Your NAIPS login goes in the NAIPS fields below, not here");
   if(!opsReady()) throw new Error("no connector address set. NAIPS briefings, winds and filing all go through a connector – enter its address under Operator link (your operator's, or your own: see the guide, section 12c)");
   const url=state.ops.url.replace(/\/+$/,"")+path; const headers=Object.assign({"Accept":"application/json"},(opts&&opts.body)?{"Content-Type":"application/json"}:{} ,state.ops.token?{"Authorization":"Bearer "+state.ops.token}:{});
   const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),15000);
@@ -1393,7 +1394,7 @@ function opsSheet(){
   const card=h("div",{class:"card2 editor ops"}); const sheet=h("div",{class:"sheet",id:"sheet"},card); const msg=h("div",{class:"hint",id:"ops-msg"});
   const f=(label,key,type,hint,obj)=>{ obj=obj||O; const i=h("input",{type:type||"text",value:obj[key]===null||obj[key]===undefined?"":obj[key],autocapitalize:"off",autocorrect:"off",spellcheck:"false"}); if(type==="number"){ i.setAttribute("step","any"); i.setAttribute("inputmode","decimal"); } i.oninput=ev=>{ obj[key]=type==="number"?(ev.target.value===""?null:ev.target.value):ev.target.value; save(); }; return h("label",{},h("span",{},label,hint?h("small",{},hint):""),i); };
   const run=async(b,label,fn)=>{ b.disabled=true; b.textContent=label+"…"; try{ msg.textContent=await fn(); }catch(e){ msg.textContent=label+" failed: "+e.message+(e.name==="TypeError"?" (no connection, or the server does not allow this app's origin – see docs/INTEGRATION.md)":""); } b.disabled=false; b.textContent=label; };
-  card.append(h("h2",{},"Operator link"),h("div",{class:"hint"},"A connector is a small web service between this app and NAIPS (and, for an operator, its rostering and records systems). Airservices does not let browser apps call NAIPS directly, so briefings, winds and flight plan filing all need a connector address here: your operator's, or your own – the guide, section 12c, shows how to run one for free in about ten minutes. Leave the address blank to use the app stand-alone (checklists, W&B, performance, fuel planning and records still work)."));
+  card.append(h("h2",{},"Operator link"),h("div",{class:"hint"},"A connector is a small web service between this app and NAIPS (and, for an operator, its rostering and records systems). Airservices does not let browser apps call NAIPS directly, so briefings, winds and flight plan filing all need a connector address here: your operator's, or your own – the guide, section 12c, shows how to run one for free in about ten minutes. Leave the address blank to use the app stand-alone (checklists, W&B, performance, fuel planning and records still work)."),h("div",{class:"hint"},"Do not enter the NAIPS website here – it is not a connector. ",h("a",{href:"https://render.com/deploy?repo=https://github.com/swalksa350/AeroE-checklist",target:"_blank",rel:"noopener"},"Deploy your own connector on Render (free)"),": sign in, set AEROE_TOKENS to yourname:a-long-secret, wait for Live, then enter the onrender.com address, the secret and yourname below."));
   card.append(h("div",{class:"ops-grid"},f("Connector address","url","url","https://ops.example.com/aeroe"),f("Access token","token","password","issued by the operator"),f("Pilot ID","pilotId","text","as known to the roster system")));
   const au=h("input",{type:"checkbox"}); au.checked=!!O.autoUpload; au.onchange=()=>{ O.autoUpload=au.checked; save(); if(au.checked) flushOutbox(); };
   card.append(h("label",{class:"so-accept"},au,h("span",{},"Upload each flight record automatically when it is saved or signed (queued until there is signal)")));

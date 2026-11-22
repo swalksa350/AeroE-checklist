@@ -39,7 +39,8 @@ to NAIPS through a connector. You do not need an operator to have one: this serv
 no fleet pack and no operator NAIPS account, using the NAIPS login you enter in the app (Status › Operator link ›
 Your NAIPS login), which it forwards per request and never stores.
 
-The quickest free hosting is Render (https://render.com), which gives you HTTPS without any setup:
+The quickest free hosting is Render (https://render.com), which gives you HTTPS without any setup. One-click:
+https://render.com/deploy?repo=https://github.com/swalksa350/AeroE-checklist (or your fork's URL). Or by hand:
 
 1. Fork this repository on GitHub (or push a copy of the `connector/` folder plus the root `render.yaml`).
 2. In Render choose New › Blueprint, pick your fork; it reads `render.yaml`. When asked, set `AEROE_TOKENS` to
