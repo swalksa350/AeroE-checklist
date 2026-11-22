@@ -45,6 +45,15 @@ Each `aircraft` entry has the same shape as the app's *Export customisations* te
 build a pack by exporting from a configured device. Applying a pack replaces that type's customisations and
 registrations on the device (progress through checklists is reset).
 
+## Routes
+
+`GET /routes?dep=YSBK&dest=YBTH` returns `{ "routes": [ { "route": "BTH H65 CUL", "note": "company standard" } ] }` – the operator's
+preferred routes for a city pair, shown in the planner beside the routes the pilot has used before. The reference server reads
+`data/routes.json`: `[ { "dep", "dest", "route", "note" } ]`.
+
+Fleet pack extras: `"mapLayers": [ { "name", "url", "type": "base"|"overlay", "wms": false, "layers", "attribution" } ]` (up to three
+chart sources the operator licenses, e.g. tiles or a WMS) is applied to every pilot's map.
+
 ## Flight record
 
 `POST /records` body: `{ "aeroe": "flight-record", "version": 1, "pilotId": "...", "record": { ... } }` where `record`

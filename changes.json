@@ -1,5 +1,17 @@
 [
   {
+    "version": "2.14",
+    "date": "2026-11-22",
+    "title": "Radar, airspace, IFR routes and custom charts on the plan map",
+    "notes": [
+      "Rain radar overlay (Bureau of Meteorology composite via RainViewer) with a two-hour animation on the plan and enroute maps; the enroute page now has a read-only map.",
+      "Prohibited, restricted and danger areas: load them under Status › Navigation data from the Airservices Airspace Data CSV, openAIP (with your key) or GeoJSON; the planner lists every area the track crosses with limits and the planned level against them, warns, draws them on the map and keeps the result in the pre-flight record.",
+      "IFR routes: import the Airservices General Aviation Data CSV files (waypoints, navaids, routes with LSALT) and type routes with airway designators; the planner expands them, shows LSALT per leg, warns when the level is below it, files airways as ATS route segments and draws routes and waypoints on the map for tapping.",
+      "Route suggestions from the routes you have used before for a city pair and from the operator connector (GET /routes).",
+      "Custom chart sources (tiles or WMS) for licensed charts, as base maps or overlays, settable by the operator's fleet pack."
+    ]
+  },
+  {
     "version": "2.13",
     "date": "2026-11-22",
     "title": "NAIPS direct from the installed app",

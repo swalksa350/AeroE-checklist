@@ -62,6 +62,11 @@ use a paid plan or a disk-backed `DATA_DIR` if the connector is to be the record
 (Fly.io, Railway, a VPS behind Caddy) works the same way, and `connector/Dockerfile` builds a container for them.
 `ALLOWED_ORIGIN` must match the app's origin exactly; set it to `*` only while testing.
 
+## Preferred routes
+
+`data/routes.json` holds the operator's preferred routes: `[ { "dep": "YSBK", "dest": "YBTH", "route": "BTH H65 CUL", "note": "company standard" } ]`.
+`GET /routes?dep=&dest=` returns the matches; the app shows them in the planner beside the routes the pilot has used before.
+
 ## Briefing rules
 
 `rules.js` applies the Australian aeroplane alternate and holding rules in a simple form: no TAF or a TAF not covering
