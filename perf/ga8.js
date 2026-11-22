@@ -44,3 +44,18 @@ window.PERF.ga8 = {
     "A flaps-up take-off increases the take-off distance by approximately 10 % (AFM Section 4) and is not covered by this chart."
   ]
 };
+
+/* Fuel planning profile – GA8 GA-FM-04 Section 5.3 (scheduled climb, 78 KIAS, full throttle 2,500 RPM, rate of climb
+   by weight and altitude) and 5.8 (best economy cruise). Climb time is integrated from the 1,814 kg ISA rates; climb
+   fuel flow and the descent figures are planning assumptions, not AFM data – edit them in the fuel plan. Fuel in litres. */
+window.PERF.ga8.fuelProfile = {
+  verified: false, fuelUnit: "L", flowUnit: "L/h", weight: 1814, basis: "GA-FM-04 5.3 scheduled climb (rates) and 5.8 best economy cruise; climb and descent fuel flows assumed",
+  taxi: 4, taxiNote: "assumed start, taxi and run-up allowance",
+  climb: { speed: "78 KIAS", flow: 75, flowNote: "assumed full-throttle flow at 2,500 RPM", rateRows: [[0,787],[2000,684],[4000,584],[6000,487],[8000,393],[10000,301]] },
+  descent: { speed: "130 KIAS", rate: 500, flow: 45, note: "assumed; the AFM gives no descent table" },
+  cruise: { rows: [
+    { alt: 4000, max: { tas: 125, flow: 71, power: "25 inHg / 2,500 RPM" }, range: { tas: 118, flow: 56, power: "23 inHg / 2,300 RPM" } },
+    { alt: 6000, max: { tas: 125, flow: 67, power: "23 inHg / 2,500 RPM" }, range: { tas: 118, flow: 55, power: "23 inHg / 2,300 RPM" } },
+    { alt: 8000, max: { tas: 122, flow: 60, power: "22 inHg / 2,500 RPM" }, range: { tas: 120, flow: 54, power: "22 inHg / 2,300 RPM" } } ],
+    note: "Best economy mixture, most forward CG. Best power mixture adds 30–45 % to the fuel flow for 3–5 % more TAS." }
+};

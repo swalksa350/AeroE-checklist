@@ -2237,3 +2237,30 @@ window.PERF.c208b = {
   "Interpolating between tabulated values is normal practice; the POH's conservative alternative is to read the next higher weight, altitude and temperature."
  ]
 };
+
+/* Fuel planning profile – POH 208BPHBUS-01 Section 5, cargo pod installed, 8,750 lb, 1,900 RPM, inertial separator
+   NORMAL, standard temperature. Climb: Figure 5-18 sheet 1 (maximum rate of climb from sea level, standard day).
+   Descent: Figure 5-25 (800 ft/min, 160 KIAS below 16,000 ft). Cruise: Figure 5-19 sheets 2–11, 1,900 RPM, the row
+   nearest ISA at each altitude: "max" is the maximum cruise torque row, "range" the lowest (best range) row. Fuel in
+   pounds (6.7 lb/USgal); the app converts to the registration's fuel unit. Transcribed from the manual's images –
+   check against the POH before relying on it. */
+window.PERF.c208b.fuelProfile = {
+  verified: false, fuelUnit: "lb", flowUnit: "PPH", weight: 8750, basis: "POH 208BPHBUS-01 Figures 5-18, 5-19 and 5-25 (cargo pod)",
+  taxi: 35, taxiNote: "35 lb for engine start, taxi and take-off (Figure 5-18 note 2)",
+  climb: { speed: "104 KIAS reducing with altitude", rows: [[0,0,0,0],[4000,5,33,8],[8000,9,66,17],[12000,15,105,29],[16000,23,152,45],[20000,36,219,72],[24000,75,388,152]] },
+  descent: { speed: "160 KIAS, 800 ft/min", rows: [[0,0,0,0],[4000,5,24,14],[8000,10,48,28],[12000,15,71,43],[16000,20,95,59],[20000,25,113,75],[24000,30,131,91]] },
+  cruise: { rpm: 1900, rows: [
+    { alt: 2000,  max: { tas: 168, flow: 433, torque: 1865 }, range: { tas: 148, flow: 356, torque: 1385 } },
+    { alt: 4000,  max: { tas: 172, flow: 426, torque: 1859 }, range: { tas: 149, flow: 341, torque: 1335 } },
+    { alt: 6000,  max: { tas: 174, flow: 423, torque: 1865 }, range: { tas: 148, flow: 323, torque: 1285 } },
+    { alt: 8000,  max: { tas: 173, flow: 396, torque: 1736 }, range: { tas: 150, flow: 313, torque: 1265 } },
+    { alt: 10000, max: { tas: 172, flow: 379, torque: 1660 }, range: { tas: 151, flow: 304, torque: 1255 } },
+    { alt: 12000, max: { tas: 172, flow: 361, torque: 1578 }, range: { tas: 153, flow: 295, torque: 1240 } },
+    { alt: 14000, max: { tas: 167, flow: 330, torque: 1428 }, range: { tas: 154, flow: 287, torque: 1215 } },
+    { alt: 16000, max: { tas: 167, flow: 322, torque: 1401 }, range: { tas: 150, flow: 272, torque: 1150 } },
+    { alt: 18000, max: { tas: 162, flow: 294, torque: 1268 }, range: { tas: 152, flow: 270, torque: 1145 } },
+    { alt: 20000, max: { tas: 157, flow: 276, torque: 1185 }, range: { tas: 155, flow: 272, torque: 1170 } },
+    { alt: 22000, max: { tas: 155, flow: 258, torque: 1106 }, range: { tas: 155, flow: 258, torque: 1106 } },
+    { alt: 24000, max: { tas: 151, flow: 234, torque: 994 }, range: { tas: 151, flow: 234, torque: 994 } } ],
+    note: "ISA rows (10,000 and 20,000 ft are averaged between the two rows either side of ISA). Hotter than ISA: lower TAS and torque limit; see the POH sheet for the day. Inertial separator BYPASS +15 PPH, cabin heat +7 PPH." }
+};

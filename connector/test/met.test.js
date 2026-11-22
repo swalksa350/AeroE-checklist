@@ -31,3 +31,4 @@ test("fuel plan", () => {
   const f = fuelPlan({ fuelFlow: 60, eetMin: 90, altEetMin: 30, alternateRequired: true, holdingMin: 60, policy: { fixedReserveMin: 45, variableReservePct: 10, taxi: 5 }, fuelOnBoard: 300 });
   assert.equal(f.required, Math.ceil(5 + 90 + 30 + 60 + 9 + 45)); assert.equal(f.sufficient, true); assert.equal(f.enduranceMin, 300);
 });
+test("wind profile parsing", () => { const { parseWinds } = require("../server"); const w = parseWinds("FL050 240/25 +05\n 7000FT 250/30 -01\nA100 260/35 M05\nno wind here"); assert.deepEqual(w.map(x => [x.alt, x.dir, x.spd, x.temp]), [[5000, 240, 25, 5], [7000, 250, 30, -1], [10000, 260, 35, -5]]); });

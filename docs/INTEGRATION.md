@@ -12,7 +12,7 @@ All requests carry `Authorization: Bearer <token>` and expect JSON. The app is s
 
 | Method | Path | Purpose |
 |---|---|---|
-| GET | `/ping` | Connection test. Returns `{ "operator": "Name" }`. |
+| GET | `/ping` | Connection test. Returns `{ "operator", "naips", "personalNaips", "caps": { roster, fleet, notices, records, briefing, fpl, winds } }`; the app hides roster and fleet features when their flag is false. |
 | GET | `/roster?pilot=<id>&date=YYYY-MM-DD` | The pilot's flights for the day (see below). |
 | GET | `/fleet` | Fleet pack: per-type customisations, W&B registrations, standard weights, duty limit. |
 | POST | `/records` | A flight record (manifest, W&B, performance, sign-off). Returns `{ "id": "<your reference>" }`. |
@@ -84,6 +84,14 @@ eetMinutes, altn: [], route: { speed: "N0120", level: "A050", segments: [{ waypo
 suppl: { endurance (min), pob, pilotName, pilotPhone, colour, ... }, sartime, sartimeLocation, dryRun }` returns
 `{ filed, status, info, fplText: [], preview }`. `preview` is the FPL as text for the record; `fplText` is NAIPS's own
 rendering when filed. The app stores both with the flight record.
+
+## Winds and personal NAIPS accounts
+
+`POST /winds` with `{ dep, dest, etd, tas }` returns the NAIPS wind and temperature profile for the stage as text plus
+the wind groups the connector could parse (`winds: [{ alt, dir, spd, temp }]`). Any of `/briefing`, `/winds`, `/fpl` and
+`POST /naips/status` may carry `"naips": { "user", "pass" }`; the connector then uses that NAIPS account for the request
+instead of its own and does not store it. This lets a pilot use a personal NAIPS login through a connector that has no
+operator account at all.
 
 ## Not yet covered
 

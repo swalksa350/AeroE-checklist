@@ -1,5 +1,17 @@
 [
   {
+    "version": "2.11",
+    "date": "2026-11-22",
+    "title": "POH fuel planning, winds, personal NAIPS login, full EFB file",
+    "notes": [
+      "Fuel plan from the POH: the Plan tab now builds the fuel plan by segment – taxi, climb (time, fuel and distance to the cruise level), cruise (TAS and fuel flow at that level, maximum cruise or best range), descent, alternate, holding and reserves – from the type's POH profile (C208: Figures 5-18, 5-19 and 5-25; GA8: AFM 5.3 climb rates and 5.8 cruise). Every figure can be amended; Recalculate from POH restores them, and Use this plan's EET and flow carries the result into the briefing and flight plan.",
+      "Winds: enter a wind per leg or Load winds (NAIPS) to fetch the wind and temperature profile for the route through the connector; the wind nearest the cruise level is applied to each leg and the ground speeds, leg times and trip fuel follow.",
+      "Personal NAIPS login: under Status › Operator link you can enter your own NAIPS username and password; briefings, winds and flight plan filing then use your account rather than the operator's. The login stays on the device and is sent to the connector with each request. Test NAIPS login confirms it.",
+      "The connector now reports what it provides; From roster and the fleet pack only appear when the operator actually has a roster feed, so a pilot or a small operator can use briefings, winds, filing and records without one.",
+      "Full app file for an EFB: Status › EFB files › Full app file builds a single HTML file of the whole app for this aircraft – W&B, performance, planning, records – on the device, for OzRunways or AvPlan documents. It keeps its own data on that device and does not update itself; rebuild it after an app update."
+    ]
+  },
+  {
     "version": "2.10",
     "date": "2026-11-22",
     "title": "Flight sequence: pre-flight sign-off, enroute, completion and logbook",

@@ -26,6 +26,8 @@ class Naips {
       return parseResponse(text, operation);
     } finally { clearTimeout(tm); }
   }
+  withCredentials(c){ if(!c||!c.user||!c.pass) return this; const n=new Naips({base:this.base,user:c.user,pass:c.pass,source:this.source,timeout:this.timeout}); return n; }
+  windTempProfile(spec){ const stages=spec.stages.map(s=>`<ndd:stage><ndd:adep>${esc(s.adep)}</ndd:adep><ndd:ades>${esc(s.ades)}</ndd:ades><ndd:etd>${esc(isoZ(s.etd))}</ndd:etd>${s.route?`<ndd:route>${esc(s.route)}</ndd:route>`:""}</ndd:stage>`).join(""); return this.call("briefing","wind-temp-profile",`<ndd:wind-temp-profile-rqs ${this.attrs()}>${stages}<ndd:tas>${esc(spec.tas||"N0120")}</ndd:tas></ndd:wind-temp-profile-rqs>`); }
   /* --- briefing service --- */
   authenticate() { return this.call("briefing", "authenticate", `<ndd:authenticate-rqs ${this.attrs()}/>`).catch(e => { throw e; }); }
   locBrief(locs, flags = {}) {

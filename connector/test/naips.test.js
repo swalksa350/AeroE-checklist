@@ -1,4 +1,4 @@
-process.env.NAIPS_URL = "http://localhost:8797"; process.env.NAIPS_USER = "testuser"; process.env.NAIPS_PASS = "Secret123"; process.env.AEROE_TOKENS = "P42:tok"; process.env.DATA_DIR = require("path").join(__dirname, "tmpdata"); process.env.ANTHROPIC_API_KEY = "";
+process.env.NAIPS_URL = "http://localhost:8787"; process.env.NAIPS_USER = "testuser"; process.env.NAIPS_PASS = "Secret123"; process.env.AEROE_TOKENS = "P42:tok"; process.env.DATA_DIR = require("path").join(__dirname, "tmpdata"); process.env.ANTHROPIC_API_KEY = "";
 const test = require("node:test"); const assert = require("node:assert"); const http = require("http"); const fs = require("fs");
 const { Naips, parseResponse } = require("../naips"); const { server } = require("../server"); const { CONTENT } = require("./sample");
 const seen = [];
@@ -8,7 +8,7 @@ const mock = http.createServer((req, res) => { let b = ""; req.on("data", c => b
   if (req.headers.soapaction === "loc-brief") return rsp("loc-brief-rsp", "<ndd:content>" + CONTENT.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</ndd:content>");
   if (req.headers.soapaction === "submit-icao-fn") { if (!/<ndd:acid>VHWSM<\/ndd:acid>/.test(b)) return rsp("submit-icao-fn-rsp", "<ndd:info>bad acid</ndd:info>", "INVALID"); return rsp("submit-icao-fn-rsp", "<ndd:fpl-text>(FPL-VHWSM-IN -GA8/L-SG/S -YSBK2230 -N0120A050 DCT -YSCN0030 YBTH -REG/VHWSM)</ndd:fpl-text>"); }
   res.writeHead(500); res.end("<faultstring>no</faultstring>"); }); });
-test.before(() => new Promise(r => mock.listen(8797, r))); test.after(() => { mock.close(); server.close(); fs.rmSync(process.env.DATA_DIR, { recursive: true, force: true }); });
+test.before(() => new Promise(r => mock.listen(8787, r))); test.after(() => { mock.close(); server.close(); fs.rmSync(process.env.DATA_DIR, { recursive: true, force: true }); });
 test("authenticate and loc-brief envelopes", async () => {
   const n = new Naips(); const a = await n.authenticate(); assert.equal(a.ok, true); assert.equal(a.name, "Test Pilot");
   assert.match(seen[0].body, /<ndd:authenticate-rqs requestor="TESTUSER" password="Secret123" source="aeroe"\/>/);
