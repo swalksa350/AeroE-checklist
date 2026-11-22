@@ -11,3 +11,5 @@ android/.gradle/
 android/build/
 android/app/build/
 android/local.properties
+ios/App/App.xcworkspace/contents.xcworkspacedata
+ios/App/Podfile.lock
