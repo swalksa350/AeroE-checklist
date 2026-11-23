@@ -53,5 +53,57 @@
 	<false/>
 	<key>UIRequiresFullScreen</key>
 	<false/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<false/>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Flight plan</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>au.com.aeroe.ozpln</string>
+				<string>com.topografix.gpx</string>
+				<string>au.com.aeroe.fpl</string>
+				<string>public.xml</string>
+				<string>public.json</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>au.com.aeroe.ozpln</string>
+			<key>UTTypeDescription</key>
+			<string>OzRunways flight plan</string>
+			<key>UTTypeConformsTo</key>
+			<array><string>public.json</string><string>public.data</string></array>
+			<key>UTTypeTagSpecification</key>
+			<dict><key>public.filename-extension</key><array><string>ozpln</string></array></dict>
+		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>com.topografix.gpx</string>
+			<key>UTTypeDescription</key>
+			<string>GPX route</string>
+			<key>UTTypeConformsTo</key>
+			<array><string>public.xml</string></array>
+			<key>UTTypeTagSpecification</key>
+			<dict><key>public.filename-extension</key><array><string>gpx</string></array><key>public.mime-type</key><array><string>application/gpx+xml</string></array></dict>
+		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>au.com.aeroe.fpl</string>
+			<key>UTTypeDescription</key>
+			<string>Garmin flight plan</string>
+			<key>UTTypeConformsTo</key>
+			<array><string>public.xml</string></array>
+			<key>UTTypeTagSpecification</key>
+			<dict><key>public.filename-extension</key><array><string>fpl</string></array></dict>
+		</dict>
+	</array>
 </dict>
 </plist>

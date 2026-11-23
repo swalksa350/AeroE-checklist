@@ -22,6 +22,14 @@ that Capacitor 6 declares, which shows up as "The iOS deployment target ... is s
 deployment target versions is ..." on every pod. If a future Xcode raises the floor again, change both the Podfile
 `platform` line and the post_install hook, then run `npm run sync`.
 
+## Opening flight plans from other apps
+
+The iOS target declares the `.ozpln`, `.gpx` and `.fpl` document types and the Android manifest has VIEW/SEND
+intent filters for them, so the installed app appears in the share sheet ("Copy to AeroE Checklist" on iOS,
+Open with on Android). The file arrives through `@capacitor/app`'s `appUrlOpen` event, is read with
+`@capacitor/filesystem` and imported onto the Plan page. After pulling this change run `npm install` in this
+folder before `npm run ios`, so the Filesystem plugin is installed and synced.
+
 ## NAIPS direct
 
 `capacitor.config.json` enables the Capacitor HTTP plugin, which routes the web app's `fetch` calls through native

@@ -420,7 +420,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "673e6472";
+const BUILD = "6a744421";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, plan:{}, manifest:{}, records:{}, ops:{url:"",token:"",pilotId:"",autoUpload:false,std:{},dutyMax:null,lastRoster:null,notices:[],noticesRead:{}}, duty:{start:null,log:[]}, pilot:{}, outbox:[]};
@@ -1356,6 +1356,10 @@ const opsReady=()=>!!(state.ops.url&&/^https?:\/\//.test(state.ops.url));
    state.ops.naipsMode: "auto" (direct in the installed app when a login is entered, otherwise connector), "direct", "connector". */
 const NAIPS_NEED="NAIPS needs either a connector (Status › Operator link) or, in the installed app, your NAIPS login.";
 function naipsInstalledApp(){ const c=window.Capacitor; return !!(c&&typeof c.isNativePlatform==="function"&&c.isNativePlatform()); }
+/* Installed app only: a flight plan file shared or opened into the app ("Copy to AeroE" on iOS, Open with on Android)
+   arrives as an appUrlOpen event with a file URL; read it and import it like the Import button does. */
+function nativeFileOpen(){ const c=window.Capacitor; if(!naipsInstalledApp()||!c.Plugins||!c.Plugins.App||!c.Plugins.Filesystem) return; const handle=async ev=>{ const url=ev&&ev.url; if(!url||/^https?:/i.test(url)) return; try{ const r=await c.Plugins.Filesystem.readFile({path:url,encoding:"utf8"}); const text=typeof r.data==="string"?r.data:""; const name=decodeURIComponent(url.split("/").pop()||"plan"); const a=AC(); if(!a){ alert("Choose the aircraft first, then share the plan again."); return; } const p=planStore(); const imp=importPlanText(text,name); applyPlanImport(p,imp); state.mode="plan"; state.sel="plan"; state.showing=true; save(); render(); }catch(e){ alert("Could not import that file: "+e.message); } }; c.Plugins.App.addListener("appUrlOpen",handle); c.Plugins.App.getLaunchUrl().then(r=>{ if(r&&r.url) handle(r); }).catch(()=>{}); }
+document.addEventListener("DOMContentLoaded",()=>{ try{ nativeFileOpen(); }catch(e){} });
 function naipsDirectActive(){ const O=state.ops; if(!window.NAIPS_LIB||!O.naipsUser||!O.naipsPass) return false; const mode=O.naipsMode||"auto"; if(mode==="connector") return false; if(mode==="direct") return true; return naipsInstalledApp(); }
 function naipsReady(){ return opsReady()||naipsDirectActive(); }
 async function naipsDirect(path,opts){ const LIB=window.NAIPS_LIB; const n=new LIB.Naips({base:state.ops.naipsBase||"https://www.airservicesaustralia.com",user:state.ops.naipsUser,pass:state.ops.naipsPass,source:"aeroe"}); const b=(opts&&opts.body)||{};
