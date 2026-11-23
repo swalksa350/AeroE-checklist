@@ -1,5 +1,17 @@
 [
   {
+    "version": "2.16",
+    "date": "2026-11-23",
+    "title": "Plan import from EFBs, aerodrome minima table, tidier Plan page, NAIPS corrections",
+    "notes": [
+      "Import a plan from OzRunways, AvPlan, ForeFlight or Garmin (FPL) or a GPX route; the file's waypoints are kept with the plan so they resolve without a navigation database. Paste route for a typed route.",
+      "Aerodrome minima table (Status › Navigation data): alternate minima per aerodrome from your documents, CSV import or the fleet pack; used by the briefing rules in place of the defaults.",
+      "Plan page in collapsible sections with the action buttons and briefing always visible; briefing header shows the minima applied in words.",
+      "NAIPS: winds now come from an SPFIB with expanded winds; briefing decoding follows NAIPS's real layout (NAME (ICAO) headers, two-digit NOTAM numbers, wrapped reports), so NOTAMs for smaller aerodromes are no longer lost and METARs keep their header; a debug view shows the last request and reply.",
+      "openAIP navaids and reporting points can be loaded into the navigation data."
+    ]
+  },
+  {
     "version": "2.15",
     "date": "2026-11-22",
     "title": "Navigation log; NAIPS client corrected against the live service",
