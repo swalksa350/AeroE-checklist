@@ -2,8 +2,9 @@
   {
     "version": "2.21",
     "date": "2026-11-23",
-    "title": "Route amendments in flight; terms of use; privacy policy; shared plans into the installed app",
+    "title": "Flight preparation on every device; route amendments in flight; terms of use",
     "notes": [
+      "Status › Operator link › Flight preparation on every device: plan, manifest, W&B, performance, open records, pilot and duty kept on the connector per pilot, sent after each change and fetched when the app opens, so a flight prepared in the office is on the iPad at the aircraft. Export flight file / Import plan does the same with a file and no server.",
       "Enroute: Direct to a waypoint, remove a waypoint, Divert to another aerodrome and Re-route, starting from the GPS position or the last waypoint passed; nav log actuals and winds carried across, EET and fuel recomputed, amendments listed and kept in the record.",
       "Plan and Enroute open the live map by default when online; the offline sketch now shows each leg's track, distance and LSALT, a scale bar and north.",
       "First launch shows the terms of use and asks for your name and acceptance before the app can be used; shown again when the terms change. Status › App has the acceptance date and the terms to read again; terms.html and privacy.html carry the same text for the App Store listing.",

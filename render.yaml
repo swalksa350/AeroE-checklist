@@ -18,3 +18,10 @@ services:
         value: https://swalksa350.github.io
       - key: OPERATOR_NAME
         value: My connector
+    # For records and flight-preparation sync to survive restarts: move to the starter plan, uncomment the disk and set DATA_DIR.
+    #   - key: DATA_DIR
+    #     value: /data
+    # disk:
+    #   name: aeroe-data
+    #   mountPath: /data
+    #   sizeGB: 1

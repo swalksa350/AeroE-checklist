@@ -6,6 +6,7 @@ its own systems. It implements the interface in `../docs/INTEGRATION.md`:
 | Endpoint | What it does |
 |---|---|
 | `GET /health` | Host health check, no token: `{ok:true}`. |
+| `GET /sync`, `PUT /sync` | The pilot's flight preparation (plan, manifest, W&B, performance, open records, pilot, duty) as one JSON document per pilot ID, for the app's device-to-device sync. |
 | `GET /ping` | Connection test; reports whether NAIPS and summaries are configured. |
 | `GET /roster?pilot=&date=` | The pilot's flights for the day from `data/roster.json` (replace with a query to your rostering system). |
 | `GET /fleet` | Fleet pack from `data/fleet.json`: registrations, checklist customisations, standard weights, duty limit. |
@@ -56,6 +57,11 @@ https://render.com/deploy?repo=https://github.com/swalksa350/AeroE-checklist (or
 3. When the service is live, note its address (`https://aeroe-connector-xxxx.onrender.com`).
 4. In the app: Status › Operator link › Connector address = that address, Access token = the secret, Pilot ID = `yourname`,
    then Test connection, enter your NAIPS login and Test NAIPS login.
+
+Persistent storage (records and flight-preparation sync): the free plan's filesystem is reset whenever the instance
+restarts, including after it sleeps, so anything written to `DATA_DIR` is lost. To keep it: upgrade the service to the
+Starter plan, add a Disk (Render dashboard › the service › Disks › Add Disk, mount path `/data`, 1 GB is plenty) and set
+the environment variable `DATA_DIR=/data`. Records and the sync document then survive restarts and deploys.
 
 Notes: the free plan sleeps after 15 minutes idle and the first request then takes up to a minute – press the
 button again. Records uploaded to a free instance are not kept across restarts (your device keeps its own copies);
