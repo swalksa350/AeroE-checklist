@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.21",
+    "date": "2026-11-23",
+    "title": "Terms of use acceptance; privacy policy; installed app opens shared plans",
+    "notes": [
+      "First launch shows the terms of use and asks for your name and acceptance before the app can be used; shown again when the terms change. Status › App has the acceptance date and the terms to read again; terms.html and privacy.html carry the same text for the App Store listing.",
+      "Installed app (TestFlight): OzRunways, GPX and Garmin plan files can be shared straight into the app (Copy to AeroE Checklist) and open on the Plan page.",
+      "NAIPS through a connector waits up to two minutes (free Render instances sleep); the chart directory loads in parallel; Direct NAIPS access is used only in the installed app."
+    ]
+  },
+  {
     "version": "2.20",
     "date": "2026-11-23",
     "title": "Cruise level and winds ahead of the fuel table; level comparison on hemispherical levels",
