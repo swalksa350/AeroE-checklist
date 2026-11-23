@@ -41,9 +41,11 @@ async function status(naips, personal) { if (!naips.configured()) return { confi
 /* Chart directory: NAIPS keeps GAF and GPWT as "resources" and everything else (MSL analysis, SIGWX, planning charts, the PCA)
    as "charts"; the app sees one list. Each entry's key is what fetches it. */
 const BOM_NAMES = { GAF: "Graphical Area Forecast", GPWT: "Grid point wind and temperature" };
-async function chartDir(naips, b) { const cat = b && b.category; const out = []; const errs = [];
-  if (!cat || !/^(GAF|GPWT)$/.test(cat)) { try { const r = await naips.chartDir({ category: cat, search: b && b.search }); if (!r.ok) errs.push(r.info || r.status); (r.charts || []).forEach(c => out.push(c)); } catch (e) { errs.push(e.message); } }
-  for (const t of ["GAF", "GPWT"]) { if (cat && cat !== t) continue; try { const r = await naips.resourceDir(t); if (!r.ok) errs.push(r.info || r.status); (r.resources || []).forEach(x => out.push(Object.assign(x, { name: BOM_NAMES[t] + " " + (x.bom || ""), code: x.bom, format: null, variants: [] }))); } catch (e) { errs.push(e.message); } }
+/* The chart directory is three NAIPS requests (chart-dir, GAF resources, GPWT resources); they run in parallel. */
+async function chartDir(naips, b) { const cat = b && b.category; const out = []; const errs = []; const jobs = [];
+  if (!cat || !/^(GAF|GPWT)$/.test(cat)) jobs.push(naips.chartDir({ category: cat, search: b && b.search }).then(r => { if (!r.ok) errs.push(r.info || r.status); (r.charts || []).forEach(c => out.push(c)); }, e => errs.push(e.message)));
+  for (const t of ["GAF", "GPWT"]) { if (cat && cat !== t) continue; jobs.push(naips.resourceDir(t).then(r => { if (!r.ok) errs.push(r.info || r.status); (r.resources || []).forEach(x => out.push(Object.assign(x, { name: BOM_NAMES[t] + " " + (x.bom || ""), code: x.bom, format: null, variants: [] }))); }, e => errs.push(e.message))); }
+  await Promise.all(jobs);
   return { ok: out.length > 0 || !errs.length, status: errs.length ? "PARTIAL" : "SUCCESS", info: errs.join("; ") || null, charts: out }; }
 function guessType(b64) { if (/^iVBOR/.test(b64)) return "PNG"; if (/^R0lGOD/.test(b64)) return "GIF"; if (/^JVBER/.test(b64)) return "PDF"; if (/^\/9j\//.test(b64)) return "JPEG"; return "PNG"; }
 async function getChart(naips, b) { if (!b || !b.key) throw new Error("key is required"); if (b.kind === "resource") { const r = await naips.getResource(b.key); const data = (r.content || "").replace(/\s+/g, ""); return { ok: r.ok, status: r.status, info: r.info, products: data ? [{ type: guessType(data), variant: null, data }] : [] }; } const r = await naips.getChart(b.key, b.variant); return { ok: r.ok, status: r.status, info: r.info, products: r.products || [] }; }

@@ -420,7 +420,7 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "6a744421";
+const BUILD = "097d14e5";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, plan:{}, manifest:{}, records:{}, ops:{url:"",token:"",pilotId:"",autoUpload:false,std:{},dutyMax:null,lastRoster:null,notices:[],noticesRead:{}}, duty:{start:null,log:[]}, pilot:{}, outbox:[]};
@@ -1372,8 +1372,12 @@ async function opsFetch(path,opts){
   if(/airservicesaustralia\.com|\/naips\b/i.test(state.ops.url||"")) throw new Error("the connector address is NAIPS itself. NAIPS does not accept requests from a web page, so this field needs the address of a connector server that forwards them (for example the onrender.com address from the guide, section 12c). Your NAIPS login goes in the NAIPS fields below, not here");
   if(!opsReady()) throw new Error("no connector address set. NAIPS briefings, winds and filing all go through a connector – enter its address under Operator link (your operator's, or your own: see the guide, section 12c)");
   const url=state.ops.url.replace(/\/+$/,"")+path; const headers=Object.assign({"Accept":"application/json"},(opts&&opts.body)?{"Content-Type":"application/json"}:{} ,state.ops.token?{"Authorization":"Bearer "+state.ops.token}:{});
-  const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),15000);
+  /* NAIPS calls take a while (the chart directory is three NAIPS requests; a briefing with charts more) and a free
+     Render instance sleeps after 15 minutes idle and takes up to a minute to wake, so those paths get a long limit. */
+  const heavy=/^\/(briefing|charts|chart|winds|fpl|naips\/status)$/.test(path); const limit=heavy?120000:20000;
+  const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),limit);
   try{ const r=await fetch(url,{method:(opts&&opts.method)||"GET",headers,body:opts&&opts.body?JSON.stringify(opts.body):undefined,signal:ctl.signal,cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status); const ct=r.headers.get("content-type")||""; return ct.includes("json")?await r.json():{}; }
+  catch(e){ if(e&&(e.name==="AbortError"||/abort/i.test(e.message||""))) throw new Error("no reply from the connector within "+Math.round(limit/1000)+" s"+(/onrender\.com/i.test(state.ops.url||"")?" – a free Render instance takes up to a minute to wake after 15 minutes idle; try again":"")); if(e&&/Failed to fetch|Load failed|NetworkError/i.test(e.message||"")) throw new Error("could not reach the connector ("+e.message+") – check the address, signal, and that the connector allows this app's origin"); throw e; }
   finally{ clearTimeout(tm); }
 }
 function recById(aid,id){ const l=state.records[aid]||[]; return l.find(r=>r.id===id)||null; }
