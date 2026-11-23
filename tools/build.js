@@ -27,3 +27,5 @@ sw = sw.replace(/const VERSION = "[^"]*";/, `const VERSION = "ga-ecl-${version}"
        .replace(/const ASSETS = \[[\s\S]*?\];/, `const ASSETS = [\n${assets.map(a => `  "${a}"`).join(",\n")}\n];`);
 fs.writeFileSync(path.join(root, "sw.js"), sw);
 console.log(`${files.length} aircraft, ${wbFiles.length} W&B templates, ${perfFiles.length} performance sets, ${assets.length} precached files, build ${version}`);
+/* syntax check: every inline script in index.html must parse, or the build fails (a broken app must never ship) */
+{ const vm = require("vm"); const html = fs.readFileSync(path.join(root, "index.html"), "utf8"); const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)]; scripts.forEach((m, i) => { try { new vm.Script(m[1], { filename: "index.html inline script " + i }); } catch (e) { console.error("SYNTAX ERROR in index.html inline script " + i + ": " + e.message); process.exit(1); } }); }
