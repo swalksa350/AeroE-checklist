@@ -61,13 +61,39 @@ npm run android         # syncs and opens Android Studio; Run on a connected dev
 
 ## TestFlight and the App Store
 
-1. In Xcode choose *Product → Archive*, then *Distribute App → App Store Connect → Upload*.
-2. In App Store Connect create the app record (bundle id `au.com.aeroe.checklist`, name "AeroE Checklist",
-   primary category Navigation or Utilities; the review notes should say the app works offline and that the
-   microphone is used only for on-device recognition of checklist commands).
-3. Add internal testers under TestFlight; external testers need a short beta review.
-4. For the public release: screenshots (iPad 13" and 11", iPhone 6.7"), privacy policy URL, support URL,
-   the App Privacy questionnaire (no data collected: everything stays on the device), age rating, price.
+TestFlight is the way onto an iPad that cannot enable Developer Mode (a company-managed device): the build is
+installed through Apple's TestFlight app, not by Xcode. It needs a paid Apple Developer Program membership.
+
+1. **Join the Apple Developer Program** at https://developer.apple.com/programs/enroll/ with the Apple ID you use in
+   Xcode (about AUD 149 a year; approval can take up to 48 hours, an email confirms it). A Personal Team cannot upload.
+2. **Point Xcode at the paid team.** Xcode › Settings › Accounts: the account now lists the paid team as well as the
+   Personal Team. In the project (`npm run ios`, then App › Signing & Capabilities) change *Team* from the Personal Team
+   to the paid one for the App target; leave *Automatically manage signing* on. Xcode registers the bundle id
+   `au.com.aeroe.checklist` for that team.
+3. **Create the app record** at https://appstoreconnect.apple.com › My Apps › + › New App: platform iOS, name
+   "AeroE Checklist", primary language English (Australia), bundle id `au.com.aeroe.checklist`, SKU `aeroe-checklist`,
+   full access. The name must be unique across the store; add a word if it is taken.
+4. **Archive.** In Xcode set the run destination to *Any iOS Device (arm64)* (not My Mac, not a simulator), then
+   *Product › Archive*. The Organizer opens with the archive; choose *Distribute App › TestFlight Internal Only › Upload*
+   and accept the defaults. The first upload asks the export-compliance question only if `Info.plist` lacks
+   `ITSAppUsesNonExemptEncryption` (it is set to NO here: the app uses only standard HTTPS).
+5. **Wait for processing** (five to thirty minutes; App Store Connect emails when the build is ready).
+6. **Add yourself as a tester.** App Store Connect › the app › TestFlight › Internal Testing › + › name the group,
+   tick the build, add testers by Apple ID email (up to 100 internal testers; no beta review needed). Each tester
+   gets an email invitation.
+7. **On the iPad** install TestFlight from the App Store, open the invitation (or the TestFlight app) and tap Install.
+   The app appears on the Home Screen like any other. Direct NAIPS calls work because it is the installed app.
+8. **Updates.** Raise `CURRENT_PROJECT_VERSION` in `ios/App/App.xcodeproj/project.pbxproj` (every upload needs a
+   higher build number), archive and upload again; TestFlight offers the new build on the iPad. A TestFlight build
+   expires 90 days after upload, so upload at least that often.
+
+If the company's device management blocks the App Store or TestFlight, no build can be installed on that iPad;
+use the Pages web app with a connector (see `connector/README.md`, "Run your own") instead.
+
+For the public App Store release in addition: screenshots (iPad 13" and 11", iPhone 6.7"), a privacy policy URL,
+a support URL, the App Privacy questionnaire (no data collected: everything stays on the device), age rating, price,
+and review notes saying the app works offline and the microphone is used only for on-device recognition of
+checklist commands. External TestFlight testers (beyond the 100 internal) need a short beta review.
 
 ## Versioning
 
