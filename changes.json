@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.20",
+    "date": "2026-11-23",
+    "title": "Cruise level and winds ahead of the fuel table; level comparison on hemispherical levels",
+    "notes": [
+      "Fuel plan section reordered: cruise level, power setting and the per-leg winds come first, the fuel required table follows, because the winds and level set the trip fuel.",
+      "Level dropdown in the fuel plan lists the hemispherical IFR or VFR levels for the direction of flight; changing it (or the Flight section field) recalculates the POH climb, cruise and descent and re-applies the model winds for that level – no reload.",
+      "Level comparison now runs on the real hemispherical levels, with the model wind interpolated to each level, the chosen power setting, LSALT flags and a note for levels outside the POH cruise table. Use sets level, POH figures and winds together.",
+      "Model winds fetched at nine pressure levels (about 1,800 to 23,600 ft) and interpolated to the planned level instead of the nearest level."
+    ]
+  },
+  {
     "version": "2.19",
     "date": "2026-11-23",
     "title": "Charts attached to briefings; Airvan cruise settings; fuel checks linked to the nav log",
