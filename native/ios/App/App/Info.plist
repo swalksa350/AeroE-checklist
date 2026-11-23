@@ -49,6 +49,8 @@
 	<string>AeroE Checklist listens for your spoken replies ("checked", "repeat", "skip") and for "hey Aero" when voice features are turned on. Audio is processed on this device.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Used only when you turn on voice replies, to recognise short checklist commands.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Used only when you amend the route in flight (direct to, divert, re-route) so the new leg can start from the aircraft's present position.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIRequiresFullScreen</key>

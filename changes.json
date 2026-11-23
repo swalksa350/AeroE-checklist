@@ -2,8 +2,10 @@
   {
     "version": "2.21",
     "date": "2026-11-23",
-    "title": "Terms of use acceptance; privacy policy; installed app opens shared plans",
+    "title": "Route amendments in flight; terms of use; privacy policy; shared plans into the installed app",
     "notes": [
+      "Enroute: Direct to a waypoint, remove a waypoint, Divert to another aerodrome and Re-route, starting from the GPS position or the last waypoint passed; nav log actuals and winds carried across, EET and fuel recomputed, amendments listed and kept in the record.",
+      "Plan and Enroute open the live map by default when online; the offline sketch now shows each leg's track, distance and LSALT, a scale bar and north.",
       "First launch shows the terms of use and asks for your name and acceptance before the app can be used; shown again when the terms change. Status › App has the acceptance date and the terms to read again; terms.html and privacy.html carry the same text for the App Store listing.",
       "Installed app (TestFlight): OzRunways, GPX and Garmin plan files can be shared straight into the app (Copy to AeroE Checklist) and open on the Plan page.",
       "NAIPS through a connector waits up to two minutes (free Render instances sleep); the chart directory loads in parallel; Direct NAIPS access is used only in the installed app."
