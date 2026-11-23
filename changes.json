@@ -1,5 +1,15 @@
 [
   {
+    "version": "2.18",
+    "date": "2026-11-23",
+    "title": "Times in UTC; briefing validity; en route alternates list; chart browser",
+    "notes": [
+      "All clock times are now UTC by default: ETD, Now buttons, nav log, fuel checks, plan import and logbook exports. Status › Pilot can switch to device local time. Records carry their convention; the Enroute page warns when an entered time is hours off the plan.",
+      "Briefing requested for a period covering the arrival plus a day, so NOTAMs starting later today or tomorrow are included.",
+      "En route alternates are added one code at a time as a list; the chart browser lists NAIPS charts on opening; a Copy wind diagnostics button appears when winds fail."
+    ]
+  },
+  {
     "version": "2.17",
     "date": "2026-11-23",
     "title": "Alternates and minima: take-off alternate, approach DA/MDA, en route alternates; NAIPS charts; W&B fuel in volume and weight",
