@@ -254,7 +254,7 @@ function evaluateAerodrome(icao, decoded, eta, opts = {}) {
   }
   const metar = decoded.metar.filter(m => m.icao === icao).slice(-1)[0];
   if (metar) { const why = belowMinima(metar, minima, ac); if (why.length) add("warning", "Current conditions", icao + " latest " + metar.type + ": " + why.join("; ") + ".", metar.raw); }
-  for (const n of decoded.notam.filter(n => n.icao === icao)) { const r = classifyNotam(n.text); if (r) add(r.level, "NOTAM " + r.topic, icao + " " + n.id + ": " + r.text, n.text.split("\n").slice(0, 6).join("\n")); }
+  for (const n of decoded.notam.filter(n => n.icao === icao)) { const r = classifyNotam(n.text); if (r) add(r.level, "NOTAM " + r.topic, icao + " " + n.id + ": " + r.text, n.text.split("\n").slice(0, 6).join("\n"), r.holdMin); }
   return finish();
   function finish() {
     const alternate = F.some(f => f.level === "alternate"); const holdMin = Math.max(0, ...F.map(f => f.holdMin || 0));
@@ -262,6 +262,7 @@ function evaluateAerodrome(icao, decoded, eta, opts = {}) {
   }
 }
 const NOTAM_RULES = [
+  [/\b(HOLD|HLDG|HOLDING|DELAY|DELAYS)\b[^\n]{0,80}?\b(\d{1,3})\s*MIN/s, "holding", "traffic holding", "Holding or delays are notified – carry the holding fuel stated."],
   [/\b(AD|AERODROME)\b.*\b(CLSD|CLOSED|NOT AVBL)/s, "alternate", "aerodrome closed", "The aerodrome is notified closed or not available – check the times against your ETA."],
   [/\bRWY\s*[0-9/LRC ]*\b.*\b(CLSD|CLOSED|NOT AVBL|U\/S)/s, "warning", "runway", "A runway is closed or unserviceable – check which runway and when."],
   [/\b(RWY|TWY)\b.*\b(SHORTENED|REDUCED|DISPLACED)/s, "warning", "runway length", "Runway length or threshold is reduced – re-check take-off and landing distance."],
@@ -273,7 +274,7 @@ const NOTAM_RULES = [
   [/\b(CTAF|FREQ|FREQUENCY)\b.*\b(CHANGED|CHG|NEW)/s, "info", "frequency", "A frequency has changed."],
   [/\b(DAP|CHART|PROCEDURE)\b.*\b(AMEND|CHG|CHANGED|CORRECT)/s, "info", "procedure", "A chart or procedure is amended."],
 ];
-function classifyNotam(text) { const t = text.toUpperCase(); for (const [re, level, topic, msg] of NOTAM_RULES) if (re.test(t)) return { level, topic, text: msg }; return null; }
+function classifyNotam(text) { const t = text.toUpperCase(); for (const [re, level, topic, msg] of NOTAM_RULES) { const m = re.exec(t); if (m) { const out = { level, topic, text: msg }; if (topic === "traffic holding") { out.holdMin = +m[2]; out.text = "Holding or delays of up to " + m[2] + " minutes are notified – carry " + m[2] + " min holding fuel."; } return out; } } return null; }
 /* Whole-flight evaluation. plan: {dep, dest, altn:[...], etd (Date), eetMin, altEetMin, minima:{ICAO:{ceiling,vis}}, aircraft:{maxCrosswind,maxTailwind,runwayHdg:{ICAO:hdg}}} */
 function evaluateFlight(decoded, plan) {
   const etd = new Date(plan.etd); const eta = new Date(etd.getTime() + (plan.eetMin || 60) * 60000);
