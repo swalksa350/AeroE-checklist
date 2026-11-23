@@ -20,7 +20,10 @@ const briefing = p => core.briefing(naipsFor(p), p, { summarise, log });
 const { parseWinds, fplPreview } = core;
 const server = http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") { res.writeHead(204, { "Access-Control-Allow-Origin": ORIGIN, "Access-Control-Allow-Headers": "Authorization, Content-Type", "Access-Control-Allow-Methods": "GET, POST, OPTIONS" }); return res.end(); }
-  const u = new URL(req.url, "http://x"); const who = auth(req);
+  const u = new URL(req.url, "http://x");
+  /* Health check for the host (Render, Docker): no token, no detail. */
+  if (u.pathname === "/health" && req.method === "GET") return send(res, 200, { ok: true });
+  const who = auth(req);
   if (!who) return send(res, 401, { error: "missing or invalid token" });
   try {
     if (u.pathname === "/ping") { const roster = readJSON("roster.json", null); const fleet = readJSON("fleet.json", null); return send(res, 200, { operator: process.env.OPERATOR_NAME || "AeroE connector", naips: naips.configured(), personalNaips: true, summary: !!process.env.ANTHROPIC_API_KEY, version: require("./package.json").version, caps: { roster: !!(roster && (Array.isArray(roster) ? roster.length : (roster.flights || []).length)), fleet: !!(fleet && fleet.aircraft && Object.keys(fleet.aircraft).length), notices: true, records: true, briefing: true, fpl: true, winds: true } }); }

@@ -5,6 +5,7 @@ its own systems. It implements the interface in `../docs/INTEGRATION.md`:
 
 | Endpoint | What it does |
 |---|---|
+| `GET /health` | Host health check, no token: `{ok:true}`. |
 | `GET /ping` | Connection test; reports whether NAIPS and summaries are configured. |
 | `GET /roster?pilot=&date=` | The pilot's flights for the day from `data/roster.json` (replace with a query to your rostering system). |
 | `GET /fleet` | Fleet pack from `data/fleet.json`: registrations, checklist customisations, standard weights, duty limit. |

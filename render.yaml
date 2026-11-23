@@ -8,7 +8,7 @@ services:
     plan: free
     buildCommand: "true"
     startCommand: node server.js
-    healthCheckPath: /ping
+    healthCheckPath: /health
     envVars:
       - key: NODE_VERSION
         value: "22"
