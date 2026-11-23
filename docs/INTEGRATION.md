@@ -96,6 +96,14 @@ rendering when filed. The app stores both with the flight record.
 
 Route `segments[].waypoint` entries are aerodrome codes or ICAO lat/long tokens such as `3340S15110E` (turning points added from the map); they go into the NAIPS route as waypoints.
 
+## Charts
+
+`POST /charts` with `{ category? }` (GAF, GPWT, SIGWX, WIND_TEMP, OTHER) returns `{ charts: [{ code, name, from, till, format, category, variants }] }`
+from NAIPS's chart directory; `POST /chart` with `{ key, variant? }` returns `{ products: [{ type, variant, data (base64) }] }`.
+Both accept the personal `naips` login like the briefing.
+
+Fleet pack `minima` entries may carry `toCeiling`, `toVis`, `elev` and `approaches: [{ type, da, vis }]` as well as `ceiling`, `vis` and `note`.
+
 ## Winds and personal NAIPS accounts
 
 The installed iOS/Android app reaches NAIPS directly and only uses the connector for roster, fleet, notices and records; a browser uses the connector for everything.

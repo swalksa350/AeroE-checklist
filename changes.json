@@ -1,5 +1,17 @@
 [
   {
+    "version": "2.17",
+    "date": "2026-11-23",
+    "title": "Alternates and minima: take-off alternate, approach DA/MDA, en route alternates; NAIPS charts; W&B fuel in volume and weight",
+    "notes": [
+      "Plan: Destination alternate 1 and 2 plus Enroute alternates (as required); a Minima for this flight table with an editor per aerodrome for alternate planning minima, take-off alternate minima and each approach's DA/MDA and visibility.",
+      "Briefing rules: approach minima compared with the forecast at ETA (supports all, some or none of the approaches; none at the destination means an alternate), INTER/TEMPO below approach minima flagged, take-off alternate requirement from the departure's current weather, en route alternates assessed for a mid-flight diversion.",
+      "Area charts (NAIPS): the Planning Chart Australia, GAF, GPWT and SIGWX charts from the NAIPS chart directory, viewed in the Plan page.",
+      "W&B fuel rows show a volume box (L or US gal) beside a weight box; either can be typed.",
+      "Plan import accepts OzRunways .ozpln files (airways, LSALTs, winds, level, ETD)."
+    ]
+  },
+  {
     "version": "2.16",
     "date": "2026-11-23",
     "title": "Plan import from EFBs, aerodrome minima table, tidier Plan page, NAIPS corrections",

@@ -13,6 +13,14 @@ function belowMinima(g, minima, ac) {
   if (g.wind && ac) { const x = crosswind(g.wind, ac.runwayHdg); if (ac.maxCrosswind && x !== null && x.cross > ac.maxCrosswind) why.push("crosswind " + x.cross + " kt above the aircraft limit of " + ac.maxCrosswind + " kt"); if (ac.maxTailwind !== undefined && x !== null && x.tail > ac.maxTailwind) why.push("tailwind " + x.tail + " kt above " + ac.maxTailwind + " kt"); }
   return why;
 }
+/* Approach minima: minima.approaches = [{type, da (DA or MDA, ft AMSL), vis (m)}] with minima.elev (aerodrome elevation ft).
+   Returns the approaches the forecast/report supports and the reasons the others fail; null when none are entered. */
+function approachCheck(g, minima) {
+  const list = (minima.approaches || []).filter(a => a && (a.da !== null && a.da !== undefined));
+  if (!list.length) return null; const elev = minima.elev || 0;
+  const res = list.map(a => { const hat = Math.max(0, Math.round(a.da - elev)); const why = []; if (g.ceiling !== null && g.ceiling !== undefined && g.ceiling < hat) why.push("cloud at " + g.ceiling + " ft below the " + (a.type || "approach") + " minima height of " + hat + " ft (" + a.da + " ft AMSL)"); if (a.vis && g.vis !== null && g.vis !== undefined && g.vis < a.vis) why.push("visibility " + g.vis + " m below the " + (a.type || "approach") + " minimum of " + a.vis + " m"); return { type: a.type || "approach", da: a.da, hat, vis: a.vis || null, ok: !why.length, why }; });
+  return { ok: res.filter(r => r.ok), fail: res.filter(r => !r.ok), lowest: res.slice().sort((x, y) => x.hat - y.hat)[0] };
+}
 function crosswind(wind, rwyHdg) { if (!wind || wind.dir === null || rwyHdg === null || rwyHdg === undefined) return null; const spd = wind.gust || wind.spd; const d = (wind.dir - rwyHdg) * Math.PI / 180; return { cross: Math.round(Math.abs(spd * Math.sin(d))), tail: Math.round(-spd * Math.cos(d)) }; }
 /* Evaluate one aerodrome for an arrival at eta (Date). Returns findings and the holding/alternate requirement. */
 function evaluateAerodrome(icao, decoded, eta, opts = {}) {
@@ -25,10 +33,11 @@ function evaluateAerodrome(icao, decoded, eta, opts = {}) {
   const base = taf.segments.find(s => s.kind === "BASE"); let current = base;
   const fms = taf.segments.filter(s => (s.kind === "FM" || s.kind === "BECMG") && s.period && s.period.from <= till); if (fms.length) current = fms[fms.length - 1];
   const merged = current && current !== base ? Object.assign({}, base, Object.fromEntries(Object.entries(current).filter(([k, v]) => v !== null && !(Array.isArray(v) && !v.length) && k !== "kind" && k !== "text"))) : base;
-  if (merged) { const why = belowMinima(merged, minima, ac); if (why.length) add("alternate", "Forecast below alternate minima", icao + ": " + why.join("; ") + " in the operative forecast at ETA – an alternate is required.", current.text || base.raw || taf.raw); }
+  if (merged) { const why = belowMinima(merged, minima, ac); if (why.length) add("alternate", "Forecast below alternate minima", icao + ": " + why.join("; ") + " in the operative forecast at ETA – an alternate is required.", current.text || base.raw || taf.raw);
+    const ap = approachCheck(merged, minima); if (ap) { if (!ap.ok.length) add(opts.role === "destination" ? "alternate" : "warning", "Approach minima", icao + ": the operative forecast at ETA is below the minima of every approach entered (" + ap.fail.map(r => r.type + " " + r.hat + " ft" + (r.vis ? "/" + r.vis + " m" : "")).join(", ") + "): " + ap.fail[0].why.join("; ") + ". A landing is not assured" + (opts.role === "destination" ? " – an alternate is required" : "") + ".", current.text || base.raw || taf.raw); else if (ap.fail.length) add("info", "Approach minima", icao + ": forecast supports " + ap.ok.map(r => r.type + " (" + r.hat + " ft)").join(", ") + "; below minima for " + ap.fail.map(r => r.type).join(", ") + ".", current.text || base.raw || taf.raw); else add("info", "Approach minima", icao + ": forecast at ETA is above the minima of " + ap.ok.map(r => r.type + " (" + r.hat + " ft" + (r.vis ? "/" + r.vis + " m" : "") + ")").join(", ") + ".", ""); } }
   for (const s of taf.segments) {
     if (!["TEMPO", "INTER", "PROB"].includes(s.kind) || !within(s, from, till)) continue;
-    const why = belowMinima(s, minima, ac); if (!why.length) continue;
+    const why = belowMinima(s, minima, ac); const ap = approachCheck(s, minima); if (!why.length) { if (ap && !ap.ok.length) add("warning", "Approach minima in " + s.kind, icao + ": " + s.kind + (s.prob ? " (PROB" + s.prob + ")" : "") + " conditions are below every approach minima entered (" + ap.fail[0].why.join("; ") + ") although above the alternate minima – expect holding or a diversion if it occurs.", s.text); continue; }
     const hold = s.kind === "PROB" ? HOLD.PROB : HOLD[s.kind];
     add("holding", s.kind + (s.prob ? " PROB" + s.prob : ""), icao + ": " + s.kind + (s.prob ? " (PROB" + s.prob + ")" : "") + " " + why.join("; ") + " within ETA ± " + (opts.bufferMin || 30) + " min – carry " + hold + " min holding fuel, or plan an alternate.", s.text, hold);
   }
@@ -57,16 +66,22 @@ function classifyNotam(text) { const t = text.toUpperCase(); for (const [re, lev
 /* Whole-flight evaluation. plan: {dep, dest, altn:[...], etd (Date), eetMin, altEetMin, minima:{ICAO:{ceiling,vis}}, aircraft:{maxCrosswind,maxTailwind,runwayHdg:{ICAO:hdg}}} */
 function evaluateFlight(decoded, plan) {
   const etd = new Date(plan.etd); const eta = new Date(etd.getTime() + (plan.eetMin || 60) * 60000);
-  const per = icao => ({ minima: (plan.minima || {})[icao], aircraft: Object.assign({}, plan.aircraft || {}, { runwayHdg: plan.aircraft && plan.aircraft.runwayHdg ? plan.aircraft.runwayHdg[icao] : undefined }), bufferMin: plan.bufferMin });
-  const dest = evaluateAerodrome(plan.dest, decoded, eta, per(plan.dest));
-  const altns = (plan.altn || []).map(a => evaluateAerodrome(a, decoded, new Date(eta.getTime() + (plan.altEetMin || 30) * 60000), per(a)));
+  const per = (icao, role) => ({ role, minima: (plan.minima || {})[icao], aircraft: Object.assign({}, plan.aircraft || {}, { runwayHdg: plan.aircraft && plan.aircraft.runwayHdg ? plan.aircraft.runwayHdg[icao] : undefined }), bufferMin: plan.bufferMin });
+  const dest = evaluateAerodrome(plan.dest, decoded, eta, per(plan.dest, "destination"));
+  const altns = (plan.altn || []).map(a => evaluateAerodrome(a, decoded, new Date(eta.getTime() + (plan.altEetMin || 30) * 60000), per(a, "alternate")));
+  /* en route alternates: assessed for an arrival around the middle of the flight (a diversion can come at any point) */
+  const enroute = (plan.enroute || []).map(a => evaluateAerodrome(a, decoded, new Date(etd.getTime() + ((plan.eetMin || 60) / 2) * 60000), Object.assign(per(a, "enroute"), { bufferMin: Math.max(plan.bufferMin || 30, Math.round((plan.eetMin || 60) / 2)) })));
   const depF = []; const depTaf = decoded.taf.find(t => t.icao === plan.dep); const depMetar = decoded.metar.filter(m => m.icao === plan.dep).slice(-1)[0];
   if (depMetar) { const g = depMetar; if (g.ts) depF.push({ level: "warning", aerodrome: plan.dep, rule: "Departure weather", text: plan.dep + ": thunderstorms reported.", quote: g.raw }); if (g.vis !== null && g.vis < 5000) depF.push({ level: "warning", aerodrome: plan.dep, rule: "Departure weather", text: plan.dep + ": visibility " + g.vis + " m.", quote: g.raw }); }
+  /* take-off alternate: departure weather against the take-off alternate minima (minima[dep].toCeiling/toVis), or failing those, the lowest approach minima for a return */
+  { const dm = (plan.minima || {})[plan.dep] || {}; const g = depMetar || (depTaf && depTaf.segments && depTaf.segments.find(x => x.kind === "BASE")); if (g) { const to = (dm.toCeiling || dm.toVis) ? { ceiling: dm.toCeiling || 0, vis: dm.toVis || 0 } : null; if (to) { const why = []; if (g.ceiling !== null && g.ceiling !== undefined && g.ceiling < to.ceiling) why.push("cloud at " + g.ceiling + " ft below " + to.ceiling + " ft"); if (g.vis !== null && g.vis !== undefined && g.vis < to.vis) why.push("visibility " + g.vis + " m below " + to.vis + " m"); if (why.length) depF.push({ level: "alternate", aerodrome: plan.dep, rule: "Take-off alternate", text: plan.dep + ": " + (depMetar ? "current conditions" : "forecast") + " below the take-off alternate minima (" + why.join("; ") + ") – a take-off alternate is required, within the distance or time your exposition allows.", quote: g.raw || g.text || "" }); else depF.push({ level: "info", aerodrome: plan.dep, rule: "Take-off alternate", text: plan.dep + ": " + (depMetar ? "current conditions" : "forecast") + " above the take-off alternate minima (" + to.ceiling + " ft / " + to.vis + " m).", quote: "" }); }
+      else { const ap = approachCheck(g, dm); if (ap && !ap.ok.length) depF.push({ level: "warning", aerodrome: plan.dep, rule: "Take-off alternate", text: plan.dep + ": " + (depMetar ? "current conditions" : "forecast") + " are below every approach minima entered for a return (" + ap.fail[0].why.join("; ") + ") – consider a take-off alternate; enter the take-off alternate minima to have this assessed.", quote: g.raw || g.text || "" }); } } }
   for (const n of decoded.notam.filter(n => n.icao === plan.dep)) { const r = classifyNotam(n.text); if (r) depF.push({ level: r.level === "alternate" ? "warning" : r.level, aerodrome: plan.dep, rule: "NOTAM " + r.topic, text: plan.dep + " " + n.id + ": " + r.text, quote: n.text.split("\n").slice(0, 6).join("\n") }); }
   const sig = decoded.sigmet.map(s => ({ level: "warning", aerodrome: "route", rule: "SIGMET/AIRMET", text: "A SIGMET or AIRMET is current – check whether it affects the route and levels.", quote: s.text.split("\n").slice(0, 8).join("\n") }));
   const altnOk = altns.filter(a => !a.alternateRequired && !a.findings.some(f => f.level === "alternate"));
-  const summary = { alternateRequired: dest.alternateRequired, holdingMinutes: dest.holdingMinutes, alternatesSuitable: altnOk.map(a => a.icao), alternatesUnsuitable: altns.filter(a => !altnOk.includes(a)).map(a => a.icao), eta: eta.toISOString(), depTafPresent: !!depTaf };
+  const enrOk = enroute.filter(a => !a.alternateRequired && !a.findings.some(f => f.level === "alternate"));
+  const summary = { alternateRequired: dest.alternateRequired, holdingMinutes: dest.holdingMinutes, alternatesSuitable: altnOk.map(a => a.icao), alternatesUnsuitable: altns.filter(a => !altnOk.includes(a)).map(a => a.icao), enrouteSuitable: enrOk.map(a => a.icao), enrouteUnsuitable: enroute.filter(a => !enrOk.includes(a)).map(a => a.icao), takeoffAlternateRequired: depF.some(f => f.rule === "Take-off alternate" && f.level === "alternate"), eta: eta.toISOString(), depTafPresent: !!depTaf };
   if (dest.alternateRequired && !altnOk.length) summary.problem = "The destination requires an alternate and no suitable alternate was briefed.";
-  return { summary, departure: { icao: plan.dep, findings: depF }, destination: dest, alternates: altns, route: sig };
+  return { summary, departure: { icao: plan.dep, findings: depF }, destination: dest, alternates: altns, enroute, route: sig };
 }
-module.exports = { evaluateAerodrome, evaluateFlight, classifyNotam, crosswind, DEFAULT_MINIMA, HOLD };
+module.exports = { evaluateAerodrome, evaluateFlight, classifyNotam, crosswind, approachCheck, DEFAULT_MINIMA, HOLD };

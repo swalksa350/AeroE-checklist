@@ -6,7 +6,7 @@ const met = require("./met"); const rules = require("./rules"); const { fuelPlan
 async function briefing(naips, p, opts) {
   opts = opts || {}; const log = opts.log || (() => {});
   for (const k of ["dep", "dest", "etd"]) if (!p[k]) throw new Error("missing " + k);
-  const locs = [p.dep, p.dest, ...(p.altn || [])].map(s => String(s).toUpperCase()).filter((v, i, a) => a.indexOf(v) === i);
+  const locs = [p.dep, p.dest, ...(p.altn || []), ...(p.enroute || [])].map(s => String(s).toUpperCase()).filter((v, i, a) => a.indexOf(v) === i).slice(0, 12);
   const ref = new Date(); let content = "", source = "naips", charts = [];
   if (p.products) { content = p.products; source = "supplied"; }            // for testing or a pasted briefing
   else {
@@ -15,7 +15,7 @@ async function briefing(naips, p, opts) {
     if (p.areas && p.areas.length) { const a = await naips.areaBrief(p.areas, { met: true, ntm: true, charts: !!p.charts }); if (a.ok && a.content) content += "\n\n" + a.content; if (a.ok) charts = charts.concat((a.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type))).slice(0, 16); }
   }
   const decoded = met.decodeBriefing(content, ref);
-  const plan = { dep: p.dep.toUpperCase(), dest: p.dest.toUpperCase(), altn: (p.altn || []).map(s => String(s).toUpperCase()), etd: p.etd, eetMin: +p.eetMin || 60, altEetMin: +p.altEetMin || 30, minima: p.minima || {}, aircraft: p.aircraft || {}, bufferMin: p.bufferMin || 30 };
+  const plan = { dep: p.dep.toUpperCase(), dest: p.dest.toUpperCase(), altn: (p.altn || []).map(s => String(s).toUpperCase()), enroute: (p.enroute || []).map(s => String(s).toUpperCase()), etd: p.etd, eetMin: +p.eetMin || 60, altEetMin: +p.altEetMin || 30, minima: p.minima || {}, aircraft: p.aircraft || {}, bufferMin: p.bufferMin || 30 };
   const evaluation = rules.evaluateFlight(decoded, plan);
   const fuel = p.fuelFlow ? fuelPlan({ fuelFlow: p.fuelFlow, eetMin: plan.eetMin, altEetMin: plan.altEetMin, alternateRequired: evaluation.summary.alternateRequired || (p.altn && p.altn.length && p.alwaysCarryAlternate), holdingMin: evaluation.summary.holdingMinutes, policy: p.policy, fuelOnBoard: p.fuelOnBoard }) : null;
   const out = { fetched: ref.toISOString(), source, plan, decoded: { taf: decoded.taf, metar: decoded.metar, ttf: decoded.ttf, notam: decoded.notam, sigmet: decoded.sigmet, products: decoded.products }, evaluation, fuel, rawContent: content, charts };
@@ -36,4 +36,7 @@ async function winds(naips, b) { if (!b.dep || !b.dest || !b.etd) throw new Erro
 async function fileFpl(naips, b) { if (!b.acid || !b.adep || !b.ades || !b.etd || !b.atyp) throw new Error("acid, atyp, adep, ades and etd are required"); if (b.dryRun || !naips.configured()) return { filed: false, dryRun: true, naipsConfigured: naips.configured(), preview: fplPreview(b) }; const r = await naips.submitIcaoFn(b); return { filed: r.ok, status: r.status, info: r.info, fplText: r.fplText, preview: fplPreview(b) }; }
 /* NAIPS login check. */
 async function status(naips, personal) { if (!naips.configured()) return { configured: false }; const a = await naips.authenticate(); return { configured: true, personal: !!personal, ok: a.ok, status: a.status, name: a.name, info: a.info, motd: a.motd }; }
-module.exports = { briefing, winds, fileFpl, status, parseWinds, fplPreview };
+/* Chart directory and one chart from NAIPS's met service (GAF, GPWT, SIGWX, planning charts such as the PCA). */
+async function chartDir(naips, b) { const r = await naips.chartDir({ category: b && b.category, search: b && b.search }); return { ok: r.ok, status: r.status, info: r.info, charts: r.charts || [] }; }
+async function getChart(naips, b) { if (!b || !b.key) throw new Error("key is required"); const r = await naips.getChart(b.key, b.variant); return { ok: r.ok, status: r.status, info: r.info, products: r.products || [] }; }
+module.exports = { briefing, winds, fileFpl, status, parseWinds, fplPreview, chartDir, getChart };

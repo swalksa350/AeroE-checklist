@@ -3,7 +3,7 @@
    https://www.airservicesaustralia.com/naips/flight-notification-service?xsd=1 (shared by all NAIPS services). */
 const NS = "http://www.airservicesaustralia.com/naips/xsd";
 const ENV = (typeof process !== "undefined" && process.env) || {};   // the same file runs in the connector and, bundled, in the app
-const SERVICES = { briefing: "/naips/briefing-service", fn: "/naips/flight-notification-service" };
+const SERVICES = { briefing: "/naips/briefing-service", fn: "/naips/flight-notification-service", met: "/naips/met-service" };
 const esc = s => String(s === undefined || s === null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const unesc = s => String(s || "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&amp;/g, "&");
 const isoZ = d => new Date(d).toISOString().replace(/\.\d{3}Z$/, "Z");
@@ -51,6 +51,9 @@ class Naips {
     const body = `<ndd:spfib-rqs ${this.attrs()}><ndd:spfib><ndd:domestic>${spec.domestic !== false}</ndd:domestic>${spec.acid ? `<ndd:acid>${esc(spec.acid)}</ndd:acid>` : ""}${stages}<ndd:tas>${esc(spec.tas || "N0120")}</ndd:tas><ndd:exp-wind>${!!spec.expWind}</ndd:exp-wind><ndd:full-text-notam>${spec.fullText !== false}</ndd:full-text-notam></ndd:spfib></ndd:spfib-rqs>`;
     return this.call("briefing", "spfib", body);
   }
+  /* --- met service: charts (GAF, GPWT, SIGWX, planning charts) --- */
+  chartDir(opts = {}) { return this.call("met", "chart-dir", `<ndd:chart-dir-rqs ${this.attrs()}>${opts.search ? `<ndd:search>${esc(String(opts.search).slice(0, 64))}</ndd:search>` : ""}${opts.category ? `<ndd:category>${esc(opts.category)}</ndd:category>` : ""}</ndd:chart-dir-rqs>`).then(r => { r.charts = r.charts || []; return r; }); }
+  getChart(key, variant) { return this.call("met", "get-chart", `<ndd:get-chart-rqs ${this.attrs()}><ndd:key>${esc(key)}</ndd:key>${variant ? `<ndd:variant>${esc(variant)}</ndd:variant>` : ""}</ndd:get-chart-rqs>`); }
   /* --- flight notification service: ICAO flight plan --- */
   submitIcaoFn(fn) {
     const s = fn; const dur = m => `PT${Math.floor(m / 60)}H${m % 60}M`;
@@ -82,7 +85,10 @@ function parseResponse(xml, operation) {
   const grab = name => { const m = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">").exec(inner); return m ? unesc(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")) : null; };
   const all = name => { const re = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">", "g"); const out = []; let m; while ((m = re.exec(inner))) out.push(unesc(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"))); return out; };
   const products = []; const pre = /<(?:\w+:)?product\b([^>]*)>([\s\S]*?)<\/(?:\w+:)?product>/g; let pm; while ((pm = pre.exec(inner))) { const type = (/type="([^"]*)"/.exec(pm[1]) || [])[1]; const variant = (/variant="([^"]*)"/.exec(pm[1]) || [])[1]; const c = /<(?:\w+:)?content>([\s\S]*?)<\/(?:\w+:)?content>/.exec(pm[2]); if (type && c) products.push({ type, variant: variant || null, data: c[1].replace(/\s+/g, "") }); }
-  const res = { operation, status, ok: status === "SUCCESS", info: grab("info"), content: grab("content"), fplText: all("fpl-text"), name: grab("name"), motd: grab("motd"), number: grab("number"), products };
+  /* get-chart-rsp carries each picture as <content type="PNG" variant="LO"><content>base64</content></content> */
+  const cre2 = /<(?:\w+:)?content\b([^>]*\btype="[^"]*"[^>]*)>\s*<(?:\w+:)?content>([^<]*)</g; let c2; while ((c2 = cre2.exec(inner))) { const type = (/type="([^"]*)"/.exec(c2[1]) || [])[1]; const variant = (/variant="([^"]*)"/.exec(c2[1]) || [])[1]; if (type) products.push({ type, variant: variant || null, data: c2[2].replace(/\s+/g, "") }); }
+  const charts = []; const cre = /<(?:\w+:)?chart\b[^>]*>([\s\S]*?)<\/(?:\w+:)?chart>/g; let cm; while ((cm = cre.exec(inner))) { const g2 = name => { const m2 = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">").exec(cm[1]); return m2 ? unesc(m2[1]).trim() : null; }; const vm = /<(?:\w+:)?valid>[\s\S]*?<(?:\w+:)?from>([^<]*)<[\s\S]*?<(?:\w+:)?till>([^<]*)</.exec(cm[1]); charts.push({ code: g2("code"), name: g2("name"), stored: g2("store-time"), from: vm ? vm[1] : null, till: vm ? vm[2] : null, source: g2("source"), format: g2("format"), category: g2("category"), variants: [...cm[1].matchAll(/<(?:\w+:)?variant>([^<]*)</g)].map(x => x[1]) }); }
+  const res = { operation, status, ok: status === "SUCCESS", info: grab("info"), content: grab("content"), fplText: all("fpl-text"), name: grab("name"), motd: grab("motd"), number: grab("number"), products, charts };
   if (!res.ok && !res.info) res.info = "NAIPS returned " + status;
   return res;
 }

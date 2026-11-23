@@ -6,7 +6,7 @@ mods["naips"]=(function(){ const module={exports:{}}; const exports=module.expor
    https://www.airservicesaustralia.com/naips/flight-notification-service?xsd=1 (shared by all NAIPS services). */
 const NS = "http://www.airservicesaustralia.com/naips/xsd";
 const ENV = (typeof process !== "undefined" && process.env) || {};   // the same file runs in the connector and, bundled, in the app
-const SERVICES = { briefing: "/naips/briefing-service", fn: "/naips/flight-notification-service" };
+const SERVICES = { briefing: "/naips/briefing-service", fn: "/naips/flight-notification-service", met: "/naips/met-service" };
 const esc = s => String(s === undefined || s === null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const unesc = s => String(s || "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&#(\d+);/g, (m, n) => String.fromCharCode(+n)).replace(/&amp;/g, "&");
 const isoZ = d => new Date(d).toISOString().replace(/\.\d{3}Z$/, "Z");
@@ -54,6 +54,9 @@ class Naips {
     const body = `<ndd:spfib-rqs ${this.attrs()}><ndd:spfib><ndd:domestic>${spec.domestic !== false}</ndd:domestic>${spec.acid ? `<ndd:acid>${esc(spec.acid)}</ndd:acid>` : ""}${stages}<ndd:tas>${esc(spec.tas || "N0120")}</ndd:tas><ndd:exp-wind>${!!spec.expWind}</ndd:exp-wind><ndd:full-text-notam>${spec.fullText !== false}</ndd:full-text-notam></ndd:spfib></ndd:spfib-rqs>`;
     return this.call("briefing", "spfib", body);
   }
+  /* --- met service: charts (GAF, GPWT, SIGWX, planning charts) --- */
+  chartDir(opts = {}) { return this.call("met", "chart-dir", `<ndd:chart-dir-rqs ${this.attrs()}>${opts.search ? `<ndd:search>${esc(String(opts.search).slice(0, 64))}</ndd:search>` : ""}${opts.category ? `<ndd:category>${esc(opts.category)}</ndd:category>` : ""}</ndd:chart-dir-rqs>`).then(r => { r.charts = r.charts || []; return r; }); }
+  getChart(key, variant) { return this.call("met", "get-chart", `<ndd:get-chart-rqs ${this.attrs()}><ndd:key>${esc(key)}</ndd:key>${variant ? `<ndd:variant>${esc(variant)}</ndd:variant>` : ""}</ndd:get-chart-rqs>`); }
   /* --- flight notification service: ICAO flight plan --- */
   submitIcaoFn(fn) {
     const s = fn; const dur = m => `PT${Math.floor(m / 60)}H${m % 60}M`;
@@ -85,7 +88,10 @@ function parseResponse(xml, operation) {
   const grab = name => { const m = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">").exec(inner); return m ? unesc(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")) : null; };
   const all = name => { const re = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">", "g"); const out = []; let m; while ((m = re.exec(inner))) out.push(unesc(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1"))); return out; };
   const products = []; const pre = /<(?:\w+:)?product\b([^>]*)>([\s\S]*?)<\/(?:\w+:)?product>/g; let pm; while ((pm = pre.exec(inner))) { const type = (/type="([^"]*)"/.exec(pm[1]) || [])[1]; const variant = (/variant="([^"]*)"/.exec(pm[1]) || [])[1]; const c = /<(?:\w+:)?content>([\s\S]*?)<\/(?:\w+:)?content>/.exec(pm[2]); if (type && c) products.push({ type, variant: variant || null, data: c[1].replace(/\s+/g, "") }); }
-  const res = { operation, status, ok: status === "SUCCESS", info: grab("info"), content: grab("content"), fplText: all("fpl-text"), name: grab("name"), motd: grab("motd"), number: grab("number"), products };
+  /* get-chart-rsp carries each picture as <content type="PNG" variant="LO"><content>base64</content></content> */
+  const cre2 = /<(?:\w+:)?content\b([^>]*\btype="[^"]*"[^>]*)>\s*<(?:\w+:)?content>([^<]*)</g; let c2; while ((c2 = cre2.exec(inner))) { const type = (/type="([^"]*)"/.exec(c2[1]) || [])[1]; const variant = (/variant="([^"]*)"/.exec(c2[1]) || [])[1]; if (type) products.push({ type, variant: variant || null, data: c2[2].replace(/\s+/g, "") }); }
+  const charts = []; const cre = /<(?:\w+:)?chart\b[^>]*>([\s\S]*?)<\/(?:\w+:)?chart>/g; let cm; while ((cm = cre.exec(inner))) { const g2 = name => { const m2 = new RegExp("<(?:\\w+:)?" + name + "\\b[^>]*>([\\s\\S]*?)<\\/(?:\\w+:)?" + name + ">").exec(cm[1]); return m2 ? unesc(m2[1]).trim() : null; }; const vm = /<(?:\w+:)?valid>[\s\S]*?<(?:\w+:)?from>([^<]*)<[\s\S]*?<(?:\w+:)?till>([^<]*)</.exec(cm[1]); charts.push({ code: g2("code"), name: g2("name"), stored: g2("store-time"), from: vm ? vm[1] : null, till: vm ? vm[2] : null, source: g2("source"), format: g2("format"), category: g2("category"), variants: [...cm[1].matchAll(/<(?:\w+:)?variant>([^<]*)</g)].map(x => x[1]) }); }
+  const res = { operation, status, ok: status === "SUCCESS", info: grab("info"), content: grab("content"), fplText: all("fpl-text"), name: grab("name"), motd: grab("motd"), number: grab("number"), products, charts };
   if (!res.ok && !res.info) res.info = "NAIPS returned " + status;
   return res;
 }
@@ -212,6 +218,14 @@ function belowMinima(g, minima, ac) {
   if (g.wind && ac) { const x = crosswind(g.wind, ac.runwayHdg); if (ac.maxCrosswind && x !== null && x.cross > ac.maxCrosswind) why.push("crosswind " + x.cross + " kt above the aircraft limit of " + ac.maxCrosswind + " kt"); if (ac.maxTailwind !== undefined && x !== null && x.tail > ac.maxTailwind) why.push("tailwind " + x.tail + " kt above " + ac.maxTailwind + " kt"); }
   return why;
 }
+/* Approach minima: minima.approaches = [{type, da (DA or MDA, ft AMSL), vis (m)}] with minima.elev (aerodrome elevation ft).
+   Returns the approaches the forecast/report supports and the reasons the others fail; null when none are entered. */
+function approachCheck(g, minima) {
+  const list = (minima.approaches || []).filter(a => a && (a.da !== null && a.da !== undefined));
+  if (!list.length) return null; const elev = minima.elev || 0;
+  const res = list.map(a => { const hat = Math.max(0, Math.round(a.da - elev)); const why = []; if (g.ceiling !== null && g.ceiling !== undefined && g.ceiling < hat) why.push("cloud at " + g.ceiling + " ft below the " + (a.type || "approach") + " minima height of " + hat + " ft (" + a.da + " ft AMSL)"); if (a.vis && g.vis !== null && g.vis !== undefined && g.vis < a.vis) why.push("visibility " + g.vis + " m below the " + (a.type || "approach") + " minimum of " + a.vis + " m"); return { type: a.type || "approach", da: a.da, hat, vis: a.vis || null, ok: !why.length, why }; });
+  return { ok: res.filter(r => r.ok), fail: res.filter(r => !r.ok), lowest: res.slice().sort((x, y) => x.hat - y.hat)[0] };
+}
 function crosswind(wind, rwyHdg) { if (!wind || wind.dir === null || rwyHdg === null || rwyHdg === undefined) return null; const spd = wind.gust || wind.spd; const d = (wind.dir - rwyHdg) * Math.PI / 180; return { cross: Math.round(Math.abs(spd * Math.sin(d))), tail: Math.round(-spd * Math.cos(d)) }; }
 /* Evaluate one aerodrome for an arrival at eta (Date). Returns findings and the holding/alternate requirement. */
 function evaluateAerodrome(icao, decoded, eta, opts = {}) {
@@ -224,10 +238,11 @@ function evaluateAerodrome(icao, decoded, eta, opts = {}) {
   const base = taf.segments.find(s => s.kind === "BASE"); let current = base;
   const fms = taf.segments.filter(s => (s.kind === "FM" || s.kind === "BECMG") && s.period && s.period.from <= till); if (fms.length) current = fms[fms.length - 1];
   const merged = current && current !== base ? Object.assign({}, base, Object.fromEntries(Object.entries(current).filter(([k, v]) => v !== null && !(Array.isArray(v) && !v.length) && k !== "kind" && k !== "text"))) : base;
-  if (merged) { const why = belowMinima(merged, minima, ac); if (why.length) add("alternate", "Forecast below alternate minima", icao + ": " + why.join("; ") + " in the operative forecast at ETA – an alternate is required.", current.text || base.raw || taf.raw); }
+  if (merged) { const why = belowMinima(merged, minima, ac); if (why.length) add("alternate", "Forecast below alternate minima", icao + ": " + why.join("; ") + " in the operative forecast at ETA – an alternate is required.", current.text || base.raw || taf.raw);
+    const ap = approachCheck(merged, minima); if (ap) { if (!ap.ok.length) add(opts.role === "destination" ? "alternate" : "warning", "Approach minima", icao + ": the operative forecast at ETA is below the minima of every approach entered (" + ap.fail.map(r => r.type + " " + r.hat + " ft" + (r.vis ? "/" + r.vis + " m" : "")).join(", ") + "): " + ap.fail[0].why.join("; ") + ". A landing is not assured" + (opts.role === "destination" ? " – an alternate is required" : "") + ".", current.text || base.raw || taf.raw); else if (ap.fail.length) add("info", "Approach minima", icao + ": forecast supports " + ap.ok.map(r => r.type + " (" + r.hat + " ft)").join(", ") + "; below minima for " + ap.fail.map(r => r.type).join(", ") + ".", current.text || base.raw || taf.raw); else add("info", "Approach minima", icao + ": forecast at ETA is above the minima of " + ap.ok.map(r => r.type + " (" + r.hat + " ft" + (r.vis ? "/" + r.vis + " m" : "") + ")").join(", ") + ".", ""); } }
   for (const s of taf.segments) {
     if (!["TEMPO", "INTER", "PROB"].includes(s.kind) || !within(s, from, till)) continue;
-    const why = belowMinima(s, minima, ac); if (!why.length) continue;
+    const why = belowMinima(s, minima, ac); const ap = approachCheck(s, minima); if (!why.length) { if (ap && !ap.ok.length) add("warning", "Approach minima in " + s.kind, icao + ": " + s.kind + (s.prob ? " (PROB" + s.prob + ")" : "") + " conditions are below every approach minima entered (" + ap.fail[0].why.join("; ") + ") although above the alternate minima – expect holding or a diversion if it occurs.", s.text); continue; }
     const hold = s.kind === "PROB" ? HOLD.PROB : HOLD[s.kind];
     add("holding", s.kind + (s.prob ? " PROB" + s.prob : ""), icao + ": " + s.kind + (s.prob ? " (PROB" + s.prob + ")" : "") + " " + why.join("; ") + " within ETA ± " + (opts.bufferMin || 30) + " min – carry " + hold + " min holding fuel, or plan an alternate.", s.text, hold);
   }
@@ -256,19 +271,25 @@ function classifyNotam(text) { const t = text.toUpperCase(); for (const [re, lev
 /* Whole-flight evaluation. plan: {dep, dest, altn:[...], etd (Date), eetMin, altEetMin, minima:{ICAO:{ceiling,vis}}, aircraft:{maxCrosswind,maxTailwind,runwayHdg:{ICAO:hdg}}} */
 function evaluateFlight(decoded, plan) {
   const etd = new Date(plan.etd); const eta = new Date(etd.getTime() + (plan.eetMin || 60) * 60000);
-  const per = icao => ({ minima: (plan.minima || {})[icao], aircraft: Object.assign({}, plan.aircraft || {}, { runwayHdg: plan.aircraft && plan.aircraft.runwayHdg ? plan.aircraft.runwayHdg[icao] : undefined }), bufferMin: plan.bufferMin });
-  const dest = evaluateAerodrome(plan.dest, decoded, eta, per(plan.dest));
-  const altns = (plan.altn || []).map(a => evaluateAerodrome(a, decoded, new Date(eta.getTime() + (plan.altEetMin || 30) * 60000), per(a)));
+  const per = (icao, role) => ({ role, minima: (plan.minima || {})[icao], aircraft: Object.assign({}, plan.aircraft || {}, { runwayHdg: plan.aircraft && plan.aircraft.runwayHdg ? plan.aircraft.runwayHdg[icao] : undefined }), bufferMin: plan.bufferMin });
+  const dest = evaluateAerodrome(plan.dest, decoded, eta, per(plan.dest, "destination"));
+  const altns = (plan.altn || []).map(a => evaluateAerodrome(a, decoded, new Date(eta.getTime() + (plan.altEetMin || 30) * 60000), per(a, "alternate")));
+  /* en route alternates: assessed for an arrival around the middle of the flight (a diversion can come at any point) */
+  const enroute = (plan.enroute || []).map(a => evaluateAerodrome(a, decoded, new Date(etd.getTime() + ((plan.eetMin || 60) / 2) * 60000), Object.assign(per(a, "enroute"), { bufferMin: Math.max(plan.bufferMin || 30, Math.round((plan.eetMin || 60) / 2)) })));
   const depF = []; const depTaf = decoded.taf.find(t => t.icao === plan.dep); const depMetar = decoded.metar.filter(m => m.icao === plan.dep).slice(-1)[0];
   if (depMetar) { const g = depMetar; if (g.ts) depF.push({ level: "warning", aerodrome: plan.dep, rule: "Departure weather", text: plan.dep + ": thunderstorms reported.", quote: g.raw }); if (g.vis !== null && g.vis < 5000) depF.push({ level: "warning", aerodrome: plan.dep, rule: "Departure weather", text: plan.dep + ": visibility " + g.vis + " m.", quote: g.raw }); }
+  /* take-off alternate: departure weather against the take-off alternate minima (minima[dep].toCeiling/toVis), or failing those, the lowest approach minima for a return */
+  { const dm = (plan.minima || {})[plan.dep] || {}; const g = depMetar || (depTaf && depTaf.segments && depTaf.segments.find(x => x.kind === "BASE")); if (g) { const to = (dm.toCeiling || dm.toVis) ? { ceiling: dm.toCeiling || 0, vis: dm.toVis || 0 } : null; if (to) { const why = []; if (g.ceiling !== null && g.ceiling !== undefined && g.ceiling < to.ceiling) why.push("cloud at " + g.ceiling + " ft below " + to.ceiling + " ft"); if (g.vis !== null && g.vis !== undefined && g.vis < to.vis) why.push("visibility " + g.vis + " m below " + to.vis + " m"); if (why.length) depF.push({ level: "alternate", aerodrome: plan.dep, rule: "Take-off alternate", text: plan.dep + ": " + (depMetar ? "current conditions" : "forecast") + " below the take-off alternate minima (" + why.join("; ") + ") – a take-off alternate is required, within the distance or time your exposition allows.", quote: g.raw || g.text || "" }); else depF.push({ level: "info", aerodrome: plan.dep, rule: "Take-off alternate", text: plan.dep + ": " + (depMetar ? "current conditions" : "forecast") + " above the take-off alternate minima (" + to.ceiling + " ft / " + to.vis + " m).", quote: "" }); }
+      else { const ap = approachCheck(g, dm); if (ap && !ap.ok.length) depF.push({ level: "warning", aerodrome: plan.dep, rule: "Take-off alternate", text: plan.dep + ": " + (depMetar ? "current conditions" : "forecast") + " are below every approach minima entered for a return (" + ap.fail[0].why.join("; ") + ") – consider a take-off alternate; enter the take-off alternate minima to have this assessed.", quote: g.raw || g.text || "" }); } } }
   for (const n of decoded.notam.filter(n => n.icao === plan.dep)) { const r = classifyNotam(n.text); if (r) depF.push({ level: r.level === "alternate" ? "warning" : r.level, aerodrome: plan.dep, rule: "NOTAM " + r.topic, text: plan.dep + " " + n.id + ": " + r.text, quote: n.text.split("\n").slice(0, 6).join("\n") }); }
   const sig = decoded.sigmet.map(s => ({ level: "warning", aerodrome: "route", rule: "SIGMET/AIRMET", text: "A SIGMET or AIRMET is current – check whether it affects the route and levels.", quote: s.text.split("\n").slice(0, 8).join("\n") }));
   const altnOk = altns.filter(a => !a.alternateRequired && !a.findings.some(f => f.level === "alternate"));
-  const summary = { alternateRequired: dest.alternateRequired, holdingMinutes: dest.holdingMinutes, alternatesSuitable: altnOk.map(a => a.icao), alternatesUnsuitable: altns.filter(a => !altnOk.includes(a)).map(a => a.icao), eta: eta.toISOString(), depTafPresent: !!depTaf };
+  const enrOk = enroute.filter(a => !a.alternateRequired && !a.findings.some(f => f.level === "alternate"));
+  const summary = { alternateRequired: dest.alternateRequired, holdingMinutes: dest.holdingMinutes, alternatesSuitable: altnOk.map(a => a.icao), alternatesUnsuitable: altns.filter(a => !altnOk.includes(a)).map(a => a.icao), enrouteSuitable: enrOk.map(a => a.icao), enrouteUnsuitable: enroute.filter(a => !enrOk.includes(a)).map(a => a.icao), takeoffAlternateRequired: depF.some(f => f.rule === "Take-off alternate" && f.level === "alternate"), eta: eta.toISOString(), depTafPresent: !!depTaf };
   if (dest.alternateRequired && !altnOk.length) summary.problem = "The destination requires an alternate and no suitable alternate was briefed.";
-  return { summary, departure: { icao: plan.dep, findings: depF }, destination: dest, alternates: altns, route: sig };
+  return { summary, departure: { icao: plan.dep, findings: depF }, destination: dest, alternates: altns, enroute, route: sig };
 }
-module.exports = { evaluateAerodrome, evaluateFlight, classifyNotam, crosswind, DEFAULT_MINIMA, HOLD };
+module.exports = { evaluateAerodrome, evaluateFlight, classifyNotam, crosswind, approachCheck, DEFAULT_MINIMA, HOLD };
 
 return module.exports; })();
 mods["fuel"]=(function(){ const module={exports:{}}; const exports=module.exports; const require=req;
@@ -296,7 +317,7 @@ const met = require("./met"); const rules = require("./rules"); const { fuelPlan
 async function briefing(naips, p, opts) {
   opts = opts || {}; const log = opts.log || (() => {});
   for (const k of ["dep", "dest", "etd"]) if (!p[k]) throw new Error("missing " + k);
-  const locs = [p.dep, p.dest, ...(p.altn || [])].map(s => String(s).toUpperCase()).filter((v, i, a) => a.indexOf(v) === i);
+  const locs = [p.dep, p.dest, ...(p.altn || []), ...(p.enroute || [])].map(s => String(s).toUpperCase()).filter((v, i, a) => a.indexOf(v) === i).slice(0, 12);
   const ref = new Date(); let content = "", source = "naips", charts = [];
   if (p.products) { content = p.products; source = "supplied"; }            // for testing or a pasted briefing
   else {
@@ -305,7 +326,7 @@ async function briefing(naips, p, opts) {
     if (p.areas && p.areas.length) { const a = await naips.areaBrief(p.areas, { met: true, ntm: true, charts: !!p.charts }); if (a.ok && a.content) content += "\n\n" + a.content; if (a.ok) charts = charts.concat((a.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type))).slice(0, 16); }
   }
   const decoded = met.decodeBriefing(content, ref);
-  const plan = { dep: p.dep.toUpperCase(), dest: p.dest.toUpperCase(), altn: (p.altn || []).map(s => String(s).toUpperCase()), etd: p.etd, eetMin: +p.eetMin || 60, altEetMin: +p.altEetMin || 30, minima: p.minima || {}, aircraft: p.aircraft || {}, bufferMin: p.bufferMin || 30 };
+  const plan = { dep: p.dep.toUpperCase(), dest: p.dest.toUpperCase(), altn: (p.altn || []).map(s => String(s).toUpperCase()), enroute: (p.enroute || []).map(s => String(s).toUpperCase()), etd: p.etd, eetMin: +p.eetMin || 60, altEetMin: +p.altEetMin || 30, minima: p.minima || {}, aircraft: p.aircraft || {}, bufferMin: p.bufferMin || 30 };
   const evaluation = rules.evaluateFlight(decoded, plan);
   const fuel = p.fuelFlow ? fuelPlan({ fuelFlow: p.fuelFlow, eetMin: plan.eetMin, altEetMin: plan.altEetMin, alternateRequired: evaluation.summary.alternateRequired || (p.altn && p.altn.length && p.alwaysCarryAlternate), holdingMin: evaluation.summary.holdingMinutes, policy: p.policy, fuelOnBoard: p.fuelOnBoard }) : null;
   const out = { fetched: ref.toISOString(), source, plan, decoded: { taf: decoded.taf, metar: decoded.metar, ttf: decoded.ttf, notam: decoded.notam, sigmet: decoded.sigmet, products: decoded.products }, evaluation, fuel, rawContent: content, charts };
@@ -326,7 +347,10 @@ async function winds(naips, b) { if (!b.dep || !b.dest || !b.etd) throw new Erro
 async function fileFpl(naips, b) { if (!b.acid || !b.adep || !b.ades || !b.etd || !b.atyp) throw new Error("acid, atyp, adep, ades and etd are required"); if (b.dryRun || !naips.configured()) return { filed: false, dryRun: true, naipsConfigured: naips.configured(), preview: fplPreview(b) }; const r = await naips.submitIcaoFn(b); return { filed: r.ok, status: r.status, info: r.info, fplText: r.fplText, preview: fplPreview(b) }; }
 /* NAIPS login check. */
 async function status(naips, personal) { if (!naips.configured()) return { configured: false }; const a = await naips.authenticate(); return { configured: true, personal: !!personal, ok: a.ok, status: a.status, name: a.name, info: a.info, motd: a.motd }; }
-module.exports = { briefing, winds, fileFpl, status, parseWinds, fplPreview };
+/* Chart directory and one chart from NAIPS's met service (GAF, GPWT, SIGWX, planning charts such as the PCA). */
+async function chartDir(naips, b) { const r = await naips.chartDir({ category: b && b.category, search: b && b.search }); return { ok: r.ok, status: r.status, info: r.info, charts: r.charts || [] }; }
+async function getChart(naips, b) { if (!b || !b.key) throw new Error("key is required"); const r = await naips.getChart(b.key, b.variant); return { ok: r.ok, status: r.status, info: r.info, products: r.products || [] }; }
+module.exports = { briefing, winds, fileFpl, status, parseWinds, fplPreview, chartDir, getChart };
 
 return module.exports; })();
 return { Naips: mods.naips.Naips, parseResponse: mods.naips.parseResponse, met: mods.met, rules: mods.rules, fuel: mods.fuel, core: mods.core }; })();

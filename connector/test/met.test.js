@@ -41,3 +41,18 @@ test("NAIPS location briefing layout (section titles, NAME (ICAO) headers, wrapp
   assert.deepEqual(d.notam.map(n => n.icao + " " + n.id), ["YGEL C67/26", "YGEL C65/26", "YPJT C300/26"]);
   assert.equal(d.products.filter(p => p.kind === "TEXT").length, 0);
 });
+
+test("approach minima, take-off alternate and en route alternates", () => {
+  const C = ["TAF YSCN 220430Z 2206/2306", "24012KT 9999 FEW030 SCT045", "TEMPO 2214/2220 4000 SHRA BKN008", "RMK T 24 20 18 17 Q 1012 1013 1015 1014", "", "TAF YBTH 220430Z 2206/2306", "27015G25KT 3000 BR OVC004", "RMK T 20 18 15 12 Q 1010 1011 1013 1012", "", "TAF YSBK 220430Z 2206/2306", "24010KT CAVOK", "", "METAR YSBK 220430Z 25009KT 0800 FG OVC002 15/14 Q1012 RMK RF00.0/000.0", "", "TAF YCNM 220430Z 2206/2306", "24010KT CAVOK", ""].join("\n");
+  const d = met.decodeBriefing(C, new Date("2026-11-22T04:30:00Z"));
+  const plan = { dep: "YSBK", dest: "YSCN", altn: ["YBTH"], enroute: ["YCNM"], etd: "2026-11-22T14:00:00Z", eetMin: 60, altEetMin: 30, bufferMin: 30,
+    minima: { YSCN: { ceiling: 1500, vis: 8000, elev: 230, approaches: [{ type: "RNP 06", da: 730, vis: 2400 }, { type: "NDB", da: 1030, vis: 3000 }] }, YBTH: { ceiling: 1500, vis: 8000, elev: 2435, approaches: [{ type: "RNP 17", da: 2900, vis: 3000 }] }, YSBK: { toCeiling: 300, toVis: 800 }, YCNM: { ceiling: 1500, vis: 8000 } } };
+  const e = rules.evaluateFlight(d, plan);
+  const destAp = e.destination.findings.filter(f => f.rule === "Approach minima"); assert.equal(destAp.length, 1); assert.equal(destAp[0].level, "info"); assert.match(destAp[0].text, /above the minima of RNP 06 \(500 ft\/2400 m\), NDB \(800 ft\/3000 m\)/);
+  assert.ok(e.destination.findings.some(f => f.rule === "TEMPO" && f.holdMin === 60), "TEMPO below alternate minima still gives 60 min holding");
+  const alt = e.alternates[0]; assert.equal(alt.alternateRequired, true); assert.ok(alt.findings.some(f => f.rule === "Approach minima" && /below the minima of every approach/.test(f.text)));
+  assert.deepEqual(e.summary.alternatesUnsuitable, ["YBTH"]); assert.deepEqual(e.summary.enrouteSuitable, ["YCNM"]); assert.equal(e.enroute.length, 1);
+  const to = e.departure.findings.find(f => f.rule === "Take-off alternate"); assert.ok(to, "take-off alternate finding"); assert.equal(to.level, "alternate"); assert.match(to.text, /cloud at 200 ft below 300 ft/); assert.equal(e.summary.takeoffAlternateRequired, true);
+});
+test("chart directory parsing", () => { const { parseResponse } = require("../naips"); const r = parseResponse('<S:Envelope><S:Body><chart-dir-rsp xmlns="x" status="SUCCESS"><chart><code>PCA00001</code><name>Planning Chart Australia</name><store-time>2026-11-22T00:00:00Z</store-time><valid><from>2026-11-22T00:00:00Z</from><till>2026-11-23T00:00:00Z</till></valid><source>AsA</source><format>PNG</format><variant>LO</variant><variant>HI</variant><category>OTHER</category></chart></chart-dir-rsp></S:Body></S:Envelope>', "chart-dir"); assert.equal(r.charts.length, 1); assert.equal(r.charts[0].code, "PCA00001"); assert.deepEqual(r.charts[0].variants, ["LO", "HI"]); assert.equal(r.charts[0].till, "2026-11-23T00:00:00Z"); });
+test("get-chart content parsing", () => { const { parseResponse } = require("../naips"); const r = parseResponse('<S:Envelope><S:Body><get-chart-rsp xmlns="x" status="SUCCESS"><desc><code>PCA00001</code></desc><content type="PNG" variant="LO"><content>AAAA\nBBBB</content></content></get-chart-rsp></S:Body></S:Envelope>', "get-chart"); assert.equal(r.products.length, 1); assert.equal(r.products[0].type, "PNG"); assert.equal(r.products[0].variant, "LO"); assert.equal(r.products[0].data, "AAAABBBB"); });
