@@ -53,9 +53,13 @@ window.PERF.ga8.fuelProfile = {
   taxi: 4, taxiNote: "assumed start, taxi and run-up allowance",
   climb: { speed: "78 KIAS", flow: 75, flowNote: "assumed full-throttle flow at 2,500 RPM", rateRows: [[0,787],[2000,684],[4000,584],[6000,487],[8000,393],[10000,301]] },
   descent: { speed: "130 KIAS", rate: 500, flow: 45, note: "assumed; the AFM gives no descent table" },
-  cruise: { rows: [
-    { alt: 4000, max: { tas: 125, flow: 71, power: "25 inHg / 2,500 RPM" }, range: { tas: 118, flow: 56, power: "23 inHg / 2,300 RPM" } },
-    { alt: 6000, max: { tas: 125, flow: 67, power: "23 inHg / 2,500 RPM" }, range: { tas: 118, flow: 55, power: "23 inHg / 2,300 RPM" } },
-    { alt: 8000, max: { tas: 122, flow: 60, power: "22 inHg / 2,500 RPM" }, range: { tas: 120, flow: 54, power: "22 inHg / 2,300 RPM" } } ],
-    note: "Best economy mixture, most forward CG. Best power mixture adds 30–45 % to the fuel flow for 3–5 % more TAS." }
+  /* AFM 5.8 Best Economy Cruise Performance, every scheduled setting. The AFM tabulates by MAP/RPM, not by percent power; the
+     normal-procedures section gives 25 inHg/2,500 RPM as about 75 % and 23 inHg/2,350 RPM as about 65 %, which is where the
+     approximate percentages below come from. The 2,000 RPM long-range settings are scheduled at 6,000 and 8,000 ft only. */
+  cruise: { modes: [["max","2,500 RPM – maximum cruise (about 75 %)"],["mid","2,400 RPM (about 70 %)"],["range","2,300 RPM – economy (about 65 %)"],["lr","2,000 RPM – long range (6,000 ft and above)"]],
+    rows: [
+    { alt: 4000, max: { tas: 125, flow: 71, power: "25 inHg / 2,500 RPM" }, mid: { tas: 121, flow: 62, power: "24 inHg / 2,400 RPM" }, range: { tas: 118, flow: 56, power: "23 inHg / 2,300 RPM" } },
+    { alt: 6000, max: { tas: 125, flow: 67, power: "23 inHg / 2,500 RPM" }, mid: { tas: 124, flow: 59, power: "23 inHg / 2,400 RPM" }, range: { tas: 118, flow: 55, power: "23 inHg / 2,300 RPM" }, lr: { tas: 106, flow: 38, power: "19 inHg / 2,000 RPM" } },
+    { alt: 8000, max: { tas: 122, flow: 60, power: "22 inHg / 2,500 RPM" }, mid: { tas: 121, flow: 56, power: "22 inHg / 2,400 RPM" }, range: { tas: 120, flow: 54, power: "22 inHg / 2,300 RPM" }, lr: { tas: 104, flow: 37, power: "20 inHg / 2,000 RPM" } } ],
+    note: "Best economy mixture, most forward CG. Best power mixture adds 30–45 % to the fuel flow for 3–5 % more TAS. A setting not scheduled at an altitude falls back to the economy row there." }
 };

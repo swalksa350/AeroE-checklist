@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.19",
+    "date": "2026-11-23",
+    "title": "Charts attached to briefings; Airvan cruise settings; fuel checks linked to the nav log",
+    "notes": [
+      "Browse NAIPS charts: tap Attach on a chart (GAF, GPWT, SIGWX, PCA) and it is fetched with every briefing and shown with it; attached charts are listed beside the Charts row.",
+      "GA8 fuel plan: every AFM cruise setting selectable – 2,500 RPM (about 75 %), 2,400, 2,300 (about 65 %) and 2,000 RPM long range.",
+      "Fuel checks and the nav log are one set of data: a check at a waypoint fills its row, a logged FOB creates the check.",
+      "Load winds (forecast model) for per-leg winds without NAIPS; NAIPS charts fetched by key with GAF and GPWT included."
+    ]
+  },
+  {
     "version": "2.18",
     "date": "2026-11-23",
     "title": "Times in UTC; briefing validity; en route alternates list; chart browser",
