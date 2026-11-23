@@ -36,12 +36,14 @@ class Naips {
   authenticate() { return this.call("briefing", "active-spfib-dir", `<ndd:active-spfib-dir-rqs ${this.attrs()}/>`); }
   locBrief(locs, flags = {}) {
     const f = Object.assign({ met: true, ntm: true, sigmet: true, hon: false, charts: false }, flags);
-    const body = `<ndd:loc-brief-rqs ${this.attrs()}>${locs.map(l => `<ndd:loc>${esc(l)}</ndd:loc>`).join("")}<ndd:flags met="${!!f.met}" ntm="${!!f.ntm}" hon="${!!f.hon}" sigmet="${!!f.sigmet}"${f.charts ? ' charts="true"' : ""}/></ndd:loc-brief-rqs>`;
+    const dur = f.durationHours ? `<ndd:duration>PT${Math.max(1, Math.min(72, Math.round(f.durationHours)))}H</ndd:duration>` : "";   // briefing validity; NAIPS leaves out NOTAMs that start after it
+    const body = `<ndd:loc-brief-rqs ${this.attrs()}>${dur}${locs.map(l => `<ndd:loc>${esc(l)}</ndd:loc>`).join("")}<ndd:flags met="${!!f.met}" ntm="${!!f.ntm}" hon="${!!f.hon}" sigmet="${!!f.sigmet}"${f.charts ? ' charts="true"' : ""}/></ndd:loc-brief-rqs>`;
     return this.call("briefing", "loc-brief", body);
   }
   areaBrief(areas, flags = {}) {
     const f = Object.assign({ met: true, ntm: true, hon: false }, flags);
-    return this.call("briefing", "area-brief", `<ndd:area-brief-rqs ${this.attrs()}>${areas.map(a => `<ndd:area>${esc(a)}</ndd:area>`).join("")}<ndd:flags met="${!!f.met}" ntm="${!!f.ntm}" hon="${!!f.hon}"${f.charts ? ' charts="true"' : ""}/></ndd:area-brief-rqs>`);
+    const dur = f.durationHours ? `<ndd:duration>PT${Math.max(1, Math.min(72, Math.round(f.durationHours)))}H</ndd:duration>` : "";
+    return this.call("briefing", "area-brief", `<ndd:area-brief-rqs ${this.attrs()}>${dur}${areas.map(a => `<ndd:area>${esc(a)}</ndd:area>`).join("")}<ndd:flags met="${!!f.met}" ntm="${!!f.ntm}" hon="${!!f.hon}"${f.charts ? ' charts="true"' : ""}/></ndd:area-brief-rqs>`);
   }
   /* SPFIB: route briefing for one or more stages. spec: {acid, domestic, tas:"N0160", stages:[{adep, etd (Date/ISO), ades, level:"A085", altn:[...], additional:[...], areas:[...]}], fullText} */
   spfib(spec) {

@@ -10,9 +10,11 @@ async function briefing(naips, p, opts) {
   const ref = new Date(); let content = "", source = "naips", charts = [];
   if (p.products) { content = p.products; source = "supplied"; }            // for testing or a pasted briefing
   else {
-    const r = await naips.locBrief(locs, { met: true, ntm: true, sigmet: true, charts: !!p.charts });
+    /* validity: from now until a day after the planned arrival (24 h minimum, 72 h maximum), so NOTAMs starting before the arrival are included */
+    const eta = new Date(new Date(p.etd).getTime() + ((+p.eetMin || 60) + (+p.altEetMin || 30)) * 60000); const durationHours = Math.max(24, Math.min(72, Math.ceil((eta.getTime() - Date.now()) / 3600000) + 24));
+    const r = await naips.locBrief(locs, { met: true, ntm: true, sigmet: true, charts: !!p.charts, durationHours });
     if (!r.ok) throw new Error("NAIPS: " + (r.info || r.status)); content = r.content || ""; charts = (r.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type)).slice(0, 12);
-    if (p.areas && p.areas.length) { const a = await naips.areaBrief(p.areas, { met: true, ntm: true, charts: !!p.charts }); if (a.ok && a.content) content += "\n\n" + a.content; if (a.ok) charts = charts.concat((a.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type))).slice(0, 16); }
+    if (p.areas && p.areas.length) { const a = await naips.areaBrief(p.areas, { met: true, ntm: true, charts: !!p.charts, durationHours }); if (a.ok && a.content) content += "\n\n" + a.content; if (a.ok) charts = charts.concat((a.products || []).filter(x => /^(PNG|GIF|JPEG|PDF)$/.test(x.type))).slice(0, 16); }
   }
   const decoded = met.decodeBriefing(content, ref);
   const plan = { dep: p.dep.toUpperCase(), dest: p.dest.toUpperCase(), altn: (p.altn || []).map(s => String(s).toUpperCase()), enroute: (p.enroute || []).map(s => String(s).toUpperCase()), etd: p.etd, eetMin: +p.eetMin || 60, altEetMin: +p.altEetMin || 30, minima: p.minima || {}, aircraft: p.aircraft || {}, bufferMin: p.bufferMin || 30 };

@@ -34,3 +34,5 @@ test("HTTP: /briefing and /fpl through the connector", async () => {
   const rec = await post("/records", { aeroe: "flight-record", pilotId: "P42", record: { id: "r1", rego: "VH-WSM", flight: { date: "2026-11-22" } } }); assert.equal(rec.stored, true);
   const list = await fetch("http://localhost:8798/records", { headers: H }).then(r => r.json()); assert.equal(list.count, 1);
 });
+
+test("loc-brief validity duration comes first", async () => { const n2 = new Naips(); await n2.locBrief(["YSBK"], { durationHours: 40 }); assert.match(seen[seen.length - 1].body, /<ndd:loc-brief-rqs[^>]*><ndd:duration>PT40H<\/ndd:duration><ndd:loc>YSBK<\/ndd:loc>/); });
