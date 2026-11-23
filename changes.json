@@ -6,7 +6,8 @@
     "notes": [
       "All clock times are now UTC by default: ETD, Now buttons, nav log, fuel checks, plan import and logbook exports. Status › Pilot can switch to device local time. Records carry their convention; the Enroute page warns when an entered time is hours off the plan.",
       "Briefing requested for a period covering the arrival plus a day, so NOTAMs starting later today or tomorrow are included.",
-      "En route alternates are added one code at a time as a list; the chart browser lists NAIPS charts on opening; a Copy wind diagnostics button appears when winds fail."
+      "En route alternates are added one code at a time as a list; the chart browser lists NAIPS charts on opening; a Copy wind diagnostics button appears when winds fail.",
+      "Load winds (forecast model): per-leg winds and temperatures from the Open-Meteo model at the cruise pressure level, needing no NAIPS route; NAIPS charts fetched by key with GAF and GPWT included; optional NAIPS stored route code for the NAIPS wind profile."
     ]
   },
   {
