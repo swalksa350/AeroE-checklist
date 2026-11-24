@@ -128,7 +128,7 @@ merged; `email` is the address Share uses for defect reports when there is no co
 "maint": {
   "VH-WSM": {
     "email": "maintenance@example.com",
-    "hours": { "airframe": 1200.4, "engines": [{ "tsn": 850.2, "tso": 120.7 }], "cycles": 2400, "asAt": "2026-11-20" },
+    "hours": { "airframe": 1200.4, "basis": "tacho", "tacho": 1234.5, "landings": 2400, "engines": [{ "tsn": 850.2, "tso": 120.7, "cycles": null }], "asAt": "2026-11-20" },
     "items": [
       { "id": "100h", "name": "100-hourly inspection", "basis": "airframe", "due": 1250, "interval": 100 },
       { "id": "elt", "name": "ELT battery", "basis": "date", "dueDate": "2027-03-01" },
@@ -138,6 +138,6 @@ merged; `email` is the address Share uses for defect reports when there is no co
 }
 ```
 
-`basis` is `airframe`, `engineN`, `date` or `cycles`. Defect reports arrive as `POST /defects` with
+`basis` is `airframe` (hours), `engineN` (hours), `engineNc` (engine cycles), `landings` or `date`. `hours.basis` is `tacho`, `air` or `block` (what each completed flight adds to the airframe total). Defect reports arrive as `POST /defects` with
 `{aeroe:"defect", rego, pilotId, defect:{id,t,title,severity:"aog"|"deferred"|"monitor",category,desc,readings,actions,melRef,status,photos:[dataURL],hoursAt,pilot,place,flight}}`;
 trend readings as `POST /trend` with `{aeroe:"trend", rego, pilotId, reading:{id,t,flight,pa,oat,ias,engines:[{...}],note}}`.

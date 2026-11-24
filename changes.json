@@ -8,7 +8,8 @@
       "Perf, Plan, Maint, Charts and Status pages fill the screen with an in-page selector instead of a side list; field explanations sit behind a ? button; time labels show UTC.",
       "GA8 take-off: Flaps up option applying the AFM Section 4 allowance (+10 %) to the charted 14° flap distance.",
       "Enroute: the explanatory sentence under the times is gone; Engine readings stays, defect reporting lives in the Maint tab.",
-      "New flight also clears the fuel on board and the model winds, and the fuel plan shows nothing until a route exists, so no figures from the last flight linger."
+      "New flight also clears the fuel on board and the model winds, and the fuel plan shows nothing until a route exists, so no figures from the last flight linger.",
+      "Maintenance hours by type: piston engines by tacho (tacho start offered and tacho end entered on the Complete page, airframe by tacho, air or block time as the operator chooses), turbine engines by air time with engine cycles counted per flight; landings tracked separately; scheduled items can be due by engine cycles or landings."
     ]
   },
   {
