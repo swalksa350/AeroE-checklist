@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.22",
+    "date": "2026-11-24",
+    "title": "Maintenance tab: hours and scheduled items, defect reports, engine trend",
+    "notes": [
+      "New Maint tab per registration: airframe, engine and cycle counts that grow with each completed flight; scheduled items due by hours, date or cycles with amber/red status, Done to roll forward, and a warning with a link on the Plan page.",
+      "Defect reports with status (grounded / deferred with MEL reference / monitor), category, readings, action, photos and rectification sign-off; sent to the operator's connector or shared as text from a remote base; a grounding defect shows UNSERVICEABLE on the Plan page; open defects go into the pre-flight record.",
+      "Engine trend monitoring with the parameter set for the type (piston, turboprop, turbine), sparklines, deviation flags beyond two standard deviations and CSV export; readings entered from the Enroute page in cruise.",
+      "Connector: /defects and /trend endpoints; fleet packs can set maintenance items, hours and the maintenance email per registration; maintenance data is part of the flight-preparation sync."
+    ]
+  },
+  {
     "version": "2.21",
     "date": "2026-11-23",
     "title": "Flight preparation on every device; route amendments in flight; terms of use",

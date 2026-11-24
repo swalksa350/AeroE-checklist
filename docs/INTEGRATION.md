@@ -118,3 +118,26 @@ operator account at all.
 
 Departure and arrival messages after filing (SARTIME cancellation, delay, revision) and NOTAM proposals are not
 exposed yet; the NAIPS service has operations for them (`revise-active-fn`, `submit-sar-fn`).
+
+## Maintenance in the fleet pack
+
+`GET /fleet` may carry a `maint` object keyed by registration. Items replace the pilot's list on each fetch; hours are
+merged; `email` is the address Share uses for defect reports when there is no connector.
+
+```json
+"maint": {
+  "VH-WSM": {
+    "email": "maintenance@example.com",
+    "hours": { "airframe": 1200.4, "engines": [{ "tsn": 850.2, "tso": 120.7 }], "cycles": 2400, "asAt": "2026-11-20" },
+    "items": [
+      { "id": "100h", "name": "100-hourly inspection", "basis": "airframe", "due": 1250, "interval": 100 },
+      { "id": "elt", "name": "ELT battery", "basis": "date", "dueDate": "2027-03-01" },
+      { "id": "prop", "name": "Propeller overhaul", "basis": "engine1", "due": 2000 }
+    ]
+  }
+}
+```
+
+`basis` is `airframe`, `engineN`, `date` or `cycles`. Defect reports arrive as `POST /defects` with
+`{aeroe:"defect", rego, pilotId, defect:{id,t,title,severity:"aog"|"deferred"|"monitor",category,desc,readings,actions,melRef,status,photos:[dataURL],hoursAt,pilot,place,flight}}`;
+trend readings as `POST /trend` with `{aeroe:"trend", rego, pilotId, reading:{id,t,flight,pa,oat,ias,engines:[{...}],note}}`.

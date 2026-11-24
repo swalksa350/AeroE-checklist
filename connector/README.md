@@ -6,6 +6,8 @@ its own systems. It implements the interface in `../docs/INTEGRATION.md`:
 | Endpoint | What it does |
 |---|---|
 | `GET /health` | Host health check, no token: `{ok:true}`. |
+| `POST /defects`, `GET /defects` | Defect reports from the app (one file each under `data/defects`), listed newest first for the operator. |
+| `POST /trend`, `GET /trend?rego=` | Engine trend readings, one JSON-lines file per registration. |
 | `GET /sync`, `PUT /sync` | The pilot's flight preparation (plan, manifest, W&B, performance, open records, pilot, duty) as one JSON document per pilot ID, for the app's device-to-device sync. |
 | `GET /ping` | Connection test; reports whether NAIPS and summaries are configured. |
 | `GET /roster?pilot=&date=` | The pilot's flights for the day from `data/roster.json` (replace with a query to your rostering system). |
