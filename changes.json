@@ -9,7 +9,8 @@
       "Plan and Enroute open the live map by default when online; the offline sketch now shows each leg's track, distance and LSALT, a scale bar and north.",
       "First launch shows the terms of use and asks for your name and acceptance before the app can be used; shown again when the terms change. Status › App has the acceptance date and the terms to read again; terms.html and privacy.html carry the same text for the App Store listing.",
       "Installed app (TestFlight): OzRunways, GPX and Garmin plan files can be shared straight into the app (Copy to AeroE Checklist) and open on the Plan page.",
-      "NAIPS through a connector waits up to two minutes (free Render instances sleep); the chart directory loads in parallel; Direct NAIPS access is used only in the installed app."
+      "NAIPS through a connector waits up to two minutes (free Render instances sleep); the chart directory loads in parallel; Direct NAIPS access is used only in the installed app.",
+      "Tidier pages: Status folds into drop-down sections; Enroute nav log is one card per waypoint on narrow screens (iPad Split View) with track, distance and LSALT per leg and the old Legs table removed; time pickers open near the expected time; Perf shows conditions beside results with the factored distance pinned; colour accents on sections, next waypoint and totals."
     ]
   },
   {
