@@ -54,6 +54,13 @@ jobs:
           npm run build:web
           npx cap sync ios
 
+      - name: Select Xcode 26 (Apple requires the iOS 26 SDK for uploads)
+        run: |
+          X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -z "$X" ]; then echo "No Xcode 26 on this runner image. Installed:"; ls /Applications | grep -i xcode; echo "Change runs-on in this workflow to a newer macOS image."; exit 1; fi
+          sudo xcode-select -s "$X"
+          xcodebuild -version
+
       - name: App Store Connect API key
         env:
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
@@ -79,6 +86,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         working-directory: native/ios/App
         run: |
+          set -o pipefail
           xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
             -destination "generic/platform=iOS" -archivePath "$RUNNER_TEMP/App.xcarchive" \
             CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
@@ -95,6 +103,7 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         working-directory: native/ios
         run: |
+          set -o pipefail
           sed "s/TEAM_ID_PLACEHOLDER/$APPLE_TEAM_ID/" ExportOptions.plist > "$RUNNER_TEMP/ExportOptions.plist"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
