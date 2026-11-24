@@ -51,11 +51,11 @@ jobs:
           ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-  # Lane 2: only when lane 1 failed (most often "job was not acquired by a runner" when the arm64 pool is full),
+  # Lane 2: whenever lane 1 did not succeed (GitHub marks an unacquired job "cancelled"; most often "job was not acquired by a runner" when the arm64 pool is full),
   # the same build on GitHub's Intel Mac pool, which is a separate queue.
   build-upload-intel:
     needs: build-upload
-    if: ${{ always() && needs.build-upload.result == 'failure' }}
+    if: ${{ always() && needs.build-upload.result != 'success' }}
     runs-on: macos-15-intel
     timeout-minutes: 60
     steps:
