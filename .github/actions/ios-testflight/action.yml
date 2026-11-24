@@ -1,0 +1,85 @@
+name: Build and upload to TestFlight
+description: Web app into the native shell, archive with Xcode 26, upload to App Store Connect
+inputs:
+  ASC_KEY_ID: { required: true }
+  ASC_ISSUER_ID: { required: true }
+  ASC_KEY_P8: { required: true }
+  APPLE_TEAM_ID: { required: true }
+runs:
+  using: composite
+  steps:
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 22
+
+  - name: Web app into the native shell
+    working-directory: native
+    shell: bash
+    run: |
+      npm install --no-audit --no-fund
+      npm run build:web
+      npx cap sync ios
+
+  - name: Select Xcode 26 (Apple requires the iOS 26 SDK for uploads)
+    shell: bash
+    run: |
+      X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+      if [ -z "$X" ]; then echo "No Xcode 26 on this runner image. Installed:"; ls /Applications | grep -i xcode; echo "Change runs-on in this workflow to a newer macOS image."; exit 1; fi
+      sudo xcode-select -s "$X"
+      xcodebuild -version
+
+  - name: App Store Connect API key
+    env:
+      ASC_KEY_P8: ${{ inputs.ASC_KEY_P8 }}
+      ASC_KEY_ID: ${{ inputs.ASC_KEY_ID }}
+    shell: bash
+    run: |
+      test -n "$ASC_KEY_P8" || { echo "Secret ASC_KEY_P8 is not set"; exit 1; }
+      mkdir -p ~/private_keys
+      printf '%s\n' "$ASC_KEY_P8" > ~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+      chmod 600 ~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+
+  - name: Version numbers
+    id: ver
+    shell: bash
+    run: |
+      V=$(node -e 'const c=require("./changes.json"); let v=String(c[0].version); if(v.split(".").length<3) v+=".0"; console.log(v)')
+      echo "marketing=$V" >> "$GITHUB_OUTPUT"
+      B=$(date -u +%Y%m%d%H%M)
+      echo "build=$B" >> "$GITHUB_OUTPUT"
+      echo "Marketing version $V, build $B"
+
+  - name: Archive
+    env:
+      ASC_KEY_ID: ${{ inputs.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ inputs.ASC_ISSUER_ID }}
+      APPLE_TEAM_ID: ${{ inputs.APPLE_TEAM_ID }}
+    working-directory: native/ios/App
+    shell: bash
+    run: |
+      set -o pipefail
+      xcodebuild -workspace App.xcworkspace -scheme App -configuration Release \
+        -destination "generic/platform=iOS" -archivePath "$RUNNER_TEMP/App.xcarchive" \
+        CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+        MARKETING_VERSION="${{ steps.ver.outputs.marketing }}" CURRENT_PROJECT_VERSION="${{ steps.ver.outputs.build }}" \
+        -allowProvisioningUpdates -allowProvisioningDeviceRegistration \
+        -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
+        -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+        archive | tail -n 60
+
+  - name: Upload to TestFlight
+    env:
+      ASC_KEY_ID: ${{ inputs.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ inputs.ASC_ISSUER_ID }}
+      APPLE_TEAM_ID: ${{ inputs.APPLE_TEAM_ID }}
+    working-directory: native/ios
+    shell: bash
+    run: |
+      set -o pipefail
+      sed "s/TEAM_ID_PLACEHOLDER/$APPLE_TEAM_ID/" ExportOptions.plist > "$RUNNER_TEMP/ExportOptions.plist"
+      xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" \
+        -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" -exportPath "$RUNNER_TEMP/export" \
+        -allowProvisioningUpdates \
+        -authenticationKeyPath "$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" \
+        -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID" | tail -n 40
+      echo "Uploaded build ${{ steps.ver.outputs.build }} (version ${{ steps.ver.outputs.marketing }}). Apple processes it in 5–30 minutes; the Pilots group gets it automatically."
