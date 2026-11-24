@@ -67,6 +67,26 @@ Every time the web app changes, run `npm run sync` (or `npm run ios`) and build 
 npm run android         # syncs and opens Android Studio; Run on a connected device or emulator
 ```
 
+## Automatic TestFlight uploads (GitHub Actions)
+
+`.github/workflows/testflight.yml` builds the iOS app on a GitHub macOS runner and uploads it to TestFlight on every
+push to `main` that touches the app (web files, aircraft data, `native/`). The build number is the workflow run number
+and the version comes from `changes.json`. Signing is automatic through an App Store Connect API key (Xcode's
+cloud-managed distribution certificate), so nothing is exported from a Mac. One-off setup:
+
+1. appstoreconnect.apple.com › Users and Access › Integrations › App Store Connect API › Team Keys › **+**: name
+   `GitHub Actions`, access **Admin** (cloud signing needs it). Download the `.p8` (one chance only); note the
+   **Key ID** and the **Issuer ID** shown above the list.
+2. developer.apple.com › Account › Membership details: note the 10-character **Team ID**.
+3. GitHub › the repository › Settings › Secrets and variables › Actions › New repository secret, four times:
+   `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (open the .p8 in TextEdit and paste the whole contents, BEGIN and END
+   lines included), `APPLE_TEAM_ID`.
+4. Actions tab › TestFlight › Run workflow to try it. A run takes 10–20 minutes; the log ends with "Uploaded build N".
+   Apple processes the build and the internal group with automatic distribution receives it.
+
+The manual path below still works and is the fallback if a run fails (the log says why; the usual causes are a secret
+pasted incompletely or the key not having Admin access). The repository is public, so macOS runner minutes are free.
+
 ## TestFlight and the App Store
 
 TestFlight is the way onto an iPad that cannot enable Developer Mode (a company-managed device): the build is
