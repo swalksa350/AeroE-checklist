@@ -9,8 +9,9 @@
 # access "Admin" (automatic cloud signing needs it). The .p8 can be downloaded once only.
 #
 # Signing is automatic: Xcode creates and uses a cloud-managed Apple Distribution certificate through the API key, so
-# no certificate or provisioning profile needs exporting from a Mac. The build number is the workflow run number, so
-# it always goes up; the marketing version comes from changes.json.
+# no certificate or provisioning profile needs exporting from a Mac. The build number is the UTC minute (yyyymmddHHMM),
+# the same scheme native/build-web.js stamps into the Xcode project, so manual and automatic builds sort in time order;
+# the marketing version comes from changes.json.
 name: TestFlight
 
 on:
@@ -76,8 +77,9 @@ jobs:
         run: |
           V=$(node -e 'const c=require("./changes.json"); let v=String(c[0].version); if(v.split(".").length<3) v+=".0"; console.log(v)')
           echo "marketing=$V" >> "$GITHUB_OUTPUT"
-          echo "build=${{ github.run_number }}" >> "$GITHUB_OUTPUT"
-          echo "Marketing version $V, build ${{ github.run_number }}"
+          B=$(date -u +%Y%m%d%H%M)
+          echo "build=$B" >> "$GITHUB_OUTPUT"
+          echo "Marketing version $V, build $B"
 
       - name: Archive
         env:

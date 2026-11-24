@@ -17,3 +17,10 @@ html = html.replace(/if \("serviceWorker" in navigator && location\.protocol !==
 fs.writeFileSync(path.join(out, "index.html"), html);
 const size = dir => fs.readdirSync(dir).reduce((n, f) => { const p = path.join(dir, f); return n + (fs.statSync(p).isDirectory() ? size(p) : fs.statSync(p).size); }, 0);
 console.log(`www built: ${(size(out) / 1048576).toFixed(1)} MB`);
+/* Version stamp for the native projects: the marketing version follows changes.json (x.y -> x.y.0) and the build number
+   is the UTC minute (yyyymmddHHMM), so builds from any Mac and from GitHub sort in time order in TestFlight. The same
+   scheme is used by .github/workflows/testflight.yml. Terms, privacy and the web app carry the same version. */
+{ const changes = JSON.parse(fs.readFileSync(path.join(root, "changes.json"), "utf8")); let ver = String(changes[0].version); if (ver.split(".").length < 3) ver += ".0"; const d = new Date(); const build = d.toISOString().replace(/[-T:]/g, "").slice(0, 12);
+  const pbx = path.join(__dirname, "ios", "App", "App.xcodeproj", "project.pbxproj"); if (fs.existsSync(pbx)) { let t = fs.readFileSync(pbx, "utf8"); t = t.replace(/MARKETING_VERSION = [^;]+;/g, "MARKETING_VERSION = " + ver + ";").replace(/CURRENT_PROJECT_VERSION = [^;]+;/g, "CURRENT_PROJECT_VERSION = " + build + ";"); fs.writeFileSync(pbx, t); }
+  const gradle = path.join(__dirname, "android", "app", "build.gradle"); if (fs.existsSync(gradle)) { let t = fs.readFileSync(gradle, "utf8"); t = t.replace(/versionName "[^"]*"/, 'versionName "' + ver + '"').replace(/versionCode \d+/, "versionCode " + Math.floor(d.getTime() / 60000)); fs.writeFileSync(gradle, t); }
+  console.log("version " + ver + " build " + build); }

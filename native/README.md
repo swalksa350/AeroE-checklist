@@ -125,10 +125,10 @@ checklist commands. External TestFlight testers (beyond the 100 internal) need a
 
 ## Versioning
 
-- The marketing version is `MARKETING_VERSION` in `ios/App/App.xcodeproj/project.pbxproj` and
-  `versionName` in `android/app/build.gradle` (currently 2.1.0). Bump both with each store release and
-  raise the build number (`CURRENT_PROJECT_VERSION` / `versionCode`) on every upload.
-- The web app's own version (`changes.json`) is shown on the Status page and should match.
+`npm run build:web` (part of `npm run ios`) stamps the Xcode project and the Android Gradle file: the marketing
+version is the first entry of `changes.json` (2.23 becomes 2.23.0) and the build number is the UTC minute
+(`yyyymmddHHMM`). The GitHub workflow uses the same scheme, so a manual archive and an automatic one always sort in
+the right order in TestFlight and there is nothing to type before archiving. Leave Version and Build alone in Xcode.
 
 ## Planned native additions (not yet done)
 
