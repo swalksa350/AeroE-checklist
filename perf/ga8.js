@@ -15,6 +15,9 @@ window.PERF.ga8 = {
   surfaces: [["sealed", "Hard sealed"], ["gravel", "Short dry grass or gravel"]],
   takeoff: {
     title: "Take-off – 14° flap",
+    configs: [{ id: "f14", title: "Flaps 14° (charted)", factor: 1, note: "" },
+              { id: "f0", title: "Flaps up (chart + 10 %)", factor: 1.10, note: "the AFM charts take-off at 14° flap only; Section 4 says a flaps-up take-off increases the distance by approximately 10 %, which is applied here to both distances." }],
+    configsNote: "The AFM charts 14° flap only. Flaps up applies the Section 4 allowance of about 10 % to the chart result.",
     conditions: "2,700 RPM / full throttle set before brake release, flaps 14°, distance from rest to 50 ft. Rotate at 60 KIAS and climb at the take-off safety speed below. Unfactored.",
     speedLabel: "Take-off safety speed at 50 ft",
     speeds: [[1000,57],[1100,59],[1200,61],[1300,63],[1400,65],[1500,66],[1600,68],[1700,69],[1814,71]],

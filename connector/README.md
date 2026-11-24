@@ -6,6 +6,9 @@ its own systems. It implements the interface in `../docs/INTEGRATION.md`:
 | Endpoint | What it does |
 |---|---|
 | `GET /health` | Host health check, no token: `{ok:true}`. |
+| `GET /aircraft/REGO`, `PUT /aircraft/REGO` | The aircraft's maintenance record (hours, scheduled items, defects, trend), one document per registration, merged on every PUT so pilots never overwrite each other. |
+| `GET /aircraft` | Fleet summary as JSON: hours, next item due, overdue items, open defects per registration. |
+| `GET /dashboard?token=…` | The same as an HTML page for operations staff (token in the address because a browser tab cannot send the header); refreshes every 5 minutes. |
 | `POST /defects`, `GET /defects` | Defect reports from the app (one file each under `data/defects`), listed newest first for the operator. |
 | `POST /trend`, `GET /trend?rego=` | Engine trend readings, one JSON-lines file per registration. |
 | `GET /sync`, `PUT /sync` | The pilot's flight preparation (plan, manifest, W&B, performance, open records, pilot, duty) as one JSON document per pilot ID, for the app's device-to-device sync. |

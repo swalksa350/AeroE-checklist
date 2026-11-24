@@ -1,5 +1,16 @@
 [
   {
+    "version": "2.23",
+    "date": "2026-11-24",
+    "title": "Aircraft maintenance record shared through the connector; cleaner pages",
+    "notes": [
+      "Maintenance record per registration on the connector: hours, scheduled items, defects and trend readings shared by every pilot of the aircraft, fetched when the registration is selected and sent after each change and completed flight; two pilots' changes are merged. Operations dashboard at /dashboard on the connector with hours, cycles, next due, overdue items and open defects for the fleet.",
+      "Perf, Plan, Maint, Charts and Status pages fill the screen with an in-page selector instead of a side list; field explanations sit behind a ? button; time labels show UTC.",
+      "GA8 take-off: Flaps up option applying the AFM Section 4 allowance (+10 %) to the charted 14° flap distance.",
+      "Enroute: the explanatory sentence under the times is gone; Engine readings stays, defect reporting lives in the Maint tab."
+    ]
+  },
+  {
     "version": "2.22",
     "date": "2026-11-24",
     "title": "Maintenance tab: hours and scheduled items, defect reports, engine trend",
