@@ -10,7 +10,8 @@
       "Enroute: the explanatory sentence under the times is gone; Engine readings stays, defect reporting lives in the Maint tab.",
       "New flight also clears the fuel on board and the model winds, and the fuel plan shows nothing until a route exists, so no figures from the last flight linger.",
       "Maintenance hours by type: piston engines by tacho (tacho start offered and tacho end entered on the Complete page, airframe by tacho, air or block time as the operator chooses), turbine engines by air time with engine cycles counted per flight; landings tracked separately; scheduled items can be due by engine cycles or landings.",
-      "Maintenance release moved to the Maint tab (valid-to airframe hours, expiry, reference); remaining hours follow the airframe total and the chosen time basis, appear in the Plan warning, the flight record and the ops dashboard."
+      "Maintenance release moved to the Maint tab (valid-to airframe hours, expiry, reference); remaining hours follow the airframe total and the chosen time basis, appear in the Plan warning, the flight record and the ops dashboard.",
+      "Top bar order is now Plan, W&B, Perf, Maint; the fuel plan note shows the POH profile weight beside the W&B take-off weight and warns when the plan is heavier than the profile."
     ]
   },
   {

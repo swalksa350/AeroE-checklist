@@ -426,12 +426,12 @@ const byId = id => AIRCRAFT.find(a=>a.id===id) || null;
 /* ---------------- STATE + PERSISTENCE ---------------- */
 const STORE_KEY = "ga-ecl-v2";
 const LEGACY_KEY = "c208b-ecl-v1";
-const BUILD = "424b4a2f";
+const BUILD = "a8e8d161";
 let CHANGES = [];   // loaded from changes.json; newest first
 const APP_VERSION = () => CHANGES.length ? CHANGES[0].version : "";
 const state = {ac:null, lastAc:null, mode:"normal", sel:null, showing:false, per:{}, fav:[], uses:{}, favAsked:{}, favPromptHidden:false, confirmReset:false, savedAt:null, custom:{}, sharedApproach:{on:false, name:"", items:[]}, wb:{}, perf:{}, plan:{}, manifest:{}, records:{}, ops:{url:"",token:"",pilotId:"",autoUpload:false,std:{},dutyMax:null,lastRoster:null,notices:[],noticesRead:{}}, duty:{start:null,log:[]}, pilot:{}, outbox:[]};
 const NO_SIDE=["plan","perf","status","charts","maint"];   /* these tabs are one page with their own selector: no side list */
-const MODES = [["normal","Normal","Norm"],["abnormal","Abnormal","Abn"],["emergency","Emergency","Emerg"],["wb","W&B","W&B"],["perf","Perf","Perf"],["plan","Plan","Plan"],["maint","Maint","Maint"],["charts","Charts","Charts"],["status","Status","Status"]];
+const MODES = [["normal","Normal","Norm"],["abnormal","Abnormal","Abn"],["emergency","Emergency","Emerg"],["plan","Plan","Plan"],["wb","W&B","W&B"],["perf","Perf","Perf"],["maint","Maint","Maint"],["charts","Charts","Charts"],["status","Status","Status"]];
 const AC = () => byId(state.ac);
 const PER = () => { if(!state.per[state.ac]) state.per[state.ac] = {ticks:{}, branches:{}}; return state.per[state.ac]; };
 const CUSTOM_ID="approach-custom";
@@ -1601,7 +1601,10 @@ function fuelPlanNodes(p,w){
   const btns=h("div",{class:"btns"}); if(prof) btns.append(h("button",{onclick:()=>{ p.fp=fpFromPOH(p); p.fuelFlow=p.fp.cruiseFlow; save(); render(); }},"Recalculate from POH"));
   btns.append(h("button",{onclick:()=>{ p.eetMin=R.eet; p.altEetMin=Math.ceil(R.altTime)||p.altEetMin; p.fuelFlow=R.flow; save(); render(); }},"Use this plan's EET and flow ("+R.eet+" min)"));
   const alwaysAlt=h("input",{type:"checkbox"}); alwaysAlt.checked=!!p.alwaysAlt; alwaysAlt.onchange=()=>{ p.alwaysAlt=alwaysAlt.checked; save(); render(); }; btns.append(h("label",{class:"inline"},alwaysAlt," carry alternate fuel regardless"));
-  const fuelPart=[h("h3",{},"Fuel required"),h("div",{class:"saved"},prof?"Figures from the POH profile: "+prof.basis+(prof.verified?"":" (unverified – check against the POH)")+". Every figure below can be amended; Recalculate from POH restores them.":"No POH fuel profile for this type: enter the figures by hand."),box,btns];
+  /* weight: the POH fuel profile is tabulated at one weight (maximum), which is conservative for climb and cruise; show it
+     beside the planned take-off weight from W&B so the pilot sees the margin, and warn when the plan is over weight */
+  const wNote=(()=>{ if(!prof||!prof.weight||!wb) return ""; let tow=null; try{ const r=wbCompute(wb); tow=r&&r.pts&&r.pts.to?r.pts.to.w:null; }catch(e){} const wu=wb.units.weight||"kg"; if(!tow) return " POH figures at "+fmt(prof.weight,0)+" "+wu+" (maximum weight); the W&B take-off weight is not known yet."; const over=tow>prof.weight+1; return " POH figures at "+fmt(prof.weight,0)+" "+wu+" (maximum weight); planned take-off weight from W&B "+fmt(tow,0)+" "+wu+(over?" – OVER the profile weight, check the W&B.":" – lighter, so climb and cruise figures are conservative."); })();
+  const fuelPart=[h("h3",{},"Fuel required"),h("div",{class:"saved"},prof?"Figures from the POH profile: "+prof.basis+(prof.verified?"":" (unverified – check against the POH)")+"."+wNote+" Every figure below can be amended; Recalculate from POH restores them.":"No POH fuel profile for this type: enter the figures by hand."),box,btns];
   // winds per leg (before the fuel table: the winds and the level set the trip time and fuel)
   const L=planLegs(p); if(L.legs.length){ out.push(h("h3",{},"Winds at cruise level"+(planLevelFt(p)?" "+(p.level||"").toUpperCase():""))); const wt=h("table",{class:"legs"}); wt.append(h("tr",{},h("th",{},"Leg"),h("th",{class:"num"},"Track"),h("th",{class:"num"},"Wind °/kt"),h("th",{class:"num"},"GS"),h("th",{class:"num"},"ETE min"))); p.winds=p.winds||{};
     R.legs.forEach((l,i)=>{ const wd=h("input",{type:"number",min:"0",max:"360",step:"1",placeholder:"dir",value:(p.winds[i]||{}).dir===undefined||(p.winds[i]||{}).dir===null?"":p.winds[i].dir,style:"width:4.2em"}); const wsI=h("input",{type:"number",min:"0",step:"1",placeholder:"kt",value:(p.winds[i]||{}).spd===undefined||(p.winds[i]||{}).spd===null?"":p.winds[i].spd,style:"width:3.8em"}); const upd=()=>{ p.winds[i]={dir:wd.value===""?null:+wd.value,spd:wsI.value===""?null:+wsI.value}; save(); redraw(); }; wd.oninput=upd; wsI.oninput=upd; wt.append(h("tr",{},h("td",{},l.from+" → "+l.to),h("td",{class:"num"},l.track===null?"–":String(Math.round(l.track)).padStart(3,"0")),h("td",{class:"num"},h("div",{class:"rate"},wd,"/",wsI)),h("td",{class:"num",id:"gs-"+i},l.gs),h("td",{class:"num",id:"ete-"+i},l.ete===null?"–":fmt(l.ete,0)))); });
